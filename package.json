@@ -1,0 +1,70 @@
+{
+  "name": "drama15-lite",
+  "version": "2.0.3",
+  "description": "Desktop short-drama studio for Windows portable builds.",
+  "private": true,
+  "packageManager": "npm@11.11.0",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "npm run desktop:dev",
+    "clean": "node scripts/clean.mjs",
+    "clean:all": "node scripts/clean.mjs --deps",
+    "build": "node -e \"require('node:fs').rmSync('dist',{ recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "test": "node --test --import tsx .\\tests\\**\\*.test.ts",
+    "eval:prompt-quality": "tsx scripts/evals/run-prompt-quality-smoke.ts",
+    "start": "npm run desktop:dev",
+    "check": "npm run build && npm run test",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:pack": "node -e \"require('node:fs').rmSync('release/gui',{ recursive: true, force: true })\" && npm run build && electron-builder --win portable"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.11",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "build": {
+    "appId": "com.drama15.lite.studio",
+    "productName": "Drama15 Lite Studio",
+    "artifactName": "Drama15-Lite-Studio-${version}-${arch}.${ext}",
+    "asar": true,
+    "directories": {
+      "output": "release/gui"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "presets/**/*",
+      "examples/**/*",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      }
+    ],
+    "extraMetadata": {
+      "main": "dist/electron/main.js"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
