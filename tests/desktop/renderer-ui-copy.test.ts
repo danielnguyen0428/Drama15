@@ -191,7 +191,7 @@ test("chapter reader does not expose voice generation actions", () => {
 
   assert.doesNotMatch(rendererJs, /data-generate-chapter-voice|data-play-chapter-voice|data-voice-status|Gen Voice|Play Voice|chapterNumbers:\s*\[chapterNumber\]|function getChapterVoiceFile|function toFileUrl/);
   assert.match(rendererJs, /storyBusy:\s*false/);
-  assert.doesNotMatch(rendererJs, /ttsBusy:\s*false|function getBusyScope/);
+  assert.doesNotMatch(rendererJs, /data-generate-chapter-voice|data-play-chapter-voice|function getChapterVoiceFile|function toFileUrl/);
 });
 
 test("desktop exposes a single full-story generation button", () => {
@@ -381,4 +381,23 @@ test("niche branch drives hidden randomized story-control config", () => {
   assert.match(rendererJs, /triage/i);
   assert.match(rendererJs, /scholarship/i);
   assert.match(rendererJs, /elements\.linePreset\.addEventListener\("change", \(\) => \{/);
+});
+
+test("desktop renders OmniVoice story TTS voice panel", () => {
+  const indexHtml = readProjectFile("desktop", "renderer", "index.html");
+  const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+  const stylesCss = readProjectFile("desktop", "renderer", "styles.css");
+
+  assert.match(indexHtml, /id="tts-api-base"/);
+  assert.match(indexHtml, /id="voice-id-select"/);
+  assert.match(indexHtml, /id="generate-story-voice-button"/);
+  assert.match(indexHtml, /Gen Voice 15/);
+
+  assert.match(rendererJs, /ttsConfig/);
+  assert.match(rendererJs, /loadOmniVoiceVoices/);
+  assert.match(rendererJs, /generateStoryVoice/);
+  assert.match(rendererJs, /handleTtsProgressEvent/);
+
+  assert.match(stylesCss, /\.voice-progress/);
+  assert.match(stylesCss, /\.mini-status/);
 });
