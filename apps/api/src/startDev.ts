@@ -8,6 +8,7 @@ import fastify from 'fastify';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
+import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
 import type {
   Chapter,
   NormalizedFullGenerateRequest,
@@ -99,16 +100,9 @@ const app = fastify({
 });
 
 app.addHook('onRequest', (request, reply, done) => {
-  const origin = request.headers.origin;
-  const allowedOrigin =
-    typeof origin === 'string' && env.corsOrigins.includes(origin)
-      ? origin
-      : env.corsOrigins[0] ?? 'https://drama.novelkit.cc';
-
-  reply.header('Access-Control-Allow-Origin', allowedOrigin);
-  reply.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  reply.header('Access-Control-Allow-Headers', 'content-type');
-  reply.header('Vary', 'Origin');
+  for (const [key, value] of Object.entries(buildCorsHeaders(request.headers.origin, env.corsOrigins))) {
+    reply.header(key, value);
+  }
 
   if (request.method === 'OPTIONS') {
     void reply.code(204).send();
@@ -180,12 +174,7 @@ app.get('/stories/:id/stream', async (request, reply) => {
     return reply.code(404).send({ error: { code: 'not_found', message: 'Story job not found.' } });
   }
 
-  reply.raw.writeHead(200, {
-    'Content-Type': 'text/event-stream; charset=utf-8',
-    'Cache-Control': 'no-cache, no-transform',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no',
-  });
+  reply.raw.writeHead(200, buildStreamHeaders(request.headers.origin, env.corsOrigins));
 
   const write = (payload: StreamPayload) => {
     reply.raw.write(`data: ${JSON.stringify(payload)}\n\n`);
