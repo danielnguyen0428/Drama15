@@ -19,6 +19,7 @@ apps/api/drama15-seed-history.json
 .vscode/
 .backups/
 .playwright-cli/
+.superpowers/
 .scratch_*.cjs
 *.tmp-*
 
