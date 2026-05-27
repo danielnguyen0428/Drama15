@@ -25,9 +25,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <main style={styles.shell}>
         <section style={styles.panel}>
-          <p style={styles.eyebrow}>Drama15 Local Studio</p>
+          <p style={styles.eyebrow}>Drama15 Lite Studio</p>
           <h1 style={styles.title}>App crashed</h1>
-          <p style={styles.copy}>Reload the page. Local drafts generated in this session stay in the browser until refresh.</p>
+          <p style={styles.copy}>Reload the page to restart this writing session.</p>
           {this.state.error && <pre style={styles.pre}>{this.state.error.message}</pre>}
           <button type="button" onClick={() => window.location.reload()} style={styles.button}>Reload</button>
         </section>

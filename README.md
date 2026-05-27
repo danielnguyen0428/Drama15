@@ -1,40 +1,53 @@
-# Drama15 Local Studio
+# Drama15 Lite Studio
 
-Drama15 is trimmed to the local writing core only:
+Drama15 is a web writing studio for short-drama generation.
 
 - `apps/api` - Fastify API for style presets, seed suggestions, full story generation over SSE, and chapter rewrite.
-- `apps/web` - Vite/React web client for local writing.
+- `apps/web` - Vite/React web client for `drama.novelkit.cc`.
 - `src` - shared generation pipeline, presets, router client, validators, and markdown helpers.
 - `presets` - model, line, style, and prompt presets used by the generator.
 
-Removed from this branch: Kiro specs, docs, tests, admin console, auth/licensing, voice, automation, desktop shell, migrations, online deploy config, PM2/Cloudflare/Vercel files, and old examples/outputs.
+## Production
+
+- Public web domain: `https://drama.novelkit.cc`
+- API domain: `https://drama-api.novelkit.cc`
+- Web host: Vercel, root directory `apps/web`
+- API host: Render web service from `render.yaml`
+
+The web build must set:
+
+```bash
+VITE_API_URL=https://drama-api.novelkit.cc
+```
+
+The API service must set `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `HOST=0.0.0.0`, and `CORS_ORIGINS=https://drama.novelkit.cc`.
 
 ## Requirements
 
 - Node.js 20.10 or newer
-- An OpenAI-compatible local router at `OPENAI_BASE_URL` (default `http://localhost:20128/v1`)
+- An OpenAI-compatible router at `OPENAI_BASE_URL`
 
 ## Setup
 
-```powershell
+```bash
 npm --prefix apps/api install
 npm --prefix apps/web install
-Copy-Item .env.example .env
+cp .env.example .env
 ```
 
-Edit `.env` if your router URL, API key, or model preset is different.
+Edit `.env` for your router URL, API key, model preset, and allowed CORS origins.
 
 ## Run Locally
 
 Terminal 1:
 
-```powershell
+```bash
 npm run dev:api
 ```
 
 Terminal 2:
 
-```powershell
+```bash
 npm run dev:web
 ```
 
@@ -42,8 +55,6 @@ Open the Vite URL, usually `http://localhost:5174`.
 
 ## Build
 
-```powershell
+```bash
 npm run build
 ```
-
-The build compiles the local API and the web client only.

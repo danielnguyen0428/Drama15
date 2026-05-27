@@ -9,7 +9,7 @@ const tester = net.createServer();
 tester.once('error', (error) => {
   if (error.code === 'EADDRINUSE') {
     console.error(`\n[check-port] ${HOST}:${PORT} is already in use.`);
-    console.error('[check-port] Stop the other local API process first.\n');
+    console.error('[check-port] Stop the other API process first.\n');
     process.exit(1);
   }
 

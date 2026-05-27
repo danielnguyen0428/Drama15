@@ -156,7 +156,7 @@ export function StoryWorkspace(): JSX.Element {
     source.onmessage = (event) => handleStreamEvent(JSON.parse(event.data) as StreamEvent);
     source.onerror = () => {
       source.close();
-      setError('The local API stream disconnected. Check the API terminal.');
+      setError('The API stream disconnected. Check backend health and try again.');
       setPhase('failed');
     };
   }
@@ -239,9 +239,9 @@ export function StoryWorkspace(): JSX.Element {
     <main className="workspace-shell">
       <header className="workspace-header">
         <div>
-          <p className="eyebrow">Drama15 Local Studio</p>
-          <h1>Core sang tac API/Web local</h1>
-          <p>Local API, local web UI, no login, no deploy surface.</p>
+          <p className="eyebrow">Drama15 Lite Studio</p>
+          <h1>AI sang tac drama ngan</h1>
+          <p>Generate concepts, characters, beat sheets, chapters, and rewrites from one focused writing workspace.</p>
         </div>
         <aside className="status-card">
           <span>{phase}</span>
@@ -255,7 +255,7 @@ export function StoryWorkspace(): JSX.Element {
 
       <section className="workspace-grid">
         <aside className="setup-panel">
-          <PanelHeading label="Setup" value="Local" />
+          <PanelHeading label="Setup" value="Studio" />
           <label>Niche<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Custom branch<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: me don than bi coi thuong" /></label>}
           <label>Title hint<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Optional" /></label>

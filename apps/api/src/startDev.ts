@@ -450,7 +450,7 @@ function sendError(reply: FastifyReply, error: unknown) {
 
 async function start() {
   await app.listen({ port: env.port, host: env.host });
-  app.log.info(`Drama15 local API listening on http://${env.host}:${env.port}`);
+  app.log.info(`Drama15 API listening on http://${env.host}:${env.port}`);
 }
 
 process.on('SIGINT', () => {
