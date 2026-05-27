@@ -16,7 +16,7 @@
 - Create `tests/tts/omnivoice-tts-config-store.test.ts`: config defaults, path normalization, API base trimming, speed/pitch bounds.
 - Create `src/modules/tts/omnivoice-api-client.ts`: typed wrapper for OmniVoice `/api/health`, `/api/voices`, `/api/tts-long-jobs`, polling, and WAV download.
 - Create `tests/tts/omnivoice-api-client.test.ts`: fake `fetch` coverage for paths, payloads, owner token header, and error handling.
-- Create `src/modules/tts/story-tts-service.ts`: 15-chapter validation, output path creation, sequential chapter job generation, polling, WAV writes, and progress callbacks.
+- Create `src/modules/tts/story-tts-service.ts`: 10-chapter validation, output path creation, sequential chapter job generation, polling, WAV writes, and progress callbacks.
 - Create `tests/tts/story-tts-service.test.ts`: service-level tests with a fake client and temporary output directory.
 - Modify `src/modules/session/story-history-store.ts`: add voice export metadata.
 - Modify `tests/session/story-history-store.test.ts`: assert voice exports persist and legacy entries still load.
@@ -640,7 +640,7 @@ function makeStory(chapterCount = 15): StoryPayload {
         endingMode: "respect",
         intensity: 0.84,
       },
-      chapterCount: 15,
+      chapterCount: 10,
       draftControls: { dialogueRatio: 0.55, hookDensity: "high" },
     },
     concept: {
@@ -661,7 +661,7 @@ function makeStory(chapterCount = 15): StoryPayload {
       revengeEngine: "revenge",
       endingMode: "respect",
     },
-    chapterPlan: Array.from({ length: 15 }, (_, index) => ({
+    chapterPlan: Array.from({ length: 10 }, (_, index) => ({
       chapterNumber: index + 1,
       title: `Plan ${index + 1}`,
       hook: "Hook",
@@ -739,7 +739,7 @@ test("StoryTtsService generates one WAV file for each drafted chapter", async ()
   assert.deepEqual(progress.filter((item) => item.endsWith(":completed")).length, 15);
 });
 
-test("StoryTtsService rejects stories that do not have all 15 chapter drafts", async () => {
+test("StoryTtsService rejects stories that do not have all 10 chapter drafts", async () => {
   const service = new StoryTtsService({
     client: {} as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">,
     pollIntervalMs: 1,
@@ -753,7 +753,7 @@ test("StoryTtsService rejects stories that do not have all 15 chapter drafts", a
       pitch: 0,
       outputRoot: "D:/unused",
     }),
-    /Cần đủ 15 chương đã draft trước khi gen voice/,
+    /Cần đủ 10 chương đã draft trước khi gen voice/,
   );
 });
 
@@ -860,7 +860,7 @@ export class StoryTtsService {
         totalChapters: chapters.length,
         status: "queued",
         progress: 0,
-        message: `Đang tạo job voice chương ${chapter.chapterNumber}/15`,
+        message: `Đang tạo job voice chương ${chapter.chapterNumber}/10`,
       });
 
       const job = await this.client.createLongTtsJob({
@@ -880,7 +880,7 @@ export class StoryTtsService {
         totalChapters: chapters.length,
         status: "completed",
         progress: 100,
-        message: `Đã lưu voice chương ${chapter.chapterNumber}/15`,
+        message: `Đã lưu voice chương ${chapter.chapterNumber}/10`,
         filePath,
       });
     }
@@ -906,7 +906,7 @@ export class StoryTtsService {
         totalChapters,
         status: job.state,
         progress: job.progress,
-        message: job.message || `Đang gen voice chương ${chapterNumber}/15`,
+        message: job.message || `Đang gen voice chương ${chapterNumber}/10`,
       });
       await delay(this.pollIntervalMs);
       job = await this.client.getLongTtsJob(job.jobId);
@@ -921,9 +921,9 @@ export class StoryTtsService {
 function getCompleteChapters(storyPayload: StoryPayload) {
   const chapters = [...(storyPayload.chapters || [])].sort((a, b) => a.chapterNumber - b.chapterNumber);
   const chapterNumbers = new Set(chapters.map((chapter) => chapter.chapterNumber));
-  const hasAllChapters = chapters.length >= 15 && Array.from({ length: 15 }, (_, index) => index + 1).every((number) => chapterNumbers.has(number));
+  const hasAllChapters = chapters.length >= 10 && Array.from({ length: 10 }, (_, index) => index + 1).every((number) => chapterNumbers.has(number));
   if (!hasAllChapters) {
-    throw new Error("Cần đủ 15 chương đã draft trước khi gen voice.");
+    throw new Error("Cần đủ 10 chương đã draft trước khi gen voice.");
   }
   return chapters.slice(0, 15);
 }
@@ -1336,7 +1336,7 @@ test("desktop renders OmniVoice story TTS voice panel", () => {
   assert.match(indexHtml, /id="tts-api-base"/);
   assert.match(indexHtml, /id="voice-id-select"/);
   assert.match(indexHtml, /id="generate-story-voice-button"/);
-  assert.match(indexHtml, /Gen Voice 15/);
+  assert.match(indexHtml, /Gen Voice 10/);
 
   assert.match(rendererJs, /ttsConfig/);
   assert.match(rendererJs, /loadOmniVoiceVoices/);
@@ -1390,7 +1390,7 @@ In `desktop/renderer/index.html`, insert this panel after `Xuất File` and befo
       <input id="tts-pitch" type="number" min="-20" max="20" step="1" value="0" />
     </label>
   </div>
-  <button class="primary-button wide" id="generate-story-voice-button" type="button">Gen Voice 15 Chương</button>
+  <button class="primary-button wide" id="generate-story-voice-button" type="button">Gen Voice 10 Chương</button>
   <div class="voice-progress" id="voice-progress"></div>
 </section>
 ```
@@ -1508,7 +1508,7 @@ function renderTtsVoices() {
 
 async function generateStoryVoice() {
   if (!hasDraftedChapters() || !state.currentStory?.chapters || state.currentStory.chapters.length < 15) {
-    writeStatus("Cần đủ 15 chương đã draft trước khi gen voice.", true);
+    writeStatus("Cần đủ 10 chương đã draft trước khi gen voice.", true);
     return;
   }
   if (!elements.voiceIdSelect.value) {
@@ -1549,7 +1549,7 @@ function renderTtsProgress() {
     return;
   }
   const event = state.ttsProgress;
-  elements.voiceProgress.textContent = `Chương ${event.chapterNumber}/15 · ${event.progress}% · ${normalizeDisplayText(event.message)}`;
+  elements.voiceProgress.textContent = `Chương ${event.chapterNumber}/10 · ${event.progress}% · ${normalizeDisplayText(event.message)}`;
 }
 ```
 
@@ -1663,7 +1663,7 @@ Change the root package entry in `package-lock.json` from `2.0.2` to `2.0.3`.
 Add this short section under `Tính năng chính`:
 
 ```md
-- Gen voice sau khi hoàn thành đủ 15 chương bằng OmniVoice local API server.
+- Gen voice sau khi hoàn thành đủ 10 chương bằng OmniVoice local API server.
 - Chọn một Voice ID đã lưu trong OmniVoice và xuất WAV riêng cho từng chương.
 ```
 
@@ -1672,13 +1672,13 @@ Add this section near operation notes:
 ````md
 ## OmniVoice TTS
 
-Trước khi bấm `Gen Voice 15 Chương`, hãy chạy OmniVoice local API server, ví dụ:
+Trước khi bấm `Gen Voice 10 Chương`, hãy chạy OmniVoice local API server, ví dụ:
 
 ```powershell
 omnivoice-demo --ip 127.0.0.1 --port 8001
 ```
 
-Trong Drama15 Lite Studio, giữ API mặc định `http://127.0.0.1:8001`, tải danh sách Voice ID, chọn một voice, rồi gen voice sau khi truyện đã đủ 15 chương.
+Trong Drama15 Lite Studio, giữ API mặc định `http://127.0.0.1:8001`, tải danh sách Voice ID, chọn một voice, rồi gen voice sau khi truyện đã đủ 10 chương.
 ````
 
 - [ ] **Step 3: Run targeted tests**

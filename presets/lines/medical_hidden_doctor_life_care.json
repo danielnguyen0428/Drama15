@@ -1,0 +1,122 @@
+{
+  "id": "medical_hidden_doctor_life_care",
+  "displayName": "Niche 9: Y tế / Bác sĩ ẩn danh / Sinh tử và chăm sóc",
+  "description": "Romance and thriller medical drama centered on hospital and clinic care: hidden surgeon authority, malpractice cover-up, VIP patient politics, consent and chart fraud, triage decisions, organ transplant ethics, ICU drama, ER night shift pressure, OR error reveal, hospice and end-of-life care, military combat medic, traditional medicine versus modern medicine, and ethics-board hospital justice. The engine is medical risk + chart-backed truth, not generic urban revenge (-> Niche 2) and not corporate paperwork (-> Niche 8).",
+  "emotionalAxis": "life-care stakes, medical thriller pressure, hidden doctor authority, consent and chart truth, romance-adjacent care bond after the rescue, patient dignity, ethics-board reveal beyond personal apology",
+  "coreKeywords": [
+    "medical romance",
+    "medical thriller",
+    "hidden surgeon",
+    "incognito doctor",
+    "off-duty doctor saves patient",
+    "malpractice cover-up",
+    "doctor identity reveal",
+    "nurse falsely blamed",
+    "consent form forged",
+    "chart audit reveal",
+    "hospital drama",
+    "ICU pressure",
+    "ER night shift",
+    "OR error",
+    "VIP patient politics",
+    "triage ethics",
+    "organ transplant ethics",
+    "donor list fraud",
+    "drug recall whistleblower",
+    "pharma kickback exposed",
+    "epidemic frontline",
+    "field medic in disaster",
+    "combat medic returns",
+    "hospice end of life dignity",
+    "rural clinic resource scarcity",
+    "second opinion saves a life",
+    "traditional vs modern medicine",
+    "patient safety reform"
+  ],
+  "seriesExamples": [
+    "Hidden Surgeon Saved The Patient They Refused To Treat",
+    "Hidden Surgeon Exposed The VIP Cover Up",
+    "Medical Romance Began After The Chart Audit",
+    "Malpractice Trial Needed The Nurse Who Refused To Sign",
+    "The Chart Exposed The Family",
+    "Off-Duty Surgeon Saved The Bride At The Wedding",
+    "Donor List Was A Lie, The Transplant Reveal Cost The Director",
+    "Pharma Kickback Killed The Trial, The Resident Killed The Cover Up",
+    "Hospice Nurse Held The Family To The Last Honest Conversation",
+    "Combat Medic Came Home And Reformed The ER",
+    "Rural Clinic Doctor Out-Diagnosed The City Hospital",
+    "Whistleblower Resident Saved The Recall"
+  ],
+  "tropeWeights": {
+    "medical_justice": 1,
+    "hidden_doctor_authority": 0.95,
+    "patient_dignity": 0.92,
+    "care_labor": 0.92,
+    "evidence_reveal": 0.9,
+    "medical_thriller": 0.92,
+    "malpractice_coverup": 0.92,
+    "consent_form_fraud": 0.9,
+    "chart_audit_reveal": 0.9,
+    "VIP_patient_politics": 0.86,
+    "triage_ethics": 0.88,
+    "transplant_donor_ethics": 0.86,
+    "pharma_kickback_whistleblow": 0.86,
+    "epidemic_or_disaster_frontline": 0.84,
+    "combat_medic_arc": 0.82,
+    "hospice_end_of_life": 0.82,
+    "rural_clinic_resource_scarcity": 0.82,
+    "second_opinion_saves_life": 0.86,
+    "ethics_board_payoff": 0.92,
+    "female_agency": 0.92
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "urgent care denial, medical blame, or ethics breach with concrete human stakes (a patient on the table, a family in the hallway)",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "triage desk shame: she is dismissed as a complainer, addict, or 'low-priority'",
+    "rich or VIP family overrides care workers and rewrites the chart pressure",
+    "malpractice cover-up or consent manipulation blames the wrong nurse / resident",
+    "a poor patient or migrant worker is treated as expendable on rounds",
+    "chart details slowly expose the abuse but are dismissed as a junior's mistake",
+    "the residency hierarchy silences the only person who saw the error",
+    "donor list, drug trial, or recall data is altered to protect a kickback partner",
+    "the hidden doctor is told to stay quiet because she is 'just' a nurse / resident / volunteer",
+    "the patient is asked to apologize for asking for a second opinion"
+  ],
+  "revengeActivation": [
+    "consent records and chart audit reveal the truth in the ethics review",
+    "hidden doctor authority lands after the harm is visible and documented",
+    "malpractice evidence reaches the licensing board, not just an internal apology",
+    "patient safety rule changes are written into hospital policy",
+    "the donor list / trial data / recall record is corrected on the public registry",
+    "the heroine protects care before status, refusing the easy 'forget it' settlement",
+    "the wrongly blamed nurse / resident is publicly recredited on rounds",
+    "the second opinion saves the patient and rewrites the chain of command",
+    "the whistleblower is protected on paper before any romance subplot resolves"
+  ],
+  "dignityRecoveryTiming": "late ethics review, medical-board reveal, or patient-rights public correction with chart evidence — never a private hush from the VIP family",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "hospital, clinic, ICU, ER, OR, hospice, rural clinic, disaster zone, combat field as venues",
+      "consent form, chart audit, donor list, trial data, recall registry as evidence",
+      "hidden doctor authority and second-opinion rescue arcs",
+      "ethics board, medical-licensing board, patient safety reform as resolution venue",
+      "romance arrives after the medical truth is documented, not before"
+    ],
+    "doesNotBelongHere": [
+      "office contract / paper marriage / hostile takeover (-> Niche 8)",
+      "rich-poor courtship without a hospital-care engine (-> Niche 1)",
+      "general urban humiliation without a medical wound (-> Niche 2)",
+      "campus or scholarship stigma (-> Niche 10)",
+      "wedding day cheating drama (-> Niche 5)"
+    ]
+  }
+}

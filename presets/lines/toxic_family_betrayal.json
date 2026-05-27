@@ -1,0 +1,114 @@
+{
+  "id": "toxic_family_betrayal",
+  "displayName": "Niche 4: Gia đình độc hại / Phản bội gia đình",
+  "description": "Family thriller drama about toxic relatives, golden-child favoritism, mother-in-law control, sibling betrayal, inheritance theft, deed and will fraud, custody papers, adoption secrets, hidden trust funds, exile from the family home, and comeback boundaries enforced through paperwork. The engine is family blood politics and document fraud, not romance and not workplace power.",
+  "emotionalAxis": "family betrayal wound, golden-child favoritism, mother-in-law / stepmother control, paperwork pressure, inheritance and custody leverage, exile and chosen family, comeback through documented boundary",
+  "coreKeywords": [
+    "toxic family drama",
+    "family thriller",
+    "family betrayal",
+    "mother in law cruelty",
+    "stepmother",
+    "golden child favoritism",
+    "scapegoat daughter",
+    "inheritance fraud",
+    "stolen inheritance",
+    "custody papers",
+    "adoption secret",
+    "deed theft",
+    "fake will",
+    "trust fund hidden",
+    "kicked me out of the house",
+    "erased from the family album",
+    "sibling betrayal",
+    "DNA test",
+    "guardianship dispute",
+    "elder care abuse",
+    "estate executor fraud",
+    "power of attorney abuse",
+    "she chose her chosen family",
+    "no contact boundary"
+  ],
+  "seriesExamples": [
+    "My Family Kicked Me Out At Eighteen",
+    "Mother-In-Law Hid The Custody Papers",
+    "Stepmother Stole My Inheritance",
+    "Family Thriller Exposed The Adoption Fraud",
+    "The Deed Returned Her Name",
+    "The Golden Child Forged The Will",
+    "DNA Test Returned The Real Daughter",
+    "Power Of Attorney Was A Lie",
+    "She Cut Off The Family That Erased Her",
+    "The Trust Fund Skipped Them On Purpose",
+    "Family Lawyer Read The Real Will",
+    "Sibling Betrayal Exposed By The Bank Statement"
+  ],
+  "tropeWeights": {
+    "toxic_family": 1,
+    "golden_child_favoritism": 0.95,
+    "scapegoat_daughter_arc": 0.95,
+    "family_betrayal": 1,
+    "inheritance_fraud": 0.95,
+    "custody_leverage": 0.9,
+    "deed_or_will_fraud": 0.92,
+    "adoption_or_DNA_secret": 0.86,
+    "mother_in_law_control": 0.92,
+    "stepmother_cruelty": 0.86,
+    "trust_fund_skip": 0.84,
+    "power_of_attorney_abuse": 0.84,
+    "estate_executor_fraud": 0.84,
+    "comeback_through_paperwork": 0.92,
+    "chosen_family_payoff": 0.9,
+    "no_contact_boundary": 0.88,
+    "female_agency": 0.92,
+    "justice_payoff": 0.88
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "the family closes ranks against the heroine and uses paperwork (eviction, custody, will, deed) to erase her",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 9,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "she is kicked out, disinherited, or erased from the family record",
+    "the family chooses the golden child publicly, in front of relatives or staff",
+    "the inheritance, custody, deed, will, or trust is weaponized against her",
+    "an outsider witnesses the family lie and is silenced by family pressure",
+    "the matriarch / stepmother makes her ask permission for what is already hers",
+    "she is told the family name is too good for her",
+    "her own work or earnings are credited to the golden child",
+    "the family asks for help while still calling her the disappointment"
+  ],
+  "revengeActivation": [
+    "the real will, deed, or trust deed is read in front of the family",
+    "custody, guardianship, or power-of-attorney fraud is documented and reversed",
+    "DNA or adoption records reset who legally belongs to which side",
+    "she builds an independent life and the family realizes they need her, not the other way around",
+    "a clean no-contact boundary holds even when the family begs",
+    "the chosen family (friends, mentor, lawyer, adoptive sibling) shows up where blood failed",
+    "the bank statement, signature trail, or escrow record exposes the sibling betrayal",
+    "she funds the next generation directly so the toxic branch cannot intercept the help"
+  ],
+  "dignityRecoveryTiming": "late, after the family is forced to admit dependence on the daughter they erased, and after the legal record is corrected on paper",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "blood family politics with golden-child favoritism and scapegoat daughter arc",
+      "inheritance / will / deed / trust fund / power-of-attorney fraud",
+      "custody, guardianship, adoption, DNA, and elder care paperwork",
+      "no-contact boundary and chosen-family payoff",
+      "mother-in-law / stepmother control as central pressure"
+    ],
+    "doesNotBelongHere": [
+      "single-mom workplace and daycare drama (-> Niche 6)",
+      "office contract / paper marriage / hostile takeover (-> Niche 8)",
+      "wedding / cheating / mistress drama (-> Niche 5)",
+      "rich-poor courtship love story (-> Niche 1)",
+      "campus bullying or scholarship stigma (-> Niche 10)"
+    ]
+  }
+}

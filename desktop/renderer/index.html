@@ -18,6 +18,10 @@
           <div class="status-row">
             <div class="status-pill" id="status-pill">Đang khởi động studio...</div>
             <button class="icon-button" id="router-settings-button" type="button" aria-label="Cấu hình 9router" title="Cấu hình 9router">9R</button>
+            <select id="model-preset-select" class="model-select" title="Chọn model">
+              <option value="cx/gpt-5.5">GPT-5.5</option>
+              <option value="kr/claude-sonnet-4.6">Claude Sonnet 4.6</option>
+            </select>
           </div>
           <div class="router-config-hint" id="router-config-hint">9router chưa cấu hình</div>
         </div>
@@ -98,7 +102,7 @@
               class="primary-button accent"
               id="generate-full-button"
               type="button"
-              title="Dựng outline rồi viết đủ 15 chương; tự kiểm tra và sửa chất lượng từng chương."
+              title="Dựng outline rồi viết đủ 10 chương; tự kiểm tra và sửa chất lượng từng chương."
             >
               Tạo Toàn Bộ Truyện
             </button>
@@ -114,6 +118,12 @@
             <h2>Automation</h2>
           </div>
           <label class="field">
+            <span>Niche Automation</span>
+            <select id="automation-niche-select">
+              <option value="__random__">Ng?u nhi�n (1 trong 10 niche)</option>
+            </select>
+          </label>
+          <label class="field">
             <span>Số Bộ Tự Tạo</span>
             <input id="automation-story-count" type="number" min="1" max="50" step="1" value="10" />
           </label>
@@ -127,7 +137,7 @@
           </div>
           <button class="primary-button wide" id="automation-button" type="button">Automation</button>
           <div class="action-help">
-            <span>Tự chọn ngẫu nhiên 1 trong 10 niche, tự tạo thiết lập và viết full truyện theo số lượng đã đặt.</span>
+            <span>Chọn niche hoặc để ngẫu nhiên, tự tạo thiết lập và viết full truyện theo số lượng đã đặt.</span>
           </div>
         </section>
       </aside>
@@ -223,6 +233,7 @@
           <div class="panel-head">
             <h2>Xuất File</h2>
           </div>
+          <button class="ghost-button wide" id="open-story-poster-button" type="button">Mở Poster</button>
           <button class="ghost-button wide" id="save-chapters-markdown-button" type="button">Lưu Từng Chương .md</button>
           <button class="ghost-button wide" id="save-story-pdf-button" type="button">Xuất PDF Cả Truyện</button>
         </section>
@@ -254,8 +265,16 @@
               <input id="tts-pitch" type="number" min="-20" max="20" step="1" value="0" />
             </label>
           </div>
-          <button class="primary-button wide" id="generate-story-voice-button" type="button">Gen Voice 15 Chương</button>
+          <button class="primary-button wide" id="generate-story-voice-button" type="button">Gen Voice 10 Chương</button>
+          <div class="voice-control-grid">
+            <button class="ghost-button" id="pause-story-voice-button" type="button">Pause</button>
+            <button class="ghost-button" id="stop-story-voice-button" type="button">Stop</button>
+            <button class="ghost-button" id="resume-story-voice-button" type="button">Resume</button>
+            <button class="ghost-button" id="retry-story-voice-button" type="button">Retry</button>
+          </div>
           <div class="voice-progress" id="voice-progress"></div>
+          <button class="ghost-button wide" id="render-all-button" type="button">Render All (FFmpeg)</button>
+          <div class="voice-progress" id="render-all-status"></div>
         </section>
 
         <section class="panel">

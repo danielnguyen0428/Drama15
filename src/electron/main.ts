@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { createAutomationPdfFilePath } from "./automation-pdf-export";
 import { renderHtmlToPdfBuffer } from "./pdf-renderer";
 import { configureDesktopRuntimeRoots } from "./runtime-roots";
@@ -29,6 +30,7 @@ if (!process.env.DRAMA15_ASSET_ROOT) {
 }
 
 const { createAppServices } = require("../modules/runtime/create-app-services") as typeof import("../modules/runtime/create-app-services");
+const { getLocalStoryControls } = require("../modules/presets/story-controls") as typeof import("../modules/presets/story-controls");
 const { normalizeFullGenerateRequest, normalizeOutlineRequest } = require("../modules/validators/story-validator") as typeof import("../modules/validators/story-validator");
 const { GenerateChapterRequestSchema, ExportMarkdownRequestSchema, RegenerateChapterRequestSchema } = require("../schemas/story") as typeof import("../schemas/story");
 const { getAssetRoot, getConfigRoot } = require("../lib/runtime") as typeof import("../lib/runtime");
@@ -37,6 +39,27 @@ let mainWindow: import("electron").BrowserWindow | null = null;
 const services = createAppServices();
 const STORY_PROGRESS_CHANNEL = "story:progress";
 const TTS_PROGRESS_CHANNEL = "tts:progress";
+type TtsSessionStatus = "idle" | "running" | "pause-requested" | "paused" | "stop-requested" | "stopped" | "completed" | "failed";
+type TtsRunMode = "full" | "resume" | "retry";
+type TtsSessionState = {
+  status: TtsSessionStatus;
+  mode: TtsRunMode;
+  currentChapter: number;
+  totalChapters: number;
+  message: string;
+  directoryPath?: string;
+  filePaths: string[];
+  error?: string;
+};
+const ttsSession: TtsSessionState = {
+  status: "idle",
+  mode: "full",
+  currentChapter: 0,
+  totalChapters: 10,
+  message: "Chưa chạy voice.",
+  filePaths: [],
+};
+let ttsSessionWaiter: (() => void) | null = null;
 const PRESET_ORDERS: Record<"lines" | "styles", string[]> = {
   lines: [
     "billionaire_rich_poor_romance",
@@ -46,6 +69,11 @@ const PRESET_ORDERS: Record<"lines" | "styles", string[]> = {
     "cheating_ex_wedding_drama",
     "single_mom_poor_woman_comeback",
     "social_injustice_discrimination_drama",
+    "workplace_ceo_power_struggle",
+    "medical_hidden_doctor_life_care",
+    "school_campus_bullying_identity",
+    "werewolf_luna_alpha_soulmate",
+    "steamy_alien_captive_romance",
   ],
   styles: [
     "wharton_class_shame_elegance",
@@ -100,6 +128,7 @@ app.on("window-all-closed", () => {
 });
 
 ipcMain.handle("desktop:init", async () => {
+  const currentModelPreset = services.storyOrchestrator.getActiveModelAlias() || "cx/gpt-5.5";
   const [linePresets, stylePresets, sampleOutlineRequest, routerSettings, savedSession, storyHistory, automationConfig] = await Promise.all([
     listPresetIds("lines"),
     listPresetIds("styles"),
@@ -111,6 +140,7 @@ ipcMain.handle("desktop:init", async () => {
   ]);
 
   return {
+    modelPreset: currentModelPreset,
     linePresets,
     stylePresets,
     sampleOutlineRequest,
@@ -119,7 +149,18 @@ ipcMain.handle("desktop:init", async () => {
     savedSession,
     storyHistory,
     automationConfig,
+    storyControls: getLocalStoryControls(),
+    prosePolishConfig: services.prosePolishConfig,
   };
+});
+
+ipcMain.handle("model:set-preset", async (_event, payload: { modelPreset?: string }) => {
+  const modelPreset = String(payload?.modelPreset || "").trim();
+  if (!modelPreset) {
+    return { error: "Model preset is required." };
+  }
+  services.storyOrchestrator.setModelAliasOverride(modelPreset);
+  return { ok: true, modelPreset };
 });
 
 ipcMain.handle("session:save", async (_event, payload) => {
@@ -234,7 +275,8 @@ ipcMain.handle("story:generate-outline", async (_event, payload) => {
 
 ipcMain.handle("story:generate-setting-seed", async (_event, payload) => {
   const request = normalizeOutlineRequest(payload);
-  const data = await services.storyOrchestrator.generateSettingSeed(request);
+  const recentStoryTitles = (await services.storyHistoryStore.list()).map((e) => e.title).filter(Boolean);
+  const data = await services.storyOrchestrator.generateSettingSeed(request, { recentStoryTitles });
 
   return {
     ok: true,
@@ -308,7 +350,7 @@ ipcMain.handle("story:save-markdown", async (_event, payload: { title?: string; 
   const defaultFileName = sanitizeFileName(payload.title?.trim() || "drama15-story") + ".md";
   const result = await dialog.showSaveDialog({
     title: "Lưu file Markdown",
-    defaultPath: path.join(getConfigRoot(), "outputs", defaultFileName),
+    defaultPath: path.join(getConfigRoot(), "..", "outputs", defaultFileName),
     filters: [
       {
         name: "Tệp Markdown",
@@ -338,7 +380,7 @@ ipcMain.handle("story:save-chapters-markdown", async (_event, payload: { storyPa
   const defaultDirectoryName = `${sanitizeFileName(payload.storyPayload?.title?.trim() || "drama15-story")}-chapters`;
   const result = await dialog.showOpenDialog({
     title: "Chọn thư mục lưu từng chương Markdown",
-    defaultPath: path.join(getConfigRoot(), "outputs", defaultDirectoryName),
+    defaultPath: path.join(getConfigRoot(), "..", "outputs", defaultDirectoryName),
     properties: ["openDirectory", "createDirectory"],
   });
 
@@ -369,7 +411,7 @@ ipcMain.handle("story:save-story-pdf", async (_event, payload: { storyPayload: {
   const defaultFileName = sanitizeFileName(payload.storyPayload?.title?.trim() || "drama15-story") + ".pdf";
   const result = await dialog.showSaveDialog({
     title: "Xuất PDF cả truyện",
-    defaultPath: path.join(getConfigRoot(), "outputs", defaultFileName),
+    defaultPath: path.join(getConfigRoot(), "..", "outputs", defaultFileName),
     filters: [
       {
         name: "Tệp PDF",
@@ -510,13 +552,69 @@ ipcMain.handle("tts:list-voices", async () => {
   };
 });
 
+ipcMain.handle("tts:get-session", async () => ({
+  ok: true,
+  data: getTtsSessionSnapshot(),
+}));
+
+ipcMain.handle("tts:control", async (_event, payload: { action?: string }) => {
+  const action = String(payload?.action || "").trim();
+  if (action === "pause") {
+    if (ttsSession.status === "running") {
+      ttsSession.status = "pause-requested";
+      ttsSession.message = "Sẽ tạm dừng sau chương voice hiện tại.";
+    }
+    return {
+      ok: true,
+      data: getTtsSessionSnapshot(),
+    };
+  }
+
+  if (action === "stop") {
+    if (isActiveTtsSession()) {
+      ttsSession.status = "stop-requested";
+      ttsSession.message = "Sẽ dừng sau chương voice hiện tại và giữ file đã tạo.";
+      wakeTtsSession();
+    }
+    return {
+      ok: true,
+      data: getTtsSessionSnapshot(),
+    };
+  }
+
+  if (action === "resume") {
+    if (ttsSession.status === "paused" || ttsSession.status === "pause-requested") {
+      ttsSession.status = "running";
+      ttsSession.message = "Đang chạy tiếp voice.";
+      wakeTtsSession();
+    }
+    return {
+      ok: true,
+      data: getTtsSessionSnapshot(),
+    };
+  }
+
+  return {
+    ok: false,
+    error: "Unknown TTS control action.",
+    data: getTtsSessionSnapshot(),
+  };
+});
+
 ipcMain.handle(
   "tts:generate-story",
-  async (_event, payload: { storyPayload?: StoryPayload; voiceId?: string; speed?: number; pitch?: number }) => {
+  async (_event, payload: { storyPayload?: StoryPayload; voiceId?: string; speed?: number; pitch?: number; mode?: string; chapterNumber?: number }) => {
     if (!payload?.storyPayload) {
       return {
         ok: false,
         error: "Story payload is required.",
+      };
+    }
+    if (isActiveTtsSession()) {
+      return {
+        ok: false,
+        error: "Voice generation is already running.",
+        data: getTtsSessionSnapshot(),
       };
     }
 
@@ -527,22 +625,56 @@ ipcMain.handle(
       speed: payload.speed ?? currentConfig.speed,
       pitch: payload.pitch ?? currentConfig.pitch,
     });
+    const mode = normalizeTtsRunMode(payload.mode);
+    resetTtsSession(mode, payload.chapterNumber);
     const service = services.storyTtsServiceFactory(config.apiBase);
-    const result = await service.generateStoryVoice({
-      storyPayload: payload.storyPayload,
-      voiceId: config.selectedVoiceId,
-      speed: config.speed,
-      pitch: config.pitch,
-      outputRoot: config.outputRoot,
-      onProgress: createTtsProgressForwarder(_event.sender),
-    });
-    const historyEntry = await services.storyHistoryStore.recordVoiceExport(payload.storyPayload, result);
-    return {
-      ok: true,
-      data: result,
-      storyHistory: await services.storyHistoryStore.list(),
-      historyEntry,
-    };
+    const progressForwarder = createTtsProgressForwarder(_event.sender);
+    try {
+      const result = await service.generateStoryVoice({
+        storyPayload: payload.storyPayload,
+        voiceId: config.selectedVoiceId,
+        speed: config.speed,
+        pitch: config.pitch,
+        outputRoot: config.outputRoot,
+        mode,
+        chapterNumber: Number(payload.chapterNumber || ttsSession.currentChapter || 1),
+        control: createTtsSessionControl(_event.sender),
+        onProgress: (progress) => {
+          updateTtsSessionFromProgress(progress);
+          progressForwarder(progress);
+        },
+      });
+      ttsSession.status = result.status === "stopped" ? "stopped" : "completed";
+      ttsSession.directoryPath = result.directoryPath;
+      ttsSession.filePaths = result.filePaths;
+      ttsSession.message = result.status === "stopped"
+        ? "Đã dừng gen voice. File đã tạo được giữ lại."
+        : "Hoàn tất gen voice.";
+
+      const shouldRecordHistory = result.status === "completed" && result.filePaths.length >= 10;
+      const historyEntry = shouldRecordHistory
+        ? await services.storyHistoryStore.recordVoiceExport(payload.storyPayload, result)
+        : undefined;
+      return {
+        ok: true,
+        data: result,
+        session: getTtsSessionSnapshot(),
+        storyHistory: await services.storyHistoryStore.list(),
+        historyEntry,
+      };
+    } catch (error) {
+      ttsSession.status = "failed";
+      ttsSession.error = error instanceof Error ? error.message : String(error);
+      ttsSession.message = ttsSession.error;
+      progressForwarder({
+        chapterNumber: ttsSession.currentChapter || 1,
+        totalChapters: ttsSession.totalChapters,
+        status: "failed",
+        progress: 0,
+        message: ttsSession.error,
+      });
+      throw error;
+    }
   },
 );
 
@@ -559,6 +691,45 @@ ipcMain.handle("tts:open-output", async (_event, payload: { path?: string }) => 
   return {
     ok: !error,
     error: error || undefined,
+  };
+});
+
+ipcMain.handle("tools:launch-render-all", async () => {
+  const scriptPath = "D:\\CODEEEEE\\Auto tools\\ffmpeg_render_chapter_voice_join.py";
+
+  try {
+    await fs.access(scriptPath);
+  } catch {
+    return {
+      ok: false,
+      error: `Render All script not found: ${scriptPath}`,
+    };
+  }
+
+  const pythonCandidates = ["pythonw", "python", "py"];
+  let lastError = "";
+  for (const command of pythonCandidates) {
+    try {
+      const child = spawn(command, [scriptPath], {
+        cwd: path.dirname(scriptPath),
+        detached: true,
+        stdio: "ignore",
+        windowsHide: false,
+      });
+      child.unref();
+      return {
+        ok: true,
+        command,
+        scriptPath,
+      };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  return {
+    ok: false,
+    error: `Cannot launch Python for Render All. ${lastError}`,
   };
 });
 
@@ -609,6 +780,94 @@ async function renderHtmlToPdf(html: string) {
 function createProgressForwarder(target: import("electron").WebContents) {
   return (progress: StoryProgressEvent) => {
     target.send(STORY_PROGRESS_CHANNEL, progress);
+  };
+}
+
+function normalizeTtsRunMode(value: unknown): TtsRunMode {
+  return value === "resume" || value === "retry" ? value : "full";
+}
+
+function resetTtsSession(mode: TtsRunMode, chapterNumber?: number) {
+  ttsSession.status = "running";
+  ttsSession.mode = mode;
+  ttsSession.currentChapter = mode === "retry" ? Number(chapterNumber || 1) : 0;
+  ttsSession.totalChapters = 10;
+  ttsSession.message = mode === "resume"
+    ? "Đang chạy tiếp voice từ file còn thiếu."
+    : mode === "retry"
+      ? `Đang retry voice chương ${ttsSession.currentChapter}.`
+      : "Đang gen voice 10 chương.";
+  ttsSession.directoryPath = undefined;
+  ttsSession.filePaths = [];
+  ttsSession.error = undefined;
+}
+
+function updateTtsSessionFromProgress(progress: StoryTtsProgressEvent) {
+  ttsSession.currentChapter = progress.chapterNumber;
+  ttsSession.totalChapters = progress.totalChapters;
+  ttsSession.message = progress.message;
+  if (progress.filePath && !ttsSession.filePaths.includes(progress.filePath)) {
+    ttsSession.filePaths.push(progress.filePath);
+  }
+}
+
+function isActiveTtsSession() {
+  return ["running", "pause-requested", "paused", "stop-requested"].includes(ttsSession.status);
+}
+
+function wakeTtsSession() {
+  const waiter = ttsSessionWaiter;
+  ttsSessionWaiter = null;
+  waiter?.();
+}
+
+function waitForTtsSessionControl() {
+  return new Promise<void>((resolve) => {
+    ttsSessionWaiter = resolve;
+  });
+}
+
+function getTtsSessionSnapshot() {
+  return {
+    status: ttsSession.status,
+    mode: ttsSession.mode,
+    currentChapter: ttsSession.currentChapter,
+    totalChapters: ttsSession.totalChapters,
+    message: ttsSession.message,
+    directoryPath: ttsSession.directoryPath,
+    filePaths: [...ttsSession.filePaths],
+    error: ttsSession.error,
+  };
+}
+
+function createTtsSessionControl(target: import("electron").WebContents) {
+  return {
+    shouldStop: async () => ttsSession.status === "stop-requested" || ttsSession.status === "stopped",
+    beforeChapter: async (context: { chapterNumber: number; totalChapters: number; filePath: string }) => {
+      while (ttsSession.status === "pause-requested" || ttsSession.status === "paused") {
+        ttsSession.status = "paused";
+        ttsSession.currentChapter = context.chapterNumber;
+        ttsSession.totalChapters = context.totalChapters;
+        ttsSession.message = `Đã tạm dừng trước chương ${context.chapterNumber}/10.`;
+        target.send(TTS_PROGRESS_CHANNEL, {
+          chapterNumber: context.chapterNumber,
+          totalChapters: context.totalChapters,
+          status: "paused",
+          progress: 0,
+          message: ttsSession.message,
+          filePath: context.filePath,
+        } satisfies StoryTtsProgressEvent);
+        await waitForTtsSessionControl();
+      }
+
+      if (ttsSession.status === "stop-requested" || ttsSession.status === "stopped") {
+        ttsSession.status = "stopped";
+        return "stop";
+      }
+
+      ttsSession.status = "running";
+      return "continue";
+    },
   };
 }
 

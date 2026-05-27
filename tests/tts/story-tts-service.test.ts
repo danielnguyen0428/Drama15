@@ -23,7 +23,7 @@ function makeStory(chapterCount = 15): StoryPayload {
         endingMode: "respect",
         intensity: 0.84,
       },
-      chapterCount: 15,
+      chapterCount: 10,
       draftControls: { dialogueRatio: 0.55, hookDensity: "high" },
     },
     concept: {
@@ -44,7 +44,7 @@ function makeStory(chapterCount = 15): StoryPayload {
       revengeEngine: "revenge",
       endingMode: "respect",
     },
-    chapterPlan: Array.from({ length: 15 }, (_, index) => ({
+    chapterPlan: Array.from({ length: 10 }, (_, index) => ({
       chapterNumber: index + 1,
       title: `Plan ${index + 1}`,
       hook: "Hook",
@@ -114,15 +114,15 @@ test("StoryTtsService generates one WAV file for each drafted chapter", async ()
     onProgress: (event) => progress.push(`${event.chapterNumber}:${event.status}`),
   });
 
-  assert.equal(result.filePaths.length, 15);
-  assert.equal(createdTexts.length, 15);
+  assert.equal(result.filePaths.length, 10);
+  assert.equal(createdTexts.length, 10);
   assert.equal(createdTexts[0], "Chapter 1 text.");
   assert.equal(await fs.readFile(result.filePaths[0], "utf8"), "RIFF-test");
   assert.match(result.directoryPath, /voice-story-voice/);
-  assert.deepEqual(progress.filter((item) => item.endsWith(":completed")).length, 15);
+  assert.deepEqual(progress.filter((item) => item.endsWith(":completed")).length, 10);
 });
 
-test("StoryTtsService rejects stories that do not have all 15 chapter drafts", async () => {
+test("StoryTtsService rejects stories that do not have all 10 chapter drafts", async () => {
   const service = new StoryTtsService({
     client: {} as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">,
     pollIntervalMs: 1,
@@ -130,13 +130,13 @@ test("StoryTtsService rejects stories that do not have all 15 chapter drafts", a
 
   await assert.rejects(
     () => service.generateStoryVoice({
-      storyPayload: makeStory(14),
+      storyPayload: makeStory(9),
       voiceId: "main-voice",
       speed: 1,
       pitch: 0,
       outputRoot: "D:/unused",
     }),
-    /Cáº§n Ä‘á»§ 15 chÆ°Æ¡ng Ä‘Ã£ draft trÆ°á»›c khi gen voice/,
+    /Cần đủ 10 chương đã draft trước khi gen voice/,
   );
 });
 
@@ -159,4 +159,137 @@ test("StoryTtsService reports the failed chapter when OmniVoice job fails", asyn
     }),
     /Chapter 1 voice generation failed: boom/,
   );
+});
+
+test("StoryTtsService stops after the current chapter and keeps completed WAV files", async () => {
+  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-tts-"));
+  const createdTexts: string[] = [];
+  const client = {
+    createLongTtsJob: async (input) => {
+      createdTexts.push(input.text);
+      return makeJob(`job-${createdTexts.length}`, "completed");
+    },
+    getLongTtsJob: async (jobId) => makeJob(jobId, "completed"),
+    downloadLongTtsJob: async () => Buffer.from("RIFF-stop"),
+  } as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">;
+  const service = new StoryTtsService({ client, pollIntervalMs: 1 });
+
+  const result = await service.generateStoryVoice({
+    storyPayload: makeStory(),
+    voiceId: "main-voice",
+    speed: 1,
+    pitch: 0,
+    outputRoot,
+    control: {
+      beforeChapter: async ({ chapterNumber }) => chapterNumber > 1 ? "stop" : "continue",
+    },
+  });
+
+  assert.equal(result.status, "stopped");
+  assert.equal(createdTexts.length, 1);
+  assert.equal(createdTexts[0], "Chapter 1 text.");
+  assert.equal(result.filePaths.length, 1);
+  assert.equal(await fs.readFile(result.filePaths[0], "utf8"), "RIFF-stop");
+});
+
+test("StoryTtsService stops while an OmniVoice job is still running", async () => {
+  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-tts-"));
+  let polls = 0;
+  let stopRequested = false;
+  const client = {
+    createLongTtsJob: async () => makeJob("job-running", "running", 5),
+    getLongTtsJob: async () => {
+      polls += 1;
+      if (polls === 1) {
+        stopRequested = true;
+      }
+
+      return polls < 3 ? makeJob("job-running", "running", 20) : makeJob("job-running", "completed");
+    },
+    downloadLongTtsJob: async () => Buffer.from("RIFF-should-not-download"),
+  } as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">;
+  const progress: string[] = [];
+  const service = new StoryTtsService({ client, pollIntervalMs: 1 });
+
+  const result = await service.generateStoryVoice({
+    storyPayload: makeStory(),
+    voiceId: "main-voice",
+    speed: 1,
+    pitch: 0,
+    outputRoot,
+    control: {
+      shouldStop: async () => stopRequested,
+    },
+    onProgress: (event) => progress.push(`${event.chapterNumber}:${event.status}`),
+  });
+
+  assert.equal(result.status, "stopped");
+  assert.equal(result.filePaths.length, 0);
+  assert.ok(polls < 3);
+  assert.ok(progress.includes("1:stopped"));
+});
+
+test("StoryTtsService resumes by skipping existing chapter WAV files", async () => {
+  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-tts-"));
+  const existingDirectory = path.join(outputRoot, "voice-story-voice");
+  await fs.mkdir(existingDirectory, { recursive: true });
+  await fs.writeFile(path.join(existingDirectory, "chapter-01.wav"), "RIFF-existing", "utf8");
+  const createdTexts: string[] = [];
+  const client = {
+    createLongTtsJob: async (input) => {
+      createdTexts.push(input.text);
+      return makeJob(`job-${createdTexts.length}`, "completed");
+    },
+    getLongTtsJob: async (jobId) => makeJob(jobId, "completed"),
+    downloadLongTtsJob: async () => Buffer.from("RIFF-new"),
+  } as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">;
+  const service = new StoryTtsService({ client, pollIntervalMs: 1 });
+
+  const result = await service.generateStoryVoice({
+    storyPayload: makeStory(),
+    voiceId: "main-voice",
+    speed: 1,
+    pitch: 0,
+    outputRoot,
+    mode: "resume",
+  });
+
+  assert.equal(result.status, "completed");
+  assert.equal(result.filePaths.length, 10);
+  assert.equal(createdTexts.length, 9);
+  assert.equal(createdTexts[0], "Chapter 2 text.");
+  assert.equal(await fs.readFile(path.join(existingDirectory, "chapter-01.wav"), "utf8"), "RIFF-existing");
+});
+
+test("StoryTtsService retries one selected chapter and overwrites its WAV file", async () => {
+  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-tts-"));
+  const existingDirectory = path.join(outputRoot, "voice-story-voice");
+  await fs.mkdir(existingDirectory, { recursive: true });
+  const retryPath = path.join(existingDirectory, "chapter-08.wav");
+  await fs.writeFile(retryPath, "RIFF-old", "utf8");
+  const createdTexts: string[] = [];
+  const client = {
+    createLongTtsJob: async (input) => {
+      createdTexts.push(input.text);
+      return makeJob("job-retry", "completed");
+    },
+    getLongTtsJob: async (jobId) => makeJob(jobId, "completed"),
+    downloadLongTtsJob: async () => Buffer.from("RIFF-retry"),
+  } as Pick<OmniVoiceApiClient, "createLongTtsJob" | "getLongTtsJob" | "downloadLongTtsJob">;
+  const service = new StoryTtsService({ client, pollIntervalMs: 1 });
+
+  const result = await service.generateStoryVoice({
+    storyPayload: makeStory(),
+    voiceId: "main-voice",
+    speed: 1,
+    pitch: 0,
+    outputRoot,
+    mode: "retry",
+    chapterNumber: 8,
+  });
+
+  assert.equal(result.status, "completed");
+  assert.deepEqual(createdTexts, ["Chapter 8 text."]);
+  assert.deepEqual(result.filePaths, [retryPath]);
+  assert.equal(await fs.readFile(retryPath, "utf8"), "RIFF-retry");
 });

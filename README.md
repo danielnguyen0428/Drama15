@@ -1,6 +1,6 @@
 # Drama15 Lite Studio
 
-Drama15 Lite Studio là tool desktop dành cho người làm truyện drama ngắn, short novel drama, short video drama và nội dung serialized fiction. Tool tập trung vào một việc rất cụ thể: biến một niche drama thành một bộ truyện 15 chương có tiêu đề, hạt giống bối cảnh, tổng quan, kế hoạch chương, bản thảo từng chương, lịch sử lưu lại và file xuất bản.
+Drama15 Lite Studio là tool desktop dành cho người làm truyện drama ngắn, short novel drama, short video drama và nội dung serialized fiction. Tool tập trung vào một việc rất cụ thể: biến một niche drama thành một bộ truyện 10 chương có tiêu đề, hạt giống bối cảnh, tổng quan, kế hoạch chương, bản thảo từng chương, lịch sử lưu lại và file xuất bản.
 
 Đây không phải một chatbot AI trắng để người dùng tự nghĩ prompt từ đầu. Drama15 Lite Studio là một studio workflow: có form, preset, seed engine, story bible, outline, chapter drafting, rewrite, quality repair, progress tracking, history và export.
 
@@ -12,7 +12,7 @@ Drama15 Lite Studio xử lý các điểm đó bằng workflow cố định:
 
 - Chọn hoặc tự nhập Niche, rồi bấm `Tự tạo` để tool tự fill từ tiêu đề đến hạt giống bối cảnh và config sáng tác.
 - Dùng seed blueprint để khóa plot DNA trước khi gọi model, giúp giảm lặp motif bề mặt.
-- Tách rõ các tầng sáng tác: concept, story bible, kế hoạch 15 chương, bản thảo chương.
+- Tách rõ các tầng sáng tác: concept, story bible, kế hoạch 10 chương, bản thảo chương.
 - Có progress theo stage để biết truyện đang chạy tới đâu.
 - Có nút tiếp tục từ chương còn thiếu nếu tạo full bị dừng giữa chừng.
 - Có lịch sử các bộ đã sáng tác và export để mở lại.
@@ -27,7 +27,7 @@ Nhiều tool viết AI trên thị trường thiên về viết article, email, 
 - **Motif bank lớn hơn**: mỗi niche có ít nhất 30 hot motif anchors và ít nhất 20 kiểu kịch bản sâu.
 - **Bối cảnh đa dạng**: mỗi niche có bank bối cảnh và điểm reveal riêng, tránh rơi mãi vào bệnh viện, tiệc cưới, nhà tang lễ hoặc nhà hàng nếu niche không cần.
 - **Title theo CTR grammar**: tiêu đề ngắn, rõ vai trò, dễ nhận diện series, không phải câu mô tả dài.
-- **15-chapter architecture**: tool không chỉ viết một đoạn truyện, mà bám cấu trúc 15 chương có setup, escalation, no-rescue nadir, internal pivot, public reveal và new equilibrium.
+- **10-chapter architecture**: tool không chỉ viết một đoạn truyện, mà bám cấu trúc 10 chương có setup, escalation, no-rescue nadir, internal pivot, public reveal và new equilibrium.
 - **Hidden config tự sinh**: kiểu phản bội, kiểu nhục mạ, cách trả đũa, ending mode, intensity, dialogue ratio và hook density được sinh theo niche thay vì bắt người dùng chọn tay quá nhiều.
 - **Portable Windows build**: có thể pack thành file `.exe` portable để dùng như app riêng.
 
@@ -71,13 +71,13 @@ Nhiều tool viết AI trên thị trường thiên về viết article, email, 
 - Tự tạo thiết lập truyện theo niche.
 - Custom niche thủ công.
 - 7 niche drama thương mại.
-- Gen voice sau khi hoàn thành đủ 15 chương bằng OmniVoice local API server.
+- Gen voice sau khi hoàn thành đủ 10 chương bằng OmniVoice local API server.
 - Chọn một Voice ID đã lưu trong OmniVoice và xuất WAV riêng cho từng chương.
 - 30+ hot motif anchors mỗi niche.
 - 20+ kiểu kịch bản sâu mỗi niche.
 - Seed blueprint chống lặp motif.
 - Hạt giống bối cảnh theo social conflict đời thực.
-- Tạo full story 15 chương.
+- Tạo full story 10 chương.
 - Story bible và chapter plan riêng.
 - Rewrite chapter theo nhiều chế độ.
 - Tiếp tục từ chương còn thiếu.
@@ -129,13 +129,13 @@ npm run desktop:dev
 
 ## OmniVoice TTS
 
-Trước khi bấm `Gen Voice 15 Chương`, hãy chạy OmniVoice local API server, ví dụ:
+Trước khi bấm `Gen Voice 10 Chương`, hãy chạy OmniVoice local API server, ví dụ:
 
 ```powershell
 omnivoice-demo --ip 127.0.0.1 --port 8001
 ```
 
-Trong Drama15 Lite Studio, giữ API mặc định `http://127.0.0.1:8001`, tải danh sách Voice ID, chọn một voice, rồi gen voice sau khi truyện đã đủ 15 chương.
+Trong Drama15 Lite Studio, giữ API mặc định `http://127.0.0.1:8001`, tải danh sách Voice ID, chọn một voice, rồi gen voice sau khi truyện đã đủ 10 chương.
 
 ## Pack bản portable Windows
 

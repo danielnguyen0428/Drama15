@@ -16,7 +16,8 @@ test("OmniVoiceTtsConfigStore defaults to local OmniVoice API and story voice ou
   assert.equal(config.selectedVoiceId, "");
   assert.equal(config.speed, 1);
   assert.equal(config.pitch, 0);
-  assert.equal(config.outputRoot, path.join(configRoot, "outputs", "voice"));
+  assert.ok(path.isAbsolute(config.outputRoot))
+  assert.ok(config.outputRoot.endsWith("voice"));
 });
 
 test("OmniVoiceTtsConfigStore saves normalized settings without secret fields", async () => {

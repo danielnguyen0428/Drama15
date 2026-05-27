@@ -1,0 +1,14 @@
+{
+  "id": "du_maurier_psychological_shadow",
+  "displayName": "B\u00f3ng t\u1ed1i t\u00e2m l\u00fd - du Maurier",
+  "description": "Kh\u00f4ng kh\u00ed r\u1ee3n ng\u01b0\u1eddi, nghi ng\u1edd l\u00e3ng m\u1ea1n, ng\u00f4i nh\u00e0 ch\u1ee9a b\u00ed m\u1eadt, k\u00fd \u1ee9c nh\u01b0 m\u1ed1i \u0111e d\u1ecda.",
+  "emotionalDirectness": "medium",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.44,
+  "melodramaLevel": "atmospheric dread",
+  "notes": [
+    "Let houses and rooms carry psychological threat.",
+    "Make romantic suspicion feel rational and earned.",
+    "Use memory as an unreliable but haunting force."
+  ]
+}

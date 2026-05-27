@@ -2,7 +2,7 @@
 
 ## Goal
 
-Release Drama15 Lite Studio `2.0.3` with a post-drafting text-to-speech workflow. After a full 15-chapter story has been drafted, the user can choose one saved OmniVoice `voice_id` and generate voice audio for all 15 chapters.
+Release Drama15 Lite Studio `2.0.3` with a post-drafting text-to-speech workflow. After a full 10-chapter story has been drafted, the user can choose one saved OmniVoice `voice_id` and generate voice audio for all 10 chapters.
 
 ## Confirmed Decisions
 
@@ -28,11 +28,11 @@ Layout strategy: Add a compact right-rail Voice panel near the existing export/h
 ## User Flow
 
 1. User starts OmniVoice local API server separately.
-2. User drafts a story until all 15 chapters exist.
+2. User drafts a story until all 10 chapters exist.
 3. User opens the Voice panel in `ZZZ`.
 4. App checks OmniVoice health and loads saved voices from `/api/voices`.
 5. User selects a single `voice_id`.
-6. User clicks `Gen Voice 15 Chương`.
+6. User clicks `Gen Voice 10 Chương`.
 7. Electron main creates an output directory under `outputs/<story-slug>-voice/`.
 8. App creates one long TTS job per chapter through `/api/tts-long-jobs`.
 9. App polls each job until completion, downloads the WAV, and writes `chapter-01.wav` through `chapter-15.wav`.
@@ -58,7 +58,7 @@ New UI controls:
 - health/refresh voices button
 - voice selector
 - speed and pitch inputs with conservative defaults
-- `Gen Voice 15 Chương` button
+- `Gen Voice 10 Chương` button
 
 ### Electron Main
 

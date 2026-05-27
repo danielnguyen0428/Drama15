@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("dramaStudio", {
   init: () => ipcRenderer.invoke("desktop:init"),
   saveSession: (payload: unknown) => ipcRenderer.invoke("session:save", payload),
   getRouterSettings: () => ipcRenderer.invoke("router:get-settings"),
+  setModelPreset: (payload: { modelPreset: string }) => ipcRenderer.invoke("model:set-preset", payload),
   chooseNineRouterDirectory: () => ipcRenderer.invoke("router:choose-nine-router-directory"),
   saveNineRouterDirectory: (payload: { directoryPath: string }) => ipcRenderer.invoke("router:save-nine-router-directory", payload),
   chooseAutomationPdfDirectory: () => ipcRenderer.invoke("automation:choose-pdf-directory"),
@@ -30,6 +31,8 @@ contextBridge.exposeInMainWorld("dramaStudio", {
   checkTtsHealth: () => ipcRenderer.invoke("tts:health"),
   listTtsVoices: () => ipcRenderer.invoke("tts:list-voices"),
   generateStoryVoice: (payload: unknown) => ipcRenderer.invoke("tts:generate-story", payload),
+  getTtsSession: () => ipcRenderer.invoke("tts:get-session"),
+  controlStoryVoice: (payload: unknown) => ipcRenderer.invoke("tts:control", payload),
   openTtsOutput: (payload: { path: string }) => ipcRenderer.invoke("tts:open-output", payload),
   onProgress: (listener: (payload: unknown) => void) => {
     const wrappedListener = (_event: unknown, payload: unknown) => listener(payload);
@@ -45,4 +48,5 @@ contextBridge.exposeInMainWorld("dramaStudio", {
       ipcRenderer.removeListener(TTS_PROGRESS_CHANNEL, wrappedListener);
     };
   },
+  launchRenderAll: () => ipcRenderer.invoke("tools:launch-render-all"),
 });

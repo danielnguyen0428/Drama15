@@ -1,0 +1,20 @@
+{
+  "titleHint": "Poor Girl Marries A Billionaire",
+  "linePreset": "billionaire_rich_poor_romance",
+  "stylePreset": "billionaire_rich_poor_romance__tiktok_hook_pacing",
+  "outputLanguage": "english",
+  "audience": {
+    "genderFocus": "female",
+    "ageBand": "18_34",
+    "market": "global"
+  },
+  "storyControls": {
+    "betrayalType": "rich family rejects the poor bride after a contract marriage starts feeling real.",
+    "shameType": "class humiliation through seating, etiquette, gifts, and the family treating her as temporary.",
+    "revengeMode": "the poor bride proves hidden value and forces the rich family to need the woman they rejected.",
+    "endingMode": "dignity-first love: romance can survive only after public respect is paid.",
+    "intensity": 0.84
+  },
+  "settingSeed": "startup xa xỉ và các vòng tròn gia đình thượng lưu",
+  "chapterCount": 10
+}

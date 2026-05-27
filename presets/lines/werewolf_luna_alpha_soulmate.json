@@ -1,0 +1,123 @@
+{
+  "id": "werewolf_luna_alpha_soulmate",
+  "displayName": "Niche 11: Werewolf / Luna / Alpha soulmate drama",
+  "description": "Werewolf-category paranormal romance drama centered on rejected mate, fated mate, Alpha / Luna / Beta / Omega hierarchy, pack law, rogue pack pressure, mate-bond rejection, second-chance bond, love triangle, kickass heroine, hybrid bloodline, Moon Goddess intervention, blood-moon trial, witch council politics, ancient pack feud, scent-match rule, and pack-throne succession. The engine is mate-bond and pack law, not generic romance and not corporate paperwork.",
+  "emotionalAxis": "rejected mate wound, fated mate pressure, Omega shame, pack law as both prison and proof, Alpha duty versus soulmate pull, second-chance dignity, Luna identity reclaimed through protection rather than vanity",
+  "coreKeywords": [
+    "werewolf paranormal romance",
+    "Luna",
+    "Alpha",
+    "Beta",
+    "Omega",
+    "fated mate",
+    "rejected mate",
+    "pack law",
+    "rogue pack",
+    "lone wolf returns",
+    "mate bond",
+    "scent match",
+    "second chance mate",
+    "enemies to mates",
+    "love triangle",
+    "kickass heroine",
+    "hybrid bloodline",
+    "vampire werewolf alliance",
+    "Moon Goddess intervention",
+    "blood moon trial",
+    "full moon ceremony",
+    "witch council politics",
+    "ancient pack feud",
+    "pack throne succession",
+    "rejected Luna returns",
+    "Omega rises",
+    "rogue Alpha redemption",
+    "marked by another pack",
+    "she chose herself before the bond"
+  ],
+  "seriesExamples": [
+    "Rejected Luna Returned Under A Blood Moon",
+    "Rejected Omega Became The Luna",
+    "Fated Mate Trial Exposed The Alpha",
+    "Pack Law Saved The Rejected Luna",
+    "His Enemy Was His True Mate",
+    "Hybrid Luna Crossed Two Bloodlines",
+    "Lone Wolf Took The Pack Throne",
+    "Witch Council Voided The False Mate Bond",
+    "Moon Goddess Marked The Omega First",
+    "Rogue Alpha Begged The Luna He Rejected",
+    "Scent Match Returned After Five Winters",
+    "She Marked Herself Before She Marked Him"
+  ],
+  "tropeWeights": {
+    "werewolf_pack_drama": 1,
+    "soulmate_bond": 1,
+    "rejected_mate": 0.95,
+    "fated_mate": 0.95,
+    "second_chance_mate": 0.92,
+    "alpha_luna_power": 0.95,
+    "omega_status_arc": 0.9,
+    "pack_law": 0.92,
+    "rogue_pack_pressure": 0.88,
+    "lone_wolf_return": 0.86,
+    "love_triangle": 0.86,
+    "hybrid_bloodline": 0.86,
+    "vampire_werewolf_alliance": 0.82,
+    "moon_goddess_intervention": 0.86,
+    "blood_moon_trial": 0.88,
+    "witch_council_politics": 0.84,
+    "pack_throne_succession": 0.88,
+    "scent_match_rule": 0.88,
+    "kickass_heroine": 0.94,
+    "female_agency": 0.94
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "public mate rejection, false-bond announcement, or Luna-status humiliation under pack law in front of the assembled pack",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "the mate bond is denied or hidden in front of the entire pack at a ritual",
+    "her Omega rank, hybrid blood, or victim history is turned into pack shame",
+    "a rival Luna or council elder manipulates pack law against her",
+    "the Alpha uses 'pack duty' or 'arranged Luna' as an excuse for cowardice",
+    "she is marked or claimed without consent by a rival or rogue Alpha",
+    "her wolf is suppressed by pack ritual to keep her 'in her place'",
+    "she is exiled from pack lands the moment her power begins to surface",
+    "the witch council brands the bond illegitimate without hearing her",
+    "the moon ritual exposes the fated bond he tried to bury, and the pack still mocks her"
+  ],
+  "revengeActivation": [
+    "the heroine masters her wolf strength on her own, without begging the Alpha",
+    "pack law and moon-ritual records prove the rejected bond was real all along",
+    "the rival Luna's manipulation becomes visible to the pack elders",
+    "Luna authority is reclaimed through protection of pack members, not vanity",
+    "the Moon Goddess's mark, blood-moon trial, or witch-council vote re-legitimizes her",
+    "the rogue Alpha or rival pack is defeated by the alliance she built while exiled",
+    "she refuses to take the bond back unless the rejection is publicly retracted",
+    "she names her own Beta and Omega allies into power before any romantic payoff",
+    "the pack-throne succession is corrected on record before the kiss"
+  ],
+  "dignityRecoveryTiming": "late second half with public pack correction (council, ritual, blood-moon trial) and heroine agency restored before any mate-bond romantic payoff",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "werewolf pack venues (pack lands, blood-moon clearing, council hall, rogue territory, witch grove)",
+      "fated / rejected / second-chance mate-bond engine and pack-law trials",
+      "Alpha / Luna / Beta / Omega hierarchy and pack-throne succession",
+      "Moon Goddess, witch council, hybrid bloodline, vampire alliance as supernatural levers",
+      "Luna authority reclaimed through protection and proof, not romantic rescue"
+    ],
+    "doesNotBelongHere": [
+      "alien empire captivity romance (-> Niche 12)",
+      "office contract / paper marriage drama (-> Niche 8)",
+      "rich-poor courtship without supernatural pack engine (-> Niche 1)",
+      "campus / scholarship bullying (-> Niche 10)",
+      "wedding day cheating drama in the human world (-> Niche 5)"
+    ]
+  }
+}

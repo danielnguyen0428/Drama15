@@ -1,0 +1,1112 @@
+import { AppError } from "../../lib/errors";
+import { env } from "../../lib/env";
+import {
+  GeneratedSettingSeedSchema,
+  GenerateChapterRequestSchema,
+  RegenerateChapterRequestSchema,
+  StoryPayloadSchema,
+} from "../../schemas/story";
+import type {
+  Chapter,
+  GenerateChapterRequest,
+  NormalizedFullGenerateRequest,
+  NormalizedOutlineRequest,
+  RegenerateChapterRequest,
+  StoryPayload,
+} from "../../types/story";
+import {
+  renderStoryMarkdown,
+  maybeWriteMarkdownFile,
+  renderStoryPdfHtml,
+  writeChapterMarkdownFiles,
+} from "../exporters/markdown-exporter";
+import { PresetLoader } from "../presets/preset-loader";
+import type { StoryPosterResult } from "../posters/story-poster-service";
+import {
+  buildChapterDraftPrompt,
+  buildChapterRepairPrompt,
+  buildChapterPlanPrompt,
+  buildConceptPrompt,
+  buildRegenerateChapterPrompt,
+  buildSettingSeedPrompt,
+  buildStoryBiblePrompt,
+} from "../prompts/story-prompts";
+import { createSeedBlueprint, type SeedHistoryEntry } from "../prompts/seed-blueprint";
+import { getLocalProsePolishConfig, type LocalProsePolishConfig } from "../presets/prose-polish-config";
+import { RouterClient } from "../router/router-client";
+import {
+  createContinuityLite,
+  ensureChapterPlanIntegrity,
+  parseChapterPlan,
+  parseConcept,
+  parseStoryBible,
+  resolveDraftControls,
+  summarizeChapter,
+  validateChapterDraft,
+  validateOutlineGeneration,
+  validateStoryPayload,
+} from "../validators/story-validator";
+import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, getOrCreatePhraseReuseIndex, resetPhraseReuseIndex, indexChapter } from "../validators/chapter-quality";
+// ─── Character Consistency (shared core-pipeline) ────────────────────────────
+import {
+  createEmptyMemoryStore,
+  addFactSheet,
+  type CharacterMemoryStore,
+} from "../core-pipeline/character-memory-store";
+import {
+  extractCharacterFacts,
+} from "../core-pipeline/character-fact-extractor";
+import {
+  validateConsistency,
+  hasCriticalViolations,
+  type DriftReport,
+} from "../core-pipeline/character-consistency";
+import {
+  ContinuityTracker,
+  type MinimalChapterRef,
+} from "../core-pipeline/continuity-tracker";
+
+export type StoryProgressOperation = "outline" | "full" | "chapter" | "regenerate";
+export type StoryProgressStatus = "started" | "completed";
+
+export type StoryProgressEvent = {
+  operation: StoryProgressOperation;
+  stageId: string;
+  label: string;
+  detail: string;
+  current: number;
+  total: number;
+  status: StoryProgressStatus;
+  chapter?: Chapter;
+  storyPayload?: StoryPayload;
+};
+
+type StoryProgressReporter = (event: StoryProgressEvent) => void;
+
+type StoryProgressOptions = {
+  onProgress?: StoryProgressReporter;
+  operation?: StoryProgressOperation;
+  totalStages?: number;
+  stageOffset?: number;
+};
+
+type ResolvedStoryProgressOptions = {
+  onProgress?: StoryProgressReporter;
+  operation: StoryProgressOperation;
+  totalStages: number;
+  stageOffset: number;
+};
+
+type StoryStageDescriptor = {
+  id: string;
+  label: string;
+  detail: string;
+};
+
+type SeedHistoryStorePort = {
+  load(): Promise<SeedHistoryEntry[]>;
+  append(entry: SeedHistoryEntry): Promise<SeedHistoryEntry[]>;
+};
+
+type StoryPosterGeneratorPort = {
+  generatePoster(storyPayload: StoryPayload): Promise<StoryPosterResult>;
+};
+
+const CHAPTER_DRAFT_TEMPERATURE = 0.58;
+const CHAPTER_REPAIR_TEMPERATURE = 0.28;
+const MAX_CHAPTER_REPAIR_ATTEMPTS = 2;
+
+export class StoryOrchestrator {
+  constructor(
+    private readonly presetLoader: PresetLoader,
+    private readonly routerClient: RouterClient,
+    private modelPresetName: string,
+    private readonly seedHistoryStore?: SeedHistoryStorePort,
+    private readonly posterGenerator?: StoryPosterGeneratorPort,
+    private readonly prosePolishConfig: LocalProsePolishConfig = getLocalProsePolishConfig(),
+  ) {}
+
+  private modelAliasOverride?: string;
+
+  getModelPresetName() {
+    return this.modelPresetName;
+  }
+
+  getActiveModelAlias() {
+    return this.modelAliasOverride;
+  }
+
+  setModelAliasOverride(modelAlias: string) {
+    this.modelAliasOverride = modelAlias.trim() || undefined;
+  }
+
+  async generateOutline(request: NormalizedOutlineRequest, progressOptions?: StoryProgressOptions, options?: { recentStoryTitles?: string[] }) {
+    const progress = resolveProgressOptions(progressOptions, "outline", 5);
+    const context = await runProgressStage(
+      progress,
+      1,
+      {
+        id: "load-context",
+        label: "Nạp preset",
+        detail: "Đang nạp preset và alias model.",
+      },
+      () => this.loadGenerationContext(request.linePreset, request.stylePreset),
+      "Đã nạp preset và alias model.",
+    );
+    if (request.chapterCount !== context.linePreset.constraints.fixedChapterCount) {
+      throw new AppError("VALIDATION_ERROR", `chapterCount must be ${context.linePreset.constraints.fixedChapterCount}`, 400);
+    }
+
+    const concept = await runProgressStage(
+      progress,
+      2,
+      {
+        id: "concept",
+        label: "Tạo concept",
+        detail: "Đang phác tiêu đề, logline và trục xung đột.",
+      },
+      async () => {
+        const conceptPrompt = buildConceptPrompt({
+          request,
+          linePreset: context.linePreset,
+          stylePreset: context.stylePreset,
+          recentStoryTitles: options?.recentStoryTitles,
+          prosePolishConfig: this.prosePolishConfig,
+        });
+        const conceptResult = await this.routerClient.generateJson<unknown>({
+          model: context.models.planner,
+          fallbackModel: context.models.fallback,
+          ...conceptPrompt,
+          timeoutMs: env.routerPlanningTimeoutMs,
+        });
+
+        return {
+          concept: parseConcept(unwrapEnvelope(conceptResult.data, "concept")),
+          modelUsed: conceptResult.modelUsed,
+        };
+      },
+      (result) => `Đã tạo concept bằng ${result.modelUsed}.`,
+    );
+
+    const storyBible = await runProgressStage(
+      progress,
+      3,
+      {
+        id: "story-bible",
+        label: "Dựng story bible",
+        detail: "Đang xác định dàn nhân vật, premise và các engine cảm xúc.",
+      },
+      async () => {
+        const biblePrompt = buildStoryBiblePrompt({
+          request,
+          concept: concept.concept,
+          linePreset: context.linePreset,
+          stylePreset: context.stylePreset,
+        });
+        const bibleResult = await this.routerClient.generateJson<unknown>({
+          model: context.models.bible,
+          fallbackModel: context.models.fallback,
+          ...biblePrompt,
+          timeoutMs: env.routerPlanningTimeoutMs,
+        });
+
+        return {
+          storyBible: parseStoryBible(unwrapEnvelope(bibleResult.data, "storyBible")),
+          modelUsed: bibleResult.modelUsed,
+        };
+      },
+      (result) => `Đã dựng story bible bằng ${result.modelUsed}.`,
+    );
+
+    const chapterPlan = await runProgressStage(
+      progress,
+      4,
+      {
+        id: "chapter-plan",
+        label: "Lập 10 chương",
+        detail: "Đang dựng outline từng chương.",
+      },
+      async () => {
+        const chapterPlanPrompt = buildChapterPlanPrompt({
+          request,
+          concept: concept.concept,
+          storyBible: storyBible.storyBible,
+          linePreset: context.linePreset,
+          stylePreset: context.stylePreset,
+        });
+        const chapterPlanResult = await this.routerClient.generateJson<unknown>({
+          model: context.models.planner,
+          fallbackModel: context.models.fallback,
+          ...chapterPlanPrompt,
+          timeoutMs: env.routerPlanningTimeoutMs,
+        });
+
+        return {
+          chapterPlan: parseChapterPlan(unwrapArrayEnvelope(chapterPlanResult.data, "chapterPlan")),
+          modelUsed: chapterPlanResult.modelUsed,
+        };
+      },
+      (result) => `Đã lập chapter plan bằng ${result.modelUsed}.`,
+    );
+
+    return runProgressStage(
+      progress,
+      5,
+      {
+        id: "assemble-outline",
+        label: "Ghép outline",
+        detail: "Đang kiểm tra outline và chuẩn bị payload cho studio.",
+      },
+      async () => {
+        validateOutlineGeneration({
+          concept: concept.concept,
+          storyBible: storyBible.storyBible,
+          chapterPlan: chapterPlan.chapterPlan,
+        });
+
+        const title = concept.concept.title || request.titleHint || concept.concept.titleCandidates[0];
+        return StoryPayloadSchema.parse({
+          title,
+          request,
+          concept: concept.concept,
+          storyBible: storyBible.storyBible,
+          chapterPlan: chapterPlan.chapterPlan,
+          chapters: [],
+          continuityLite: createContinuityLite(storyBible.storyBible, chapterPlan.chapterPlan),
+          meta: {
+            generatedAt: new Date().toISOString(),
+            modelAliases: {
+              planner: context.models.planner,
+              bible: context.models.bible,
+              drafter: context.models.drafter,
+              rewriter: context.models.rewriter,
+              fallback: context.models.fallback,
+            },
+          },
+        });
+      },
+      "Outline đã sẵn sàng.",
+    );
+  }
+
+  async generateSettingSeed(request: NormalizedOutlineRequest, options?: { recentStoryTitles?: string[] }) {
+    const context = await this.loadGenerationContext(request.linePreset, request.stylePreset);
+    const recentSeedHistory = (await this.seedHistoryStore?.load()) ?? [];
+    const seedBlueprint = createSeedBlueprint({
+      linePreset: resolveSeedBlueprintLinePreset(request),
+      history: recentSeedHistory,
+    });
+    const prompt = buildSettingSeedPrompt({
+      request,
+      linePreset: context.linePreset,
+      stylePreset: context.stylePreset,
+      seedBlueprint,
+      recentSeedHistory,
+      recentStoryTitles: options?.recentStoryTitles,
+      prosePolishConfig: this.prosePolishConfig,
+    });
+    const result = await this.routerClient.generateJson<unknown>({
+      model: context.models.planner,
+      fallbackModel: context.models.fallback,
+      ...prompt,
+      temperature: 0.92,
+      timeoutMs: env.routerPlanningTimeoutMs,
+    });
+
+    const rawSeedPackage = GeneratedSettingSeedSchema.parse(unwrapEnvelope(result.data, "seedPackage"));
+    const customDramaBranch = request.customCreativeInputs?.dramaBranch?.trim();
+    const seedPackage = customDramaBranch
+      ? GeneratedSettingSeedSchema.parse({
+          ...rawSeedPackage,
+          linePreset: customDramaBranch,
+        })
+      : rawSeedPackage;
+    await this.seedHistoryStore?.append({
+      fingerprint: seedBlueprint.fingerprint,
+      linePreset: seedPackage.linePreset,
+      titleHint: seedPackage.titleHint,
+      createdAt: new Date().toISOString(),
+      blueprint: seedBlueprint,
+    });
+
+    return {
+      seedPackage,
+      meta: {
+        modelUsed: result.modelUsed,
+        seedFingerprint: seedBlueprint.fingerprint,
+      },
+    };
+  }
+
+  async generateFull(request: NormalizedFullGenerateRequest, progressOptions?: StoryProgressOptions, options?: { recentStoryTitles?: string[] }) {
+    const posterStageCount = this.posterGenerator ? 1 : 0;
+    const chapterStageOffset = 5 + posterStageCount;
+    const finalizeStageNumber = chapterStageOffset + request.chapterCount + 1;
+    const totalStages = finalizeStageNumber;
+    const progress = resolveProgressOptions(progressOptions, "full", totalStages);
+    const outline = await this.generateOutline(request, progress, options);
+    const posterPromise = this.startPosterGeneration(outline, progress);
+    const chapters: Chapter[] = [];
+
+    // ─── Character Consistency System ──────────────────────────────────────
+    const memoryStore: CharacterMemoryStore = createEmptyMemoryStore();
+    const continuityTracker = new ContinuityTracker({
+      storyBible: outline.storyBible,
+      chapterPlan: outline.chapterPlan,
+    });
+
+    // Reset phrase reuse index for this generation run
+    resetPhraseReuseIndex();
+
+    for (const chapterPlanItem of outline.chapterPlan) {
+      const chapterStage = {
+        id: `chapter-${chapterPlanItem.chapterNumber}`,
+        label: `Viết chương ${chapterPlanItem.chapterNumber}/${outline.chapterPlan.length}`,
+        detail: `Đang viết "${chapterPlanItem.title}".`,
+      };
+      const chapter = await runProgressStage(
+        progress,
+        chapterStageOffset + chapterPlanItem.chapterNumber,
+        chapterStage,
+        () =>
+          this.generateChapter(
+            {
+              storyBible: outline.storyBible,
+              chapterPlan: outline.chapterPlan,
+              chapterNumber: chapterPlanItem.chapterNumber,
+              previousChapterSummaries: chapters.map(summarizeChapter),
+              draftControls: request.draftControls,
+              outputLanguage: request.outputLanguage,
+              storyTitle: outline.title,
+              memoryStore,
+              continuityTracker,
+            },
+            outline.request.stylePreset,
+            undefined,
+            outline.continuityLite,
+            {
+              onProgress: (event) => {
+                if (event.stageId !== "repair-chapter") {
+                  return;
+                }
+
+                emitProgress(
+                  progress,
+                  chapterStageOffset + chapterPlanItem.chapterNumber,
+                  chapterStage,
+                  event.status,
+                  event.status === "started"
+                    ? `Đang sửa "${chapterPlanItem.title}" sau khi kiểm tra chất lượng.`
+                    : `Đã sửa xong "${chapterPlanItem.title}".`,
+                );
+              },
+            },
+          ),
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
+      );
+
+      chapters.push(chapter);
+
+      // Index chapter for phrase reuse tracking
+      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+
+      // Update continuity tracker with character facts
+      const factSheet = memoryStore.chapters.get(chapter.chapterNumber);
+      if (factSheet) {
+        const chapterRef: MinimalChapterRef = {
+          chapterNumber: chapter.chapterNumber,
+          title: chapter.title,
+          summary: chapter.summary,
+          text: chapter.text,
+        };
+        continuityTracker.recordChapter(chapterRef, factSheet);
+      }
+
+      const partialStoryPayload = StoryPayloadSchema.parse({
+        ...outline,
+        request: {
+          ...outline.request,
+          draftControls: request.draftControls,
+        },
+        chapters: [...chapters],
+        meta: {
+          ...outline.meta,
+          generatedAt: new Date().toISOString(),
+        },
+      });
+      emitProgress(
+        progress,
+        chapterStageOffset + chapterPlanItem.chapterNumber,
+        chapterStage,
+        "completed",
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
+        {
+          chapter,
+          storyPayload: partialStoryPayload,
+        },
+      );
+    }
+
+    const poster = await posterPromise;
+    const assembledStoryPayload = StoryPayloadSchema.parse({
+      ...outline,
+      request: {
+        ...outline.request,
+        draftControls: request.draftControls,
+      },
+      chapters,
+      meta: {
+        ...outline.meta,
+        generatedAt: new Date().toISOString(),
+        ...(poster ? { poster } : {}),
+      },
+    });
+    return runProgressStage(
+      progress,
+      finalizeStageNumber,
+      {
+        id: "finalize-story",
+        label: "Hoàn tất truyện",
+        detail: "Đang kiểm tra bản thảo đã ghép.",
+      },
+      async () => assembledStoryPayload,
+      `Đã ghép ${chapters.length} chương.`,
+    );
+  }
+
+  async generateChapter(
+    request: GenerateChapterRequest,
+    stylePresetName?: string,
+    _legacyInspiredByPresetName?: string,
+    continuityLite?: StoryPayload["continuityLite"],
+    progressOptions?: StoryProgressOptions,
+  ) {
+    const parsed = GenerateChapterRequestSchema.parse(request);
+    ensureChapterPlanIntegrity(parsed.chapterPlan);
+
+    const chapterPlanItem = parsed.chapterPlan.find((chapter) => chapter.chapterNumber === parsed.chapterNumber);
+    if (!chapterPlanItem) {
+      throw new AppError("VALIDATION_ERROR", `Chapter ${parsed.chapterNumber} does not exist in chapterPlan.`, 400);
+    }
+
+    const progress = resolveProgressOptions(progressOptions, "chapter", 4);
+    const draftControls = resolveDraftControls(parsed.draftControls);
+    const context = await runProgressStage(
+      progress,
+      1,
+      {
+        id: "load-context",
+        label: "Nạp ngữ cảnh chương",
+        detail: "Đang nạp preset văn phong và alias model cho bản thảo.",
+      },
+      () =>
+        this.loadGenerationContext(
+          env.defaultLinePreset,
+          stylePresetName ?? "wharton_class_shame_elegance",
+        ),
+      "Đã nạp xong ngữ cảnh chương.",
+    );
+
+    // ─── Enhanced continuity context (includes character memory) ───────────
+    const memoryStore = parsed.memoryStore as CharacterMemoryStore | undefined;
+    const continuityTracker = parsed.continuityTracker as ContinuityTracker | undefined;
+    const enhancedContinuity: StoryPayload["continuityLite"] | undefined = continuityTracker
+      ? continuityTracker.getContinuityContext(parsed.chapterNumber) as StoryPayload["continuityLite"]
+      : continuityLite;
+
+    const chapterPrompt = buildChapterDraftPrompt({
+      storyTitle: parsed.storyTitle,
+      storyBible: parsed.storyBible,
+      chapterPlanItem,
+      previousChapterSummaries: parsed.previousChapterSummaries,
+      continuityLite: enhancedContinuity,
+      draftControls,
+      outputLanguage: parsed.outputLanguage ?? "english",
+      stylePreset: context.stylePreset,
+      prosePolishConfig: this.prosePolishConfig,
+    });
+
+    const chapterResult = await runProgressStage(
+      progress,
+      2,
+      {
+        id: "draft-chapter",
+        label: `Viết chương ${parsed.chapterNumber}`,
+        detail: `Đang viết "${chapterPlanItem.title}".`,
+      },
+      async () => {
+        const result = await this.routerClient.generateJson<unknown>({
+          model: context.models.drafter,
+          fallbackModel: context.models.fallback,
+          ...chapterPrompt,
+          temperature: CHAPTER_DRAFT_TEMPERATURE,
+          timeoutMs: env.routerChapterTimeoutMs,
+        });
+
+        return {
+          chapter: unwrapEnvelope(result.data, "chapter"),
+          modelUsed: result.modelUsed,
+        };
+      },
+      (result) => `Đã nhận bản thảo từ ${result.modelUsed}.`,
+    );
+
+    const draftedChapter = await runProgressStage(
+      progress,
+      3,
+      {
+        id: "repair-chapter",
+        label: "Sửa chương nếu cần",
+        detail: "Đang kiểm tra chất lượng, tính nhất quán nhân vật và thử sửa nếu cần.",
+      },
+      async () => {
+        const chapter = alignChapterTitleWithPlan(
+          validateChapterDraft(chapterResult.chapter, parsed.chapterNumber),
+          chapterPlanItem.title,
+        );
+        let metrics = analyzeChapterQuality(chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+
+        // ─── Character Consistency Check ──────────────────────────────────
+        let driftReport: DriftReport | null = null;
+        if (memoryStore && memoryStore.chapters.size > 0) {
+          driftReport = await validateConsistency(
+            chapter.text,
+            parsed.chapterNumber,
+            parsed.storyBible,
+            memoryStore,
+            this.routerClient,
+          );
+        }
+
+        const needsRepair = needsChapterRetry(metrics) || (driftReport && hasCriticalViolations(driftReport));
+
+        if (!needsRepair) {
+          // Extract facts and store even if no repair needed
+          if (memoryStore) {
+            try {
+              const factSheet = await extractCharacterFacts(
+                chapter.text,
+                parsed.chapterNumber,
+                parsed.storyBible,
+                parsed.outputLanguage ?? "english",
+                this.routerClient,
+              );
+              addFactSheet(memoryStore, factSheet);
+            } catch {
+              // Fail-open: character extraction should not block chapter completion
+            }
+          }
+          return {
+            chapter,
+            repaired: false,
+          };
+        }
+
+        let repairedChapter = chapter;
+        const maxAttempts = driftReport ? MAX_CHAPTER_REPAIR_ATTEMPTS + 1 : MAX_CHAPTER_REPAIR_ATTEMPTS;
+
+        for (let repairAttempt = 1; repairAttempt <= maxAttempts; repairAttempt += 1) {
+          const repairPrompt = buildChapterRepairPrompt({
+            previousDraft: repairedChapter.text,
+            failures: metrics.failures,
+            draftControls,
+            chapterPlanItem,
+            repairAttempt,
+            maxRepairAttempts: maxAttempts,
+            previousMetrics: {
+              wordCount: metrics.wordCount,
+              dialogueRatio: metrics.dialogueRatio,
+            },
+            driftViolations: driftReport?.violations.map((v) => ({
+              type: v.type,
+              character: v.characterName,
+              excerpt: v.excerpt,
+              description: v.contradictedFact,
+            })),
+            outputLanguage: parsed.outputLanguage ?? "english",
+            prosePolishConfig: this.prosePolishConfig,
+          });
+          const repairedResult = await this.routerClient.generateJson<unknown>({
+            model: context.models.rewriter,
+            fallbackModel: context.models.fallback,
+            systemPrompt: chapterPrompt.systemPrompt,
+            userPrompt: `${chapterPrompt.userPrompt}\n\n${repairPrompt}`,
+            temperature: CHAPTER_REPAIR_TEMPERATURE,
+            timeoutMs: env.routerChapterTimeoutMs,
+          });
+          repairedChapter = alignChapterTitleWithPlan(
+            validateChapterDraft(unwrapEnvelope(repairedResult.data, "chapter"), parsed.chapterNumber),
+            chapterPlanItem.title,
+          );
+          metrics = analyzeChapterQuality(repairedChapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+
+          // Re-check consistency after repair
+          if (memoryStore) {
+            driftReport = await validateConsistency(
+              repairedChapter.text,
+              parsed.chapterNumber,
+              parsed.storyBible,
+              memoryStore,
+              this.routerClient,
+            );
+          }
+
+          const stillNeedsRepair = needsChapterRetry(metrics) || (driftReport && hasCriticalViolations(driftReport));
+
+          if (!stillNeedsRepair) {
+            // Extract facts and store
+            if (memoryStore) {
+              try {
+                const factSheet = await extractCharacterFacts(
+                  repairedChapter.text,
+                  parsed.chapterNumber,
+                  parsed.storyBible,
+                  parsed.outputLanguage ?? "english",
+                  this.routerClient,
+                );
+                addFactSheet(memoryStore, factSheet);
+              } catch {
+                // Fail-open
+              }
+            }
+            return {
+              chapter: repairedChapter,
+              repaired: true,
+            };
+          }
+        }
+
+        // Extract facts even if repair failed (so next chapters have context)
+        if (memoryStore) {
+          try {
+            const factSheet = await extractCharacterFacts(
+              repairedChapter.text,
+              parsed.chapterNumber,
+              parsed.storyBible,
+              parsed.outputLanguage ?? "english",
+              this.routerClient,
+            );
+            addFactSheet(memoryStore, factSheet);
+          } catch {
+            // Fail-open
+          }
+        }
+
+        if (hasOnlySoftChapterQualityFailures(metrics)) {
+          return {
+            chapter: repairedChapter,
+            repaired: true,
+          };
+        }
+
+        throw new AppError(
+          "MODEL_OUTPUT_INVALID",
+          `Chapter ${parsed.chapterNumber} still failed quality checks after ${maxAttempts} repair attempts: ${metrics.failures.join("; ")}.`,
+          502,
+          {
+            chapterNumber: parsed.chapterNumber,
+            failures: metrics.failures,
+            metrics,
+          },
+        );
+      },
+      (result) => {
+        if (!result.repaired) {
+          return "Chất lượng đã đạt; không cần sửa.";
+        }
+
+        return `Đã sửa xong chương ${parsed.chapterNumber}.`;
+      },
+    );
+
+    return runProgressStage(
+      progress,
+      4,
+      {
+        id: "validate-chapter",
+        label: "Chốt chương",
+        detail: "Đang xác nhận bản thảo cuối hợp lệ và sẵn sàng trả về.",
+      },
+      async () => {
+        if (!draftedChapter.repaired) {
+          return draftedChapter.chapter;
+        }
+
+        const finalMetrics = analyzeChapterQuality(draftedChapter.chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+        if (needsChapterRetry(finalMetrics) && !hasOnlySoftChapterQualityFailures(finalMetrics)) {
+          throw new AppError(
+            "MODEL_OUTPUT_INVALID",
+            `Chapter ${parsed.chapterNumber} still failed quality checks after repair: ${finalMetrics.failures.join("; ")}.`,
+            502,
+            {
+              chapterNumber: parsed.chapterNumber,
+              failures: finalMetrics.failures,
+              metrics: finalMetrics,
+            },
+          );
+        }
+
+        return draftedChapter.chapter;
+      },
+      `Chương ${parsed.chapterNumber} đã sẵn sàng.`,
+    );
+  }
+
+
+  async regenerateChapter(request: RegenerateChapterRequest, progressOptions?: StoryProgressOptions) {
+    const parsed = RegenerateChapterRequestSchema.parse(request);
+    const storyPayload = validateStoryPayload(parsed.storyPayload);
+
+    const targetChapterPlan = storyPayload.chapterPlan.find((chapter) => chapter.chapterNumber === parsed.targetChapter);
+    const currentChapter = storyPayload.chapters.find((chapter) => chapter.chapterNumber === parsed.targetChapter);
+
+    if (!targetChapterPlan) {
+      throw new AppError("VALIDATION_ERROR", `Story payload does not define chapter ${parsed.targetChapter} in the chapter plan.`, 400);
+    }
+
+    if (!currentChapter) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `Chapter ${parsed.targetChapter} has not been drafted yet. Generate Full Story before using Regenerate Chapter.`,
+        400,
+      );
+    }
+
+    const progress = resolveProgressOptions(progressOptions, "regenerate", 3);
+    const context = await runProgressStage(
+      progress,
+      1,
+      {
+        id: "load-context",
+        label: "Nạp ngữ cảnh viết lại",
+        detail: "Đang nạp preset và alias model cho lượt viết lại.",
+      },
+      () =>
+        this.loadGenerationContext(
+          storyPayload.request.linePreset,
+          storyPayload.request.stylePreset,
+        ),
+      "Đã nạp xong ngữ cảnh viết lại.",
+    );
+
+    const rewrittenChapter = await runProgressStage(
+      progress,
+      2,
+      {
+        id: "rewrite-chapter",
+        label: `Viết lại chương ${parsed.targetChapter}`,
+        detail: `Đang áp dụng ${parsed.mode} cho chương ${parsed.targetChapter}.`,
+      },
+      async () => {
+        const regeneratePrompt = buildRegenerateChapterPrompt({
+          storyTitle: storyPayload.title,
+          storyBible: storyPayload.storyBible,
+          chapterPlanItem: targetChapterPlan,
+          currentChapter,
+          continuityLite: storyPayload.continuityLite,
+          instruction: parsed.instruction,
+          mode: parsed.mode,
+          preserveConstraints: parsed.preserveConstraints,
+          outputLanguage: storyPayload.request.outputLanguage,
+          stylePreset: context.stylePreset,
+          prosePolishConfig: this.prosePolishConfig,
+        });
+
+        const regenerateResult = await this.routerClient.generateJson<unknown>({
+          model: context.models.rewriter,
+          fallbackModel: context.models.fallback,
+          ...regeneratePrompt,
+          temperature: 0.75,
+          timeoutMs: env.routerChapterTimeoutMs,
+        });
+
+        return {
+          chapter: alignChapterTitleWithPlan(
+            validateChapterDraft(unwrapEnvelope(regenerateResult.data, "chapter"), parsed.targetChapter),
+            targetChapterPlan.title,
+          ),
+          modelUsed: regenerateResult.modelUsed,
+        };
+      },
+      (result) => `Đã nhận bản viết lại từ ${result.modelUsed}.`,
+    );
+
+    return runProgressStage(
+      progress,
+      3,
+      {
+        id: "merge-story",
+        label: "Gộp chương đã viết lại",
+        detail: "Đang cập nhật story payload bằng bản thảo mới.",
+      },
+      async () => {
+        const chapters = storyPayload.chapters.map((chapter) =>
+          chapter.chapterNumber === parsed.targetChapter ? rewrittenChapter.chapter : chapter,
+        );
+
+        const nextPayload = StoryPayloadSchema.parse({
+          ...storyPayload,
+          chapters,
+          meta: {
+            ...storyPayload.meta,
+            generatedAt: new Date().toISOString(),
+          },
+        });
+
+        return {
+          chapter: rewrittenChapter.chapter,
+          storyPayload: nextPayload,
+        };
+      },
+      `Đã gộp chương ${parsed.targetChapter} vào truyện.`,
+    );
+  }
+
+  async exportMarkdown(storyPayloadInput: unknown, options?: { filename?: string; writeToFile?: boolean }) {
+    const storyPayload = validateStoryPayload(storyPayloadInput);
+    const markdown = renderStoryMarkdown(storyPayload);
+    const filePath = await maybeWriteMarkdownFile(storyPayload, markdown, options);
+
+    return {
+      markdown,
+      filePath,
+    };
+  }
+
+  async exportChapterMarkdownFiles(storyPayloadInput: unknown, outputDirectory: string) {
+    const storyPayload = validateStoryPayload(storyPayloadInput);
+    if (storyPayload.chapters.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "Story payload does not contain drafted chapters.", 400);
+    }
+
+    const filePaths = await writeChapterMarkdownFiles(storyPayload, outputDirectory);
+    return {
+      filePaths,
+      count: filePaths.length,
+    };
+  }
+
+  exportStoryPdfHtml(storyPayloadInput: unknown) {
+    const storyPayload = validateStoryPayload(storyPayloadInput);
+    if (storyPayload.chapters.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "Story payload does not contain drafted chapters.", 400);
+    }
+
+    return renderStoryPdfHtml(storyPayload);
+  }
+
+  private async loadGenerationContext(linePresetName: string, stylePresetName: string) {
+    const [linePreset, stylePreset, loadedModels] = await Promise.all([
+      this.presetLoader.loadLinePreset(linePresetName),
+      this.presetLoader.loadStylePreset(stylePresetName),
+      this.presetLoader.loadModelPreset(this.modelPresetName),
+    ]);
+
+    const models = this.modelAliasOverride
+      ? {
+        planner: this.modelAliasOverride,
+        bible: this.modelAliasOverride,
+        drafter: this.modelAliasOverride,
+        rewriter: this.modelAliasOverride,
+        fallback: this.modelAliasOverride,
+      }
+      : loadedModels;
+
+    return {
+      linePreset,
+      stylePreset,
+      models,
+    };
+  }
+
+  private startPosterGeneration(outline: StoryPayload, progress: ResolvedStoryProgressOptions) {
+    if (!this.posterGenerator) {
+      return Promise.resolve<StoryPosterResult | undefined>(undefined);
+    }
+
+    const posterStage = {
+      id: "poster-image",
+      label: "Táº¡o poster",
+      detail: "Äang táº¡o poster 16:9 báº±ng GPT-Image 2.",
+    };
+    emitProgress(progress, 6, posterStage, "started");
+
+    return this.posterGenerator.generatePoster(outline)
+      .then((poster) => {
+        emitProgress(
+          progress,
+          6,
+          posterStage,
+          "completed",
+          poster.status === "completed"
+            ? `ÄÃ£ táº¡o poster: ${poster.filePath}.`
+            : `Poster ${poster.status}: ${poster.error || "khÃ´ng cÃ³ chi tiáº¿t."}`,
+        );
+        return poster;
+      })
+      .catch((error) => {
+        const failedPoster: StoryPosterResult = {
+          status: "failed",
+          title: outline.title,
+          model: "gpt-image-2",
+          size: "1536x1024",
+          generatedAt: new Date().toISOString(),
+          error: error instanceof Error ? error.message : String(error),
+        };
+        emitProgress(
+          progress,
+          6,
+          posterStage,
+          "completed",
+          `Poster failed: ${failedPoster.error}`,
+        );
+        return failedPoster;
+      });
+  }
+
+}
+
+function resolveSeedBlueprintLinePreset(request: NormalizedOutlineRequest) {
+  const customDramaBranch = request.customCreativeInputs?.dramaBranch?.toLowerCase() || "";
+  if (!customDramaBranch) {
+    return request.linePreset;
+  }
+
+  const customNicheRoutes: Array<{ linePreset: string; pattern: RegExp }> = [
+    {
+      linePreset: "werewolf_luna_alpha_soulmate",
+      pattern: /\b(werewolf|wolf|luna|alpha|mate|soulmate|moon wolf|rejected mate|second chance|pack|blood moon|rival luna)\b/i,
+    },
+    {
+      linePreset: "steamy_alien_captive_romance",
+      pattern: /\b(steamy|alien|alien master|alien masters|captive|captivity|dominant|possessive|dark romance|opposites attract|warship|alien king|alien commander|collar|consent)\b/i,
+    },
+    {
+      linePreset: "workplace_ceo_power_struggle",
+      pattern: /\b(workplace|office|ceo|corporate|startup|layoff|fired|boss|hr|board|pitch|cap table|investor|employee|coworker|career|company|slack|audit)\b/i,
+    },
+    {
+      linePreset: "medical_hidden_doctor_life_care",
+      pattern: /\b(medical|medicine|hospital|doctor|surgeon|nurse|clinic|patient|triage|surgery|consent|chart|pharmacy|ambulance|care|ward|insurance)\b/i,
+    },
+    {
+      linePreset: "school_campus_bullying_identity",
+      pattern: /\b(school|campus|student|scholarship|bully|bullied|bullying|classmate|teacher|principal|dorm|exam|talent show|graduation|bodyguard|university|college)\b/i,
+    },
+    {
+      linePreset: "billionaire_rich_poor_romance",
+      pattern: /\b(billionaire|rich|poor|contract|fake wife|wealthy|heir|tycoon)\b/i,
+    },
+    {
+      linePreset: "secret_identity_hidden_heiress",
+      pattern: /\b(secret|hidden|undercover|heiress|identity|pretend|assistant|bodyguard|owner)\b/i,
+    },
+    {
+      linePreset: "toxic_family_betrayal",
+      pattern: /\b(family|toxic|mother|father|sister|brother|stepmother|mother-in-law|inheritance|deed|custody|relative)\b/i,
+    },
+    {
+      linePreset: "cheating_ex_wedding_drama",
+      pattern: /\b(cheat|cheating|ex|wedding|mistress|husband|wife|fiance|bride|groom|affair|divorce)\b/i,
+    },
+    {
+      linePreset: "single_mom_poor_woman_comeback",
+      pattern: /\b(single mom|single mother|poor woman|child|children|custody|abandoned wife|mother comeback)\b/i,
+    },
+    {
+      linePreset: "social_injustice_discrimination_drama",
+      pattern: /\b(disabled|racist|discrimination|injustice|refused|serve|restaurant|manager|innocent|accessibility|bias)\b/i,
+    },
+    {
+      linePreset: "humiliation_revenge_justice",
+      pattern: /\b(humiliation|humiliated|revenge|justice|karma|mocked|scapegoat)\b/i,
+    },
+  ];
+
+  return customNicheRoutes.find((route) => route.pattern.test(customDramaBranch))?.linePreset ?? request.linePreset;
+}
+
+function resolveProgressOptions(
+  options: StoryProgressOptions | undefined,
+  defaultOperation: StoryProgressOperation,
+  defaultTotalStages: number,
+): ResolvedStoryProgressOptions {
+  return {
+    onProgress: options?.onProgress,
+    operation: options?.operation ?? defaultOperation,
+    totalStages: options?.totalStages ?? defaultTotalStages,
+    stageOffset: options?.stageOffset ?? 0,
+  };
+}
+
+function emitProgress(
+  options: ResolvedStoryProgressOptions,
+  stageIndex: number,
+  stage: StoryStageDescriptor,
+  status: StoryProgressStatus,
+  detail?: string,
+  payload?: Pick<StoryProgressEvent, "chapter" | "storyPayload">,
+) {
+  if (!options.onProgress) {
+    return;
+  }
+
+  options.onProgress({
+    operation: options.operation,
+    stageId: stage.id,
+    label: stage.label,
+    detail: detail ?? stage.detail,
+    current: options.stageOffset + stageIndex,
+    total: options.totalStages,
+    status,
+    ...payload,
+  });
+}
+
+async function runProgressStage<T>(
+  options: ResolvedStoryProgressOptions,
+  stageIndex: number,
+  stage: StoryStageDescriptor,
+  action: () => Promise<T>,
+  completedDetail?: string | ((result: T) => string),
+) {
+  emitProgress(options, stageIndex, stage, "started");
+  const result = await action();
+  emitProgress(
+    options,
+    stageIndex,
+    stage,
+    "completed",
+    typeof completedDetail === "function" ? completedDetail(result) : completedDetail,
+  );
+  return result;
+}
+
+function alignChapterTitleWithPlan(chapter: Chapter, plannedTitle: string): Chapter {
+  return {
+    ...chapter,
+    title: plannedTitle,
+  };
+}
+
+function unwrapEnvelope(value: unknown, key: string) {
+  if (value && typeof value === "object" && key in value) {
+    return (value as Record<string, unknown>)[key];
+  }
+
+  return value;
+}
+
+function unwrapArrayEnvelope(value: unknown, key: string) {
+  if (value && typeof value === "object" && key in value) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      [key]: value,
+    };
+  }
+
+  return value;
+}

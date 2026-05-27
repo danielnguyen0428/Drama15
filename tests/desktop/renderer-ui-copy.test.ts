@@ -37,6 +37,8 @@ test("dropdowns display Vietnamese labels while keeping backend values stable", 
   assert.match(rendererJs, /workplace_ceo_power_struggle:\s*"Niche 8: C\\u00f4ng s\\u1edf \/ CEO \/ Tranh quy\\u1ec1n ngh\\u1ec1 nghi\\u1ec7p"/);
   assert.match(rendererJs, /medical_hidden_doctor_life_care:\s*"Niche 9: Y t\\u1ebf \/ B\\u00e1c s\\u0129 \\u1ea9n danh \/ Sinh t\\u1eed v\\u00e0 ch\\u0103m s\\u00f3c"/);
   assert.match(rendererJs, /school_campus_bullying_identity:\s*"Niche 10: H\\u1ecdc \\u0111\\u01b0\\u1eddng \/ Campus \/ B\\u1eaft n\\u1ea1t v\\u00e0 th\\u00e2n ph\\u1eadn"/);
+  assert.match(rendererJs, /werewolf_luna_alpha_soulmate:\s*"Niche 11: Werewolf \/ Luna \/ Alpha bond drama"/);
+  assert.match(rendererJs, /steamy_alien_captive_romance:\s*"Niche 12: Steamy \/ Alien masters \/ Dark captive romance"/);
   assert.doesNotMatch(indexHtml, /Preset Văn Phong|style-preset|custom-style-preset/);
   assert.match(rendererJs, /value="\$\{escapeHtml\(option\)\}"/);
 });
@@ -161,6 +163,41 @@ test("export panel exposes chapter markdown and full story PDF actions", () => {
   assert.match(preloadTs, /saveStoryPdf/);
 });
 
+test("desktop exposes generated story poster preview and open action", () => {
+  const indexHtml = readProjectFile("desktop", "renderer", "index.html");
+  const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+  const stylesCss = readProjectFile("desktop", "renderer", "styles.css");
+
+  assert.match(indexHtml, /id="open-story-poster-button"/);
+  assert.match(indexHtml, /Mở Poster/);
+  assert.match(rendererJs, /openStoryPosterButton:\s*byId\("open-story-poster-button"\)/);
+  assert.match(rendererJs, /function getCurrentPosterPath/);
+  assert.match(rendererJs, /function formatPosterImageSrc/);
+  assert.match(rendererJs, /story\.meta\?\.poster/);
+  assert.match(rendererJs, /poster-preview/);
+  assert.match(rendererJs, /posterImages/);
+  assert.match(stylesCss, /\.poster-preview/);
+  assert.match(stylesCss, /\.poster-image/);
+});
+
+test("desktop does not expose thumbnail generation previews or open actions", () => {
+  const indexHtml = readProjectFile("desktop", "renderer", "index.html");
+  const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+  const stylesCss = readProjectFile("desktop", "renderer", "styles.css");
+
+  assert.doesNotMatch(indexHtml, /open-story-thumbnails-button|Thumbnail/);
+  assert.doesNotMatch(rendererJs, /openStoryThumbnailsButton|getCurrentThumbnailPath|renderThumbnailPreview|getChapterThumbnail/);
+  assert.doesNotMatch(rendererJs, /story\.meta\?\.thumbnails|thumbnailImages|thumbnailPromptPacks/);
+  assert.doesNotMatch(stylesCss, /\.thumbnail-preview|\.thumbnail-image|\.chapter-thumbnail-image/);
+});
+
+test("desktop keeps progress stable for out-of-order parallel poster events", () => {
+  const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+
+  assert.match(rendererJs, /Math\.max\(state\.progress\.current, Number\(event\.current\) \|\| 0\)/);
+  assert.doesNotMatch(rendererJs, /step\.current > event\.current\) \{\s*step\.status = "pending";/);
+});
+
 test("desktop exposes story history and OmniVoice TTS IPC", () => {
   const indexHtml = readProjectFile("desktop", "renderer", "index.html");
   const preloadTs = readProjectFile("src", "electron", "preload.ts");
@@ -200,7 +237,7 @@ test("desktop exposes a single full-story generation button", () => {
 
   assert.doesNotMatch(indexHtml, /id="generate-outline-button"|Tạo Outline/);
   assert.doesNotMatch(rendererJs, /generateOutlineButton|generateOutline\(buildOutlinePayload/);
-  assert.match(indexHtml, /id="generate-full-button"[^>]*title="Dựng outline rồi viết đủ 15 chương; tự kiểm tra và sửa chất lượng từng chương\."/);
+  assert.match(indexHtml, /id="generate-full-button"[^>]*title="Dựng outline rồi viết đủ 10 chương; tự kiểm tra và sửa chất lượng từng chương\."/);
   assert.match(indexHtml, /Tạo Toàn Bộ Truyện/);
   assert.match(indexHtml, /Tạo đủ Tổng Quan, Kế Hoạch và Chương/);
 });
@@ -286,10 +323,17 @@ test("desktop exposes a compact 9router settings control without rendering API k
 test("story control dropdowns are removed and randomized from the selected niche", () => {
   const indexHtml = readProjectFile("desktop", "renderer", "index.html");
   const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+  const mainTs = readProjectFile("src", "electron", "main.ts");
 
   assert.doesNotMatch(indexHtml, /Kiểu Phản Bội|Kiểu Nhục Mạ|Cách Trả Đũa|Kiểu Kết Thúc/);
   assert.doesNotMatch(indexHtml, /betrayal-type|shame-type|revenge-mode|ending-mode/);
-  assert.match(rendererJs, /const NICHE_STORY_CONTROLS = \{/);
+  assert.doesNotMatch(rendererJs, /const NICHE_STORY_CONTROLS = \{/);
+  assert.match(rendererJs, /let nicheStoryControls = \{\}/);
+  assert.match(rendererJs, /replaceNicheStoryControls\(payload\.storyControls \|\| \{\}\)/);
+  assert.match(mainTs, /getLocalStoryControls/);
+  assert.match(mainTs, /storyControls: getLocalStoryControls\(\)/);
+  assert.match(mainTs, /prosePolishConfig/);
+  assert.match(rendererJs, /state\.prosePolishConfig = payload\.prosePolishConfig \|\| null/);
   assert.match(rendererJs, /function buildAutoStoryControls/);
   assert.match(rendererJs, /storyControls: buildAutoStoryControls\(linePreset\)/);
 });
@@ -366,20 +410,26 @@ test("desktop session can be paused, saved, and restored on next launch", () => 
 
 test("niche branch drives hidden randomized story-control config", () => {
   const rendererJs = readProjectFile("desktop", "renderer", "renderer.js");
+  const storyControlsTs = readProjectFile("src", "modules", "presets", "story-controls.ts");
 
-  assert.match(rendererJs, /const NICHE_STORY_CONTROLS = \{/);
-  assert.match(rendererJs, /billionaire_rich_poor_romance:\s*\{/);
-  assert.match(rendererJs, /secret_identity_hidden_heiress:\s*\{/);
-  assert.match(rendererJs, /social_injustice_discrimination_drama:\s*\{/);
-  assert.match(rendererJs, /workplace_ceo_power_struggle:\s*\{/);
-  assert.match(rendererJs, /medical_hidden_doctor_life_care:\s*\{/);
-  assert.match(rendererJs, /school_campus_bullying_identity:\s*\{/);
-  assert.match(rendererJs, /contract marriage/i);
-  assert.match(rendererJs, /hidden heiress/i);
-  assert.match(rendererJs, /restaurant humiliation/i);
-  assert.match(rendererJs, /startup pitch/i);
-  assert.match(rendererJs, /triage/i);
-  assert.match(rendererJs, /scholarship/i);
+  assert.match(storyControlsTs, /export const NICHE_STORY_CONTROLS/);
+  assert.match(storyControlsTs, /billionaire_rich_poor_romance:\s*\{/);
+  assert.match(storyControlsTs, /secret_identity_hidden_heiress:\s*\{/);
+  assert.match(storyControlsTs, /social_injustice_discrimination_drama:\s*\{/);
+  assert.match(storyControlsTs, /workplace_ceo_power_struggle:\s*\{/);
+  assert.match(storyControlsTs, /medical_hidden_doctor_life_care:\s*\{/);
+  assert.match(storyControlsTs, /school_campus_bullying_identity:\s*\{/);
+  assert.match(storyControlsTs, /werewolf_luna_alpha_soulmate:\s*\{/);
+  assert.match(storyControlsTs, /steamy_alien_captive_romance:\s*\{/);
+  assert.match(storyControlsTs, /contract marriage/i);
+  assert.match(storyControlsTs, /hidden heiress/i);
+  assert.match(storyControlsTs, /restaurant humiliation/i);
+  assert.match(storyControlsTs, /startup pitch/i);
+  assert.match(storyControlsTs, /triage/i);
+  assert.match(storyControlsTs, /scholarship/i);
+  assert.match(storyControlsTs, /Alpha soulmate/i);
+  assert.match(storyControlsTs, /alien captive/i);
+  assert.doesNotMatch(rendererJs, /startup pitch|alien captive|Alpha soulmate/);
   assert.match(rendererJs, /elements\.linePreset\.addEventListener\("change", \(\) => \{/);
 });
 
@@ -391,13 +441,24 @@ test("desktop renders OmniVoice story TTS voice panel", () => {
   assert.match(indexHtml, /id="tts-api-base"/);
   assert.match(indexHtml, /id="voice-id-select"/);
   assert.match(indexHtml, /id="generate-story-voice-button"/);
-  assert.match(indexHtml, /Gen Voice 15/);
+  assert.match(indexHtml, /id="pause-story-voice-button"/);
+  assert.match(indexHtml, /id="stop-story-voice-button"/);
+  assert.match(indexHtml, /id="resume-story-voice-button"/);
+  assert.match(indexHtml, /id="retry-story-voice-button"/);
+  assert.match(indexHtml, /Gen Voice 10/);
+  assert.match(indexHtml, /Pause/);
+  assert.match(indexHtml, /Stop/);
+  assert.match(indexHtml, /Resume/);
+  assert.match(indexHtml, /Retry/);
 
   assert.match(rendererJs, /ttsConfig/);
+  assert.match(rendererJs, /ttsSession/);
   assert.match(rendererJs, /loadOmniVoiceVoices/);
   assert.match(rendererJs, /generateStoryVoice/);
+  assert.match(rendererJs, /controlStoryVoice/);
   assert.match(rendererJs, /handleTtsProgressEvent/);
 
   assert.match(stylesCss, /\.voice-progress/);
+  assert.match(stylesCss, /\.voice-control-grid/);
   assert.match(stylesCss, /\.mini-status/);
 });

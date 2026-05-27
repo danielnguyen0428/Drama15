@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { StoryHistoryStore } from "../../src/modules/session/story-history-store";
+import { StoryPayloadSchema } from "../../src/schemas/story";
 import type { StoryPayload } from "../../src/types/story";
 
 function makeStory(title = "Fake Wife Of A Billionaire"): StoryPayload {
@@ -27,7 +28,7 @@ function makeStory(title = "Fake Wife Of A Billionaire"): StoryPayload {
         endingMode: "respect before love",
         intensity: 0.84,
       },
-      chapterCount: 15,
+      chapterCount: 10,
       draftControls: {
         dialogueRatio: 0.55,
         hookDensity: "high",
@@ -64,7 +65,7 @@ function makeStory(title = "Fake Wife Of A Billionaire"): StoryPayload {
       revengeEngine: "Her competence becomes necessary.",
       endingMode: "respect before love",
     },
-    chapterPlan: Array.from({ length: 15 }, (_, index) => ({
+    chapterPlan: Array.from({ length: 10 }, (_, index) => ({
       chapterNumber: index + 1,
       title: `Plan ${index + 1}`,
       hook: `Hook ${index + 1}`,
@@ -136,6 +137,37 @@ test("StoryHistoryStore prepends newest stories, caps entries, and deletes by id
   assert.equal(await store.get(first.id), null);
 });
 
+test("StoryHistoryStore imports valid entries from legacy portable history roots", async () => {
+  const configRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-history-primary-"));
+  const legacyRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-portable-data-legacy-"));
+  const legacyStory = makeStory("Legacy Portable Story");
+  const legacyEntry = {
+    id: "legacy-portable-story-20260505010101",
+    title: legacyStory.title,
+    linePreset: legacyStory.request.linePreset,
+    outputLanguage: legacyStory.request.outputLanguage,
+    chapterCount: legacyStory.chapters.length,
+    createdAt: "2026-05-05T01:01:01.000Z",
+    updatedAt: "2026-05-05T01:02:01.000Z",
+    storyPayload: legacyStory,
+    exports: {
+      chapterMarkdownDirectories: [],
+      pdfFiles: [],
+      voiceDirectories: [],
+      posterImages: [],
+    },
+  };
+  await fs.writeFile(path.join(legacyRoot, "drama15-story-history.json"), `${JSON.stringify([legacyEntry], null, 2)}\n`, "utf8");
+
+  const store = new StoryHistoryStore({ configRoot, maxEntries: 5, legacyHistoryRoots: [legacyRoot] });
+
+  const entries = await store.list();
+  const persisted = JSON.parse(await fs.readFile(path.join(configRoot, "drama15-story-history.json"), "utf8")) as unknown[];
+
+  assert.equal(entries[0]?.title, "Legacy Portable Story");
+  assert.equal(persisted.length, 1);
+});
+
 test("StoryHistoryStore records voice export directories and keeps legacy exports valid", async () => {
   const configRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-history-"));
   const store = new StoryHistoryStore({ configRoot, maxEntries: 5 });
@@ -152,4 +184,104 @@ test("StoryHistoryStore records voice export directories and keeps legacy export
   assert.equal(loaded?.exports.voiceDirectories[0]?.directoryPath, "D:/exports/story-voice");
   assert.equal(loaded?.exports.voiceDirectories[0]?.voiceId, "main-voice");
   assert.deepEqual(loaded?.exports.voiceDirectories[0]?.filePaths, ["D:/exports/story-voice/chapter-01.wav"]);
+});
+
+test("StoryHistoryStore records completed poster images from story metadata", async () => {
+  const configRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-history-"));
+  const store = new StoryHistoryStore({ configRoot, maxEntries: 5 });
+  const story = makeStory();
+  story.meta.poster = {
+    status: "completed",
+    title: story.title,
+    model: "gpt-image-2",
+    size: "1536x1024",
+    generatedAt: "2026-05-07T16:45:00.000Z",
+    filePath: "D:/outputs/posters/fake-wife-of-a-billionaire-poster.png",
+  };
+
+  const entry = await store.upsertStory(story);
+  const loaded = await store.get(entry.id);
+
+  assert.equal(loaded?.exports.posterImages[0]?.filePath, "D:/outputs/posters/fake-wife-of-a-billionaire-poster.png");
+  assert.equal(loaded?.exports.posterImages[0]?.model, "gpt-image-2");
+  assert.equal(loaded?.exports.posterImages[0]?.title, "Fake Wife Of A Billionaire");
+});
+
+test("StoryPayloadSchema strips legacy thumbnail metadata", () => {
+  const story = makeStory();
+  const parsed = StoryPayloadSchema.parse({
+    ...story,
+    meta: {
+      ...story.meta,
+      thumbnails: {
+        status: "completed",
+        model: "gpt-image-2",
+        size: "1536x864",
+        generatedAt: "2026-05-11T04:00:00.000Z",
+        story: {
+          status: "completed",
+          kind: "story",
+          title: story.title,
+          model: "gpt-image-2",
+          size: "1536x864",
+          generatedAt: "2026-05-11T04:00:00.000Z",
+          filePath: "D:/outputs/thumbnails/fake-wife-of-a-billionaire/story.png",
+        },
+        chapters: [
+          {
+            status: "completed",
+            kind: "chapter",
+            title: "The Dinner Seat",
+            chapterNumber: 1,
+            model: "gpt-image-2",
+            size: "1536x864",
+            generatedAt: "2026-05-11T04:00:00.000Z",
+            filePath: "D:/outputs/thumbnails/fake-wife-of-a-billionaire/chapters/01-the-dinner-seat.png",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal("thumbnails" in parsed.meta, false);
+});
+
+test("StoryHistoryStore does not record legacy thumbnail images or prompt packs", async () => {
+  const configRoot = await fs.mkdtemp(path.join(os.tmpdir(), "drama15-story-history-"));
+  const store = new StoryHistoryStore({ configRoot, maxEntries: 5 });
+  const story = makeStory();
+  (story.meta as StoryPayload["meta"] & { thumbnails: unknown }).thumbnails = {
+    status: "prompt_pack",
+    model: "gpt-image-2",
+    size: "1536x864",
+    generatedAt: "2026-05-11T04:00:00.000Z",
+    promptPackPath: "D:/outputs/thumbnails/fake-wife-of-a-billionaire/thumbnail-prompts.jsonl",
+    story: {
+      status: "completed",
+      kind: "story",
+      title: story.title,
+      model: "gpt-image-2",
+      size: "1536x864",
+      generatedAt: "2026-05-11T04:00:00.000Z",
+      filePath: "D:/outputs/thumbnails/fake-wife-of-a-billionaire/story.png",
+    },
+    chapters: [
+      {
+        status: "completed",
+        kind: "chapter",
+        title: "The Dinner Seat",
+        chapterNumber: 1,
+        model: "gpt-image-2",
+        size: "1536x864",
+        generatedAt: "2026-05-11T04:00:00.000Z",
+        filePath: "D:/outputs/thumbnails/fake-wife-of-a-billionaire/chapters/01-the-dinner-seat.png",
+      },
+    ],
+  };
+
+  const entry = await store.upsertStory(story);
+  const loaded = await store.get(entry.id);
+
+  assert.equal(loaded ? "thumbnailImages" in loaded.exports : true, false);
+  assert.equal(loaded ? "thumbnailPromptPacks" in loaded.exports : true, false);
 });

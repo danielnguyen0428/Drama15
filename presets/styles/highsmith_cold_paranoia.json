@@ -1,0 +1,14 @@
+{
+  "id": "highsmith_cold_paranoia",
+  "displayName": "Hoang mang l\u1ea1nh - Highsmith",
+  "description": "B\u1ea5t an \u0111\u1ea1o \u0111\u1ee9c, m\u1eb7t n\u1ea1 x\u00e3 h\u1ed9i, \u00e1p l\u1ef1c \u00e1m \u1ea3nh, \u0111e d\u1ecda t\u00e2m l\u00fd l\u1eb7ng l\u1ebd.",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.4,
+  "melodramaLevel": "cold psychological tension",
+  "notes": [
+    "Let small mismatches create dread.",
+    "Keep menace close, ordinary, and socially plausible.",
+    "Use social masks as both weapon and vulnerability."
+  ]
+}

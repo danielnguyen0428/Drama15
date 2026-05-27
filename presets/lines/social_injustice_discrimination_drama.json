@@ -1,0 +1,113 @@
+{
+  "id": "social_injustice_discrimination_drama",
+  "displayName": "Niche 7: Bất công xã hội / Phân biệt đối xử",
+  "description": "Urban thriller social-justice drama about discrimination on protected attributes (race, ethnicity, accent, religion, disability, age, body size, immigration status, gender identity, class), accessibility denial, service refusal, profiling, wrongful policing, institutional mistreatment, paper-trail evidence, policy reform, and public repair. The wound is bias on a protected attribute, never just rude rich-versus-poor humiliation (-> Niche 2).",
+  "emotionalAxis": "discrimination wound on a protected attribute, urban thriller pressure of being misjudged in public, access denial, wrongful accusation, documented justice reveal, institutional repair beyond personal apology",
+  "coreKeywords": [
+    "urban justice drama",
+    "discrimination",
+    "accessibility denial",
+    "racism",
+    "classism",
+    "ableism",
+    "ageism",
+    "religious discrimination",
+    "language or accent discrimination",
+    "body size discrimination",
+    "immigrant discrimination",
+    "service refusal",
+    "racist manager",
+    "wheelchair user denied entry",
+    "deaf customer ignored",
+    "guide dog refused",
+    "TSA profiling",
+    "wrongful arrest reversed",
+    "policy lawsuit",
+    "institutional repair",
+    "ADA complaint",
+    "civil rights filing",
+    "documented witness",
+    "body-cam evidence",
+    "she did not have to prove she belonged"
+  ],
+  "seriesExamples": [
+    "Disabled Woman Rejected At The Restaurant She Designed",
+    "Restaurant Refused The Owner In A Wheelchair",
+    "Urban Thriller Exposed The Racist Manager",
+    "Accessibility Lawsuit Returned Her Seat",
+    "Public Shame Turned Into Policy Repair",
+    "Guide Dog Was Refused At The Five-Star Hotel She Owned",
+    "Deaf Engineer Was Spoken Over Until The Patent Read Her Name",
+    "Profiled At The Airport, She Owned The Airline",
+    "Religious Headscarf Cost Her The Job, The Court Cost Them The Brand",
+    "Body-Cam Footage Cleared The Wrongful Arrest",
+    "Pregnancy Cost Her The Promotion, The EEOC Cost Them The Settlement",
+    "The Bouncer Said She Did Not Look The Part, The Stage Disagreed"
+  ],
+  "tropeWeights": {
+    "discrimination_wound": 1,
+    "accessibility_denial": 0.95,
+    "racism_or_classism_or_ableism_engine": 0.95,
+    "service_refusal": 0.92,
+    "wrongful_arrest_or_profiling": 0.88,
+    "documented_evidence_reveal": 0.92,
+    "ADA_or_civil_rights_filing": 0.88,
+    "institutional_repair": 0.92,
+    "policy_lawsuit": 0.86,
+    "body_cam_or_witness_evidence": 0.86,
+    "refusal_to_perform_belonging": 0.9,
+    "non_extremist_resolution": 0.9,
+    "female_agency": 0.92,
+    "justice_payoff": 0.94,
+    "she_protects_other_targets_first": 0.86
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "unfair public refusal, profiling, or accusation grounded in a protected attribute, with witnesses present",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "she is refused service or accessible entrance because of a protected attribute",
+    "manager, bouncer, officer, or crowd misjudges her through racism, classism, ableism, ageism, or accent bias",
+    "a 'community standards' or 'security concern' excuse is given on the record",
+    "the institution backs the discriminator publicly until the paper trail forces a turn",
+    "she is told to prove she belongs in a way that other guests are not asked to prove",
+    "the discriminator's manager or peer reinforces the bias in front of witnesses",
+    "her credentials, license, or membership are publicly questioned without basis",
+    "the truth is captured on body-cam, security footage, or signed witness statements"
+  ],
+  "revengeActivation": [
+    "the owner or authority reveal lands in the same venue that refused her",
+    "a public apology alone is judged insufficient; she demands policy change",
+    "ADA, EEOC, civil-rights, or licensing-board filing forces accountability",
+    "policy or workplace consequence (firing, license suspension, contract loss) is recorded",
+    "evidence forces institutional repair (training, audit, oversight, monitor)",
+    "she keeps dignity over spectacle and refuses to perform belonging on demand",
+    "she protects another targeted person first, before claiming her own restitution",
+    "settlement money is redirected to community programs that fix the root issue",
+    "the case becomes precedent in the same chain or industry that wronged her"
+  ],
+  "dignityRecoveryTiming": "clear justice payoff, careful and non-exploitative, with institutional repair and policy precedent rather than only a personal apology",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "discrimination on a protected attribute (race, accent, religion, disability, age, body size, immigration status, gender identity, class)",
+      "accessibility denial, service refusal, profiling, wrongful arrest reversal",
+      "ADA / EEOC / civil-rights / licensing-board paperwork as evidence engine",
+      "institutional repair, policy reform, training mandate, oversight monitor",
+      "non-extremist, careful, paper-trail justice that protects other targets too"
+    ],
+    "doesNotBelongHere": [
+      "general public humiliation without a protected-attribute wound (-> Niche 2)",
+      "office contract / paper marriage / hostile takeover (-> Niche 8)",
+      "rich-poor courtship love story (-> Niche 1)",
+      "blood-family inheritance fraud (-> Niche 4)",
+      "campus bullying with student-stage reveal (-> Niche 10)"
+    ]
+  }
+}

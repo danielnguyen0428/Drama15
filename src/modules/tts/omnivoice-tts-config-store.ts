@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { env } from "../../lib/env";
 import { getConfigRoot } from "../../lib/runtime";
 
 export type OmniVoiceTtsConfig = {
@@ -54,13 +55,13 @@ export class OmniVoiceTtsConfigStore {
   }
 }
 
-export function getDefaultOmniVoiceTtsConfig(configRoot = getConfigRoot()): OmniVoiceTtsConfig {
+export function getDefaultOmniVoiceTtsConfig(_configRoot = getConfigRoot()): OmniVoiceTtsConfig {
   return {
     apiBase: DEFAULT_API_BASE,
     selectedVoiceId: "",
     speed: 1,
     pitch: 0,
-    outputRoot: path.join(configRoot, "outputs", "voice"),
+    outputRoot: path.join(env.outputDir, "voice"),
   };
 }
 

@@ -1,0 +1,111 @@
+{
+  "id": "humiliation_revenge_justice",
+  "displayName": "Niche 2: Bị sỉ nhục / Trả đũa / Công lý",
+  "description": "Urban thriller justice built around public humiliation, viral evidence, staged accusations, lawsuit pressure, audit trail, public apology, karma payoff, and status reversal. The engine is documented public revenge with paper trails, security footage, recordings, and institutional accountability — not romance, not corporate-power leverage, not family inheritance.",
+  "emotionalAxis": "public humiliation wound, urban justice pressure, paper-trail evidence reveal, delayed karma, public apology refusal, status reversal in the same room she was shamed in",
+  "coreKeywords": [
+    "urban justice drama",
+    "thriller revenge",
+    "public humiliation",
+    "viral video evidence",
+    "lawsuit pressure",
+    "public apology",
+    "humiliated her in public",
+    "they regretted it",
+    "karma payoff",
+    "status reversal",
+    "she came back richer",
+    "wrongful accusation",
+    "false witness",
+    "audit trail revenge",
+    "security footage reveal",
+    "voice recording",
+    "courtroom reversal",
+    "press conference apology",
+    "client list reveal",
+    "professional license at stake",
+    "she refused the cheap apology",
+    "bystanders chose the wrong side"
+  ],
+  "seriesExamples": [
+    "They Humiliated Her At The Reception Desk",
+    "Viral Clip Cleared The Woman They Shamed",
+    "Urban Lawsuit Forced The Public Apology",
+    "Public Evidence Reversed The Humiliation",
+    "Poor Girl Came Back With The Audit Report",
+    "The Manager Who Mocked Her Lost Her License",
+    "Her Voice Note Tore Down The False Witness",
+    "Restaurant Threw Her Out, Court Brought Her Back",
+    "The Bouncer Said She Did Not Belong, The Owner Disagreed",
+    "Receipts Returned In The Same Press Room She Was Mocked In",
+    "She Refused The Apology And Filed The Suit",
+    "The Charity Gala Apology Came Too Late"
+  ],
+  "tropeWeights": {
+    "public_humiliation": 1,
+    "documented_revenge": 1,
+    "justice_payoff": 0.95,
+    "karma_in_public": 0.92,
+    "status_reversal": 0.95,
+    "urban_thriller": 0.92,
+    "viral_evidence_reveal": 0.92,
+    "lawsuit_pressure": 0.9,
+    "audit_trail_revenge": 0.9,
+    "wrongful_accusation_clearing": 0.88,
+    "press_conference_reversal": 0.86,
+    "license_or_career_consequence": 0.86,
+    "refused_cheap_apology": 0.9,
+    "same_room_reversal": 0.92,
+    "female_agency": 0.92
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "public disrespect or staged accusation in a venue with witnesses, demanding documented payoff",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "she is mocked in public by someone gatekeeping a venue, queue, or service desk",
+    "her status markers are misjudged and used as proof she does not belong",
+    "witnesses choose the side with the louder voice and refuse to step in",
+    "a viral clip or staged receipt spreads before context catches up",
+    "a manager or authority figure backs the humiliator on camera",
+    "her professional credentials are publicly questioned without evidence",
+    "a false witness or fabricated complaint locks her out of a room she earned",
+    "the truth is intentionally delayed so the humiliation can compound",
+    "the humiliator brags privately, captured on a recording she keeps"
+  ],
+  "revengeActivation": [
+    "clean documentary evidence (footage, contracts, audit logs) lands in the same public space",
+    "status reversal happens in the same room she was shamed in, with the same audience",
+    "a lawsuit, audit, or licensing review forces accountability with paperwork",
+    "the people who mocked her face concrete consequences (fired, license suspended, contract pulled)",
+    "she refuses a cheap private apology and demands it where the harm happened",
+    "the humiliator's recording or message proves intent, not misunderstanding",
+    "press conference or all-hands becomes the reveal stage, not a private settlement",
+    "she protects another wrongly accused person before claiming her own dignity",
+    "the policy or rule that allowed the humiliation gets rewritten on the record"
+  ],
+  "dignityRecoveryTiming": "strong late reveal in the same public venue, with documented receipts and a moral turn — never a private hush-money settlement",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "public humiliation wound that demands documented public payoff",
+      "audit trail, security footage, voice recording, and licensing-review evidence",
+      "lawsuit and press-conference reversal in the same room she was shamed in",
+      "wrongful accusation cleared by paperwork, not romance",
+      "refusal of cheap private apology in favor of public accountability"
+    ],
+    "doesNotBelongHere": [
+      "office contract / paper marriage / hostile takeover engine (-> Niche 8)",
+      "rich-poor courtship and family opposition love story (-> Niche 1)",
+      "family inheritance fraud and custody papers (-> Niche 4)",
+      "wedding / ex-lover replacement bride drama (-> Niche 5)",
+      "discrimination based on race / disability / accessibility (-> Niche 7)"
+    ]
+  }
+}

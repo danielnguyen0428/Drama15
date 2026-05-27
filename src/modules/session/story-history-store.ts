@@ -7,6 +7,7 @@ import type { StoryPayload } from "../../types/story";
 
 type StoryHistoryStoreOptions = {
   configRoot?: string;
+  legacyHistoryRoots?: string[];
   maxEntries?: number;
 };
 
@@ -19,6 +20,13 @@ export type StoryHistoryExportPath = {
 
 export type StoryHistoryVoiceExportPath = StoryHistoryExportPath & {
   voiceId: string;
+  generatedAt: string;
+};
+
+export type StoryHistoryPosterExportPath = StoryHistoryExportPath & {
+  title: string;
+  model: string;
+  size: string;
   generatedAt: string;
 };
 
@@ -35,6 +43,7 @@ export type StoryHistoryEntry = {
     chapterMarkdownDirectories: StoryHistoryExportPath[];
     pdfFiles: StoryHistoryExportPath[];
     voiceDirectories: StoryHistoryVoiceExportPath[];
+    posterImages: StoryHistoryPosterExportPath[];
   };
 };
 
@@ -43,10 +52,14 @@ const DEFAULT_MAX_ENTRIES = 100;
 
 export class StoryHistoryStore {
   private readonly configRoot: string;
+  private readonly legacyHistoryRoots: string[];
   private readonly maxEntries: number;
 
   constructor(options: StoryHistoryStoreOptions = {}) {
     this.configRoot = options.configRoot ?? getConfigRoot();
+    this.legacyHistoryRoots = [...new Set(options.legacyHistoryRoots ?? [])]
+      .map((root) => path.resolve(root))
+      .filter((root) => root !== path.resolve(this.configRoot));
     this.maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
   }
 
@@ -60,20 +73,30 @@ export class StoryHistoryStore {
   }
 
   async upsertStory(storyPayload: StoryPayload): Promise<StoryHistoryEntry> {
+    const cleanedStoryPayload = stripLegacyThumbnailMetadata(storyPayload);
     const entries = await this.loadEntries();
-    const id = createStoryHistoryId(storyPayload);
+    const id = createStoryHistoryId(cleanedStoryPayload);
     const existing = entries.find((entry) => entry.id === id);
     const now = new Date().toISOString();
+    const exports = normalizeStoryHistoryExports(existing?.exports);
+    const posterExport = createPosterExport(cleanedStoryPayload);
+    if (posterExport) {
+      exports.posterImages = [
+        posterExport,
+        ...exports.posterImages.filter((item) => item.filePath !== posterExport.filePath),
+      ];
+    }
+
     const nextEntry: StoryHistoryEntry = {
       id,
-      title: storyPayload.title,
-      linePreset: storyPayload.request.linePreset,
-      outputLanguage: storyPayload.request.outputLanguage,
-      chapterCount: storyPayload.chapters.length,
-      createdAt: existing?.createdAt ?? storyPayload.meta.generatedAt ?? now,
+      title: cleanedStoryPayload.title,
+      linePreset: cleanedStoryPayload.request.linePreset,
+      outputLanguage: cleanedStoryPayload.request.outputLanguage,
+      chapterCount: cleanedStoryPayload.chapters.length,
+      createdAt: existing?.createdAt ?? cleanedStoryPayload.meta.generatedAt ?? now,
       updatedAt: now,
-      storyPayload,
-      exports: normalizeStoryHistoryExports(existing?.exports),
+      storyPayload: cleanedStoryPayload,
+      exports,
     };
 
     await this.saveEntries([nextEntry, ...entries.filter((entry) => entry.id !== id)].slice(0, this.maxEntries));
@@ -148,8 +171,22 @@ export class StoryHistoryStore {
   }
 
   private async loadEntries(): Promise<StoryHistoryEntry[]> {
+    const primaryEntries = await this.readEntriesFromPath(this.historyPath);
+    const legacyEntries = (
+      await Promise.all(this.legacyHistoryRoots.map((root) => this.readEntriesFromPath(path.join(root, STORY_HISTORY_FILE_NAME))))
+    ).flat();
+    const entries = mergeStoryHistoryEntries([primaryEntries, legacyEntries]).slice(0, this.maxEntries);
+
+    if (legacyEntries.length > 0 && hasDifferentEntryIds(primaryEntries, entries)) {
+      await this.saveEntries(entries);
+    }
+
+    return entries;
+  }
+
+  private async readEntriesFromPath(filePath: string): Promise<StoryHistoryEntry[]> {
     try {
-      const raw = await fs.readFile(this.historyPath, "utf8");
+      const raw = await fs.readFile(filePath, "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) {
         return [];
@@ -159,6 +196,7 @@ export class StoryHistoryStore {
         .filter(isStoryHistoryEntry)
         .map((entry) => ({
           ...entry,
+          storyPayload: stripLegacyThumbnailMetadata(entry.storyPayload),
           exports: normalizeStoryHistoryExports(entry.exports),
         }))
         .slice(0, this.maxEntries);
@@ -208,6 +246,59 @@ function normalizeStoryHistoryExports(value: unknown): StoryHistoryEntry["export
     chapterMarkdownDirectories: Array.isArray(exports.chapterMarkdownDirectories) ? exports.chapterMarkdownDirectories : [],
     pdfFiles: Array.isArray(exports.pdfFiles) ? exports.pdfFiles : [],
     voiceDirectories: Array.isArray(exports.voiceDirectories) ? exports.voiceDirectories : [],
+    posterImages: Array.isArray(exports.posterImages) ? exports.posterImages : [],
+  };
+}
+
+function mergeStoryHistoryEntries(entryGroups: StoryHistoryEntry[][]) {
+  const entriesById = new Map<string, StoryHistoryEntry>();
+
+  for (const entry of entryGroups.flat()) {
+    const current = entriesById.get(entry.id);
+    if (!current || getHistoryEntryTime(entry) > getHistoryEntryTime(current)) {
+      entriesById.set(entry.id, entry);
+    }
+  }
+
+  return [...entriesById.values()].sort((left, right) => getHistoryEntryTime(right) - getHistoryEntryTime(left));
+}
+
+function hasDifferentEntryIds(left: StoryHistoryEntry[], right: StoryHistoryEntry[]) {
+  if (left.length !== right.length) {
+    return true;
+  }
+
+  const leftIds = new Set(left.map((entry) => entry.id));
+  return right.some((entry) => !leftIds.has(entry.id));
+}
+
+function getHistoryEntryTime(entry: StoryHistoryEntry) {
+  const value = Date.parse(entry.updatedAt || entry.createdAt || "");
+  return Number.isFinite(value) ? value : 0;
+}
+
+function stripLegacyThumbnailMetadata(storyPayload: StoryPayload): StoryPayload {
+  const meta = { ...(storyPayload.meta as StoryPayload["meta"] & { thumbnails?: unknown }) };
+  delete meta.thumbnails;
+  return {
+    ...storyPayload,
+    meta,
+  };
+}
+
+function createPosterExport(storyPayload: StoryPayload): StoryHistoryPosterExportPath | null {
+  const poster = storyPayload.meta.poster;
+  if (poster?.status !== "completed" || !poster.filePath) {
+    return null;
+  }
+
+  return {
+    filePath: poster.filePath,
+    title: poster.title,
+    model: poster.model,
+    size: poster.size,
+    generatedAt: poster.generatedAt,
+    exportedAt: new Date().toISOString(),
   };
 }
 

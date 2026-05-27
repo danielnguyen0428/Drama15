@@ -1,6 +1,6 @@
 {
   "name": "drama15-lite",
-  "version": "2.0.3",
+  "version": "2.2.0",
   "description": "Desktop short-drama studio for Windows portable builds.",
   "private": true,
   "packageManager": "npm@11.11.0",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "jsonrepair": "3.11.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -29,6 +30,7 @@
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
     "esbuild": "^0.25.11",
+    "puppeteer": "^25.0.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   },

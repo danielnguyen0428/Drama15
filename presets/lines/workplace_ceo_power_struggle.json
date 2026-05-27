@@ -1,0 +1,117 @@
+{
+  "id": "workplace_ceo_power_struggle",
+  "displayName": "Niche 8: Công sở / CEO / Tranh quyền nghề nghiệp",
+  "description": "Billionaire/CEO and urban career-power drama. Owns the contract-wife / paper marriage / business-deal bride spine, ex-wife divorce regret, female billionaire comeback / revenge queen, possessive ruthless boss, hostile takeover, cap-table fraud, pitch theft, layoffs, pregnant-secretary buyout, hidden heiress in the office, and boardroom evidence reversals. Romance can appear, but the engine is power, ownership, paperwork, and documented justice rather than rich-poor courtship.",
+  "emotionalAxis": "workplace humiliation, urban career pressure, contract and paper-marriage leverage, secret-baby or pregnancy used as office leverage, ex-wife divorce regret, possessive boss control, female billionaire comeback, board or all-hands evidence reversal",
+  "coreKeywords": [
+    "workplace drama",
+    "billionaire/CEO",
+    "urban career revenge",
+    "contract wife",
+    "paper marriage",
+    "business deal romance",
+    "fake wife of a CEO",
+    "secret baby leverage in the office",
+    "pregnant secretary buyout",
+    "ex-wife divorce regret",
+    "chasing wife after divorce",
+    "female billionaire comeback",
+    "revenge queen",
+    "possessive ruthless billionaire",
+    "heartless boss",
+    "hidden heiress in the office",
+    "secret billionaire boss",
+    "hostile takeover",
+    "cap table fraud",
+    "pitch theft",
+    "fired assistant",
+    "boardroom evidence",
+    "startup betrayal",
+    "one-night with the wrong CEO",
+    "after divorce she bought his company"
+  ],
+  "seriesExamples": [
+    "Intern Became The CEO",
+    "Hostile Board Needed The Fired Assistant",
+    "They Stole Her Pitch Deck",
+    "Urban CEO War Exposed The Cap Table Fraud",
+    "The CEO Walked Into HR",
+    "Contract Wife For The CEO Heir",
+    "After Divorce She Bought His Company",
+    "Pregnant Secretary Refused The CEO's Buyout",
+    "The Hidden Heiress Signed As His Secretary",
+    "Female Billionaire Bought Her Ex's Wedding Venue",
+    "Possessive Billionaire Lost His Contract Wife",
+    "One Night With The Wrong CEO",
+    "Ex-Wife Returned As A Female Billionaire"
+  ],
+  "tropeWeights": {
+    "workplace_power": 1,
+    "stolen_credit": 0.95,
+    "ceo_reveal": 0.9,
+    "audit_revenge": 0.92,
+    "female_agency": 0.94,
+    "urban_career_power": 0.9,
+    "cap_table_fraud": 0.92,
+    "hostile_takeover": 0.9,
+    "contract_marriage": 0.95,
+    "paper_marriage": 0.92,
+    "ex_wife_divorce_regret": 0.92,
+    "possessive_ruthless_billionaire": 0.9,
+    "female_billionaire_comeback": 0.92,
+    "secret_baby_office_leverage": 0.86,
+    "pregnant_secretary_buyout": 0.86,
+    "hidden_heiress_in_office": 0.88,
+    "one_night_with_wrong_ceo": 0.82
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "public career humiliation, contract-marriage trap, divorce-regret signal, or pregnant-secretary buyout with documented stakes",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "public HR shame",
+    "credit stolen in a pitch room",
+    "cap table or hostile takeover pressure hides her ownership",
+    "coworkers choose the powerful liar",
+    "the CEO calls the contract wife a temporary expense in front of counsel",
+    "the ex-husband flaunts a new fiancee during the divorce hearing",
+    "the boss orders the pregnant secretary to sign a silence buyout",
+    "the rich mother-in-law treats the contract bride as replaceable at the gala",
+    "receipts mature before the board reveal"
+  ],
+  "revengeActivation": [
+    "audit trail flips the office",
+    "cap table or repo history proves ownership",
+    "board needs the woman they fired",
+    "hostile takeover evidence restores her leverage",
+    "the contract clause she signed becomes her veto",
+    "the pregnant secretary refuses the buyout and files her own custody packet",
+    "the ex-wife returns as the buyer of her ex-husband's company",
+    "the hidden heiress reveals her vote at the shareholder meeting",
+    "heroine fixes the system before accepting status"
+  ],
+  "dignityRecoveryTiming": "late board, all-hands, shareholder, or divorce-asset reveal where contract, custody, or company control returns to her name before any romantic payoff",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "contract wife / paper marriage / business deal bride spine",
+      "ex-wife divorce regret and chasing wife after divorce",
+      "female billionaire comeback and revenge queen returning as buyer",
+      "possessive ruthless billionaire ownership and hostile takeover",
+      "pregnant secretary buyout, secret-baby leverage used in the office",
+      "hidden heiress entering the company as assistant or secretary",
+      "one-night with the wrong CEO when the spine is corporate fallout",
+      "pitch theft, cap-table fraud, layoff, board-evidence reversals"
+    ],
+    "doesNotBelongHere": [
+      "rich-poor courtship without office, contract, or divorce engine (-> Niche 1)",
+      "Cinderella love story with family opposition only (-> Niche 1)"
+    ]
+  }
+}

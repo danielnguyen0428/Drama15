@@ -1,0 +1,110 @@
+{
+  "id": "cheating_ex_wedding_drama",
+  "displayName": "Niche 5: Ngoại tình / Người yêu cũ / Drama cưới",
+  "description": "Romance and dark romance betrayal drama centered on cheating partners, mistress conflict, ex-lover return, divorce papers, runaway wedding, replacement bride, revenge marriage, public wedding-day reveal, and dignified exit from a romantic lie. The engine is intimate betrayal and ceremonial public space, not corporate paperwork (-> Niche 8) and not family inheritance (-> Niche 4).",
+  "emotionalAxis": "intimate betrayal wound, dark romance pressure, wedding-day exposure, ex-lover regret, mistress confrontation, divorce leverage, public romantic replacement, dignified exit before begging",
+  "coreKeywords": [
+    "romance betrayal drama",
+    "dark romance",
+    "cheating husband",
+    "cheating wife",
+    "ex-wife regret",
+    "ex-husband regret",
+    "divorce papers ready",
+    "wedding day reveal",
+    "fake bride",
+    "replacement bride",
+    "mistress confrontation",
+    "revenge marriage",
+    "vow exchange interrupted",
+    "honeymoon truth reveal",
+    "anniversary betrayal",
+    "twin sister replacement",
+    "best friend slept with him",
+    "second wedding to the right person",
+    "she walked out before the kiss",
+    "prenuptial agreement reveal",
+    "DNA test on the wedding day",
+    "the engagement ring was a lie"
+  ],
+  "seriesExamples": [
+    "Husband Cheated On The Plane",
+    "Mistress Took The Bride's Name",
+    "Dark Romance Divorce Papers Saved Her",
+    "Ex-Wife Returned At The Wedding Reveal",
+    "Wedding Day Betrayal",
+    "She Read The Vows And Then The Hotel Receipts",
+    "Twin Sister Walked Down The Aisle Wearing Her Dress",
+    "The Mistress Was Already Pregnant At The Engagement",
+    "She Signed The Prenup And Then The Divorce",
+    "Honeymoon Suite Held Her Best Friend's Earring",
+    "Second Wedding, First Honest Vow",
+    "Anniversary Dinner Was Where She Filed For Divorce"
+  ],
+  "tropeWeights": {
+    "intimate_betrayal": 1,
+    "wedding_day_reveal": 1,
+    "ex_lover_regret": 0.92,
+    "replacement_bride": 0.9,
+    "mistress_confrontation": 0.92,
+    "divorce_papers_ready": 0.92,
+    "revenge_marriage": 0.86,
+    "honeymoon_truth_reveal": 0.84,
+    "twin_or_lookalike_replacement": 0.82,
+    "best_friend_betrayal": 0.86,
+    "vow_exchange_interrupted": 0.9,
+    "prenup_or_DNA_at_altar": 0.86,
+    "dignified_exit_before_begging": 0.92,
+    "second_wedding_to_the_right_person": 0.84,
+    "dark_romance_tone": 0.86,
+    "female_agency": 0.92
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "intimate betrayal exposed in or near a high-stakes ceremonial moment (engagement, vow rehearsal, vow exchange, anniversary, honeymoon)",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "the cheating is discovered in a public romantic ritual (engagement, rehearsal, vows, honeymoon, anniversary)",
+    "the mistress, sister, or best friend is publicly chosen over the heroine",
+    "divorce papers, hotel receipts, or DNA results expose the timeline",
+    "wedding-day vendors, photographers, or witnesses see the lie before she does",
+    "the betrayer asks for forgiveness only after losing leverage (assets, image, family approval)",
+    "she is asked to keep silent for the family photo / brand / parents in attendance",
+    "she is told the affair was already known by everyone except her",
+    "the betrayer's parents or in-laws side with him in front of the guests"
+  ],
+  "revengeActivation": [
+    "she exits the room before the betrayer can write the narrative",
+    "assets, prenup leverage, and shared property are reclaimed in the same ceremony venue",
+    "the ex returns too late and is publicly turned down",
+    "a revenge filing (divorce, annulment, custody) flips the power on the wedding day",
+    "the public wedding space becomes the reveal room with the truth on screen",
+    "the mistress is exposed by her own message or recording in front of the guests",
+    "she signs the divorce / annulment papers in front of the wedding photographer",
+    "the second wedding to the right person uses the same venue, redefining the room"
+  ],
+  "dignityRecoveryTiming": "mid-late, with clear romantic non-dependence — she leaves the betrayer before any reconciliation talk, and any second love story comes after dignity is restored",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "intimate betrayal (cheating, mistress, ex-lover, replacement bride) as the wound",
+      "wedding / engagement / honeymoon / anniversary as the public reveal venue",
+      "divorce / annulment / prenup paperwork tied to the romantic lie",
+      "dignified exit before begging, with optional second wedding to the right person",
+      "twin or lookalike replacement, best-friend betrayal, family complicity in the affair"
+    ],
+    "doesNotBelongHere": [
+      "corporate contract wife / hostile takeover engine (-> Niche 8)",
+      "rich-poor courtship without intimate betrayal (-> Niche 1)",
+      "family inheritance / custody / will fraud as the spine (-> Niche 4)",
+      "single-mom workplace comeback (-> Niche 6)",
+      "campus or scholarship bullying (-> Niche 10)"
+    ]
+  }
+}

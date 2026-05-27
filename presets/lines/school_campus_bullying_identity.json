@@ -1,0 +1,119 @@
+{
+  "id": "school_campus_bullying_identity",
+  "displayName": "Niche 10: Học đường / Campus / Bắt nạt và thân phận",
+  "description": "Young Adult school and campus drama centered on scholarship stigma, bullying, rich clique pressure, donor-parent interference, exam-record reveal, talent-show stage reveal, anti-cheating evidence, plagiarism reversal, sports-team politics, transfer-student outsider arc, hidden identity at school, online group-chat shaming, dorm hierarchy, school-paper investigation, and disciplinary-committee reveal. Stays inside school / campus venues with student-stage justice (assembly, competition, hearing) — corporate boardroom drama belongs to Niche 8.",
+  "emotionalAxis": "young adult campus humiliation, scholarship stigma, bullying wound, hidden identity at school, rich-clique pressure, exam or donor-power justice, student-stage public reveal",
+  "coreKeywords": [
+    "young adult campus drama",
+    "school bullying",
+    "high school drama",
+    "university drama",
+    "boarding school",
+    "campus drama",
+    "scholarship girl",
+    "scholarship stigma",
+    "rich clique",
+    "hidden heiress at school",
+    "talent show reveal",
+    "donor parent interference",
+    "student humiliation",
+    "transfer student outsider",
+    "dorm hierarchy bullying",
+    "group chat shaming",
+    "anonymous online bullying",
+    "cheating accusation",
+    "plagiarism accusation reversed",
+    "exam record reveal",
+    "academic integrity hearing",
+    "disciplinary committee",
+    "school paper investigation",
+    "sports team politics",
+    "scholarship audit",
+    "rejected by the rich friend group",
+    "she protected another student first"
+  ],
+  "seriesExamples": [
+    "Scholarship Girl Owned The School",
+    "Scholarship Girl Beat The Rich Clique",
+    "Bullies Mocked The New Girl",
+    "Talent Show Secret Reveal",
+    "The Donor's Daughter Was Poor",
+    "Transfer Student Out-Scored The Captain",
+    "The Group Chat Was The Evidence",
+    "Plagiarism Accusation Was Reversed By The Drafts Folder",
+    "School Paper Exposed The Donor Cheat Ring",
+    "Disciplinary Committee Heard The Real Tape",
+    "She Took The Bench Until The Coach's Email Leaked",
+    "Dorm Bullies Turned In Their Own Receipts"
+  ],
+  "tropeWeights": {
+    "school_bullying": 1,
+    "young_adult_campus": 1,
+    "hidden_identity_at_school": 0.92,
+    "scholarship_stigma": 0.95,
+    "donor_parent_power": 0.92,
+    "rich_clique_pressure": 0.92,
+    "talent_show_reveal": 0.88,
+    "exam_record_reveal": 0.9,
+    "plagiarism_reversal": 0.88,
+    "cheating_accusation_reversal": 0.9,
+    "group_chat_shaming": 0.86,
+    "transfer_student_outsider": 0.86,
+    "sports_team_politics": 0.84,
+    "school_paper_investigation": 0.86,
+    "disciplinary_committee_reveal": 0.92,
+    "youth_justice": 0.88,
+    "she_protects_another_student_first": 0.86,
+    "female_agency": 0.92
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "public student humiliation in a school venue (cafeteria, classroom, group chat, locker room, team photo, assembly) with identity, scholarship, or merit stakes",
+    "shameEscalationStart": 1,
+    "revengeActivationChapter": 8,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "cafeteria, classroom, locker room, or team-photo shame escalates with phone cameras",
+    "rich clique and group chat turn the school against her behind a screenshot",
+    "teacher, coach, or donor parent protects the bully or kills the complaint",
+    "talent show, exam record, or stage proof accumulates while she is told to stay quiet",
+    "she is accused of cheating, plagiarism, or theft to discredit her in front of peers",
+    "her scholarship or financial aid is publicly questioned by a peer's parent",
+    "the dorm hierarchy enforces 'who you can sit with' as a punishment",
+    "her transfer-student status is used against her in social and academic spaces",
+    "the school paper is leaned on to drop the story she filed"
+  ],
+  "revengeActivation": [
+    "scholarship ledger, exam metadata, or draft history clears her in the academic hearing",
+    "a bodyguard, donor truth, or family lawyer arrives only after evidence, not before",
+    "the principal must correct the public record at assembly or in the school paper",
+    "the heroine protects another bullied student first, before claiming her own dignity",
+    "the disciplinary committee hears the real tape / message log / drafts folder",
+    "the talent show, debate stage, or competition becomes the public reveal venue",
+    "the donor parent's leverage is exposed with paper, not gossip",
+    "the rich clique's group chat becomes the evidence that closes the case",
+    "the school updates its anti-bullying or scholarship policy on the record"
+  ],
+  "dignityRecoveryTiming": "late assembly, competition, talent show, debate finals, or disciplinary-committee public reveal — student-stage justice, not adult workplace boardroom",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "school / high school / boarding school / university / dorm / campus venues",
+      "scholarship, exam record, plagiarism, cheating accusation, talent show, sports-team politics",
+      "group chat, school paper, disciplinary committee, academic-integrity hearing as evidence venues",
+      "hidden identity at school (hidden heiress, hidden champion, hidden author) revealed on a student stage",
+      "young-adult voice and student-stage justice, not adult workplace stakes"
+    ],
+    "doesNotBelongHere": [
+      "adult workplace / boardroom / corporate revenge (-> Niche 8)",
+      "rich-poor courtship love story without school engine (-> Niche 1)",
+      "blood-family inheritance and custody papers (-> Niche 4)",
+      "single-mom parenting drama (-> Niche 6)",
+      "general urban discrimination on protected attributes (-> Niche 7)"
+    ]
+  }
+}

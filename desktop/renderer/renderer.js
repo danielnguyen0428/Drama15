@@ -45,195 +45,12 @@
       workplace_ceo_power_struggle: "Niche 8: C\u00f4ng s\u1edf / CEO / Tranh quy\u1ec1n ngh\u1ec1 nghi\u1ec7p",
       medical_hidden_doctor_life_care: "Niche 9: Y t\u1ebf / B\u00e1c s\u0129 \u1ea9n danh / Sinh t\u1eed v\u00e0 ch\u0103m s\u00f3c",
       school_campus_bullying_identity: "Niche 10: H\u1ecdc \u0111\u01b0\u1eddng / Campus / B\u1eaft n\u1ea1t v\u00e0 th\u00e2n ph\u1eadn",
+      werewolf_luna_alpha_soulmate: "Niche 11: Werewolf / Luna / Alpha bond drama",
+      steamy_alien_captive_romance: "Niche 12: Steamy / Alien masters / Dark captive romance",
     },
   };
 
-  const NICHE_STORY_CONTROLS = {
-    billionaire_rich_poor_romance: {
-      betrayalType: [
-        storyOption("contract_marriage_class_test", "Contract marriage turns real", "contract marriage pressure where a rich family treats the poor bride as temporary until her value becomes undeniable."),
-        storyOption("rich_family_hates_poor_bride", "Rich family hates her", "rich family hates her because she is poor, then realizes she is the only person who protected the billionaire honestly."),
-        storyOption("poor_girl_rich_boy_rejection", "Poor girl, rich boy rejection", "poor girl rich boy romance where he fails to defend her from elite family contempt."),
-      ],
-      shameType: [
-        storyOption("rich_house_etiquette_shame", "Rich-house etiquette shame", "class-coded shame through seating, clothes, gifts, family dinner rules, and quiet contempt."),
-        storyOption("fake_wife_public_doubt", "Fake wife doubted in public", "public doubt that she deserves to stand beside the billionaire."),
-      ],
-      revengeMode: [
-        storyOption("poor_bride_value_reveal", "Poor bride value reveal", "she proves hidden competence and forces the rich family to need the woman they dismissed."),
-        storyOption("billionaire_public_choice", "Billionaire public choice", "the billionaire must choose her publicly after failing her privately."),
-      ],
-      endingMode: [
-        storyOption("love_after_respect", "Love after respect", "romance can continue only after public respect is paid."),
-        storyOption("dignity_before_money", "Dignity before money", "she refuses to be bought and chooses dignity before wealth."),
-      ],
-    },
-    humiliation_revenge_justice: {
-      betrayalType: [
-        storyOption("they_mocked_wrong_woman", "They mocked the wrong woman", "the crowd mocks her because they misread her status, then the truth makes their cruelty costly."),
-        storyOption("public_blame_shift", "Public blame shift", "powerful people push blame onto her in public to protect themselves."),
-      ],
-      shameType: [
-        storyOption("public_humiliation_revenge", "Public humiliation", "public humiliation with witnesses, recorded details, and a social room that turns against her."),
-        storyOption("mocked_as_nobody", "Mocked as nobody", "she is called nobody, poor, or useless before anyone learns what she controls."),
-      ],
-      revengeMode: [
-        storyOption("karma_evidence_reveal", "Karma evidence reveal", "evidence flips the room and turns mockery into consequences."),
-        storyOption("same_room_status_reversal", "Same-room reversal", "the reversal happens in the exact place where she was humiliated."),
-      ],
-      endingMode: [
-        storyOption("justice_without_cruelty", "Justice without cruelty", "justice lands clearly without making the heroine cruel."),
-        storyOption("regret_too_late", "Regret too late", "they regret it only after her dignity is already restored."),
-      ],
-    },
-    secret_identity_hidden_heiress: {
-      betrayalType: [
-        storyOption("hidden_heiress_dismissed", "Hidden heiress dismissed", "a hidden heiress is treated like staff or a nobody until her real identity becomes unavoidable."),
-        storyOption("undercover_ex_assistant", "Undercover assistant", "she goes undercover as an assistant and discovers the truth everyone tried to hide."),
-      ],
-      shameType: [
-        storyOption("mistaken_for_maid", "Mistaken for maid", "she is mistaken for a maid, janitor, assistant, or poor girl by people who rely on her power."),
-        storyOption("identity_clues_ignored", "Identity clues ignored", "small identity clues appear but arrogant people ignore them."),
-      ],
-      revengeMode: [
-        storyOption("real_identity_reveal", "Real identity reveal", "the real identity reveal lands after antagonists have committed themselves publicly."),
-        storyOption("undercover_truth_package", "Undercover truth package", "undercover evidence exposes betrayal and flips the power room."),
-      ],
-      endingMode: [
-        storyOption("power_without_begging", "Power without begging", "she reveals power without begging to be accepted."),
-        storyOption("secret_kept_until_wedding", "Secret until wedding", "the identity stays hidden until a high-stakes ceremony or public event."),
-      ],
-    },
-    toxic_family_betrayal: {
-      betrayalType: [
-        storyOption("family_kicked_her_out", "Family kicked her out", "toxic family kicks her out or erases her to protect the golden child."),
-        storyOption("inheritance_stolen", "Inheritance stolen", "stepmother, sibling, or in-laws steal inheritance, home, or legal rights."),
-      ],
-      shameType: [
-        storyOption("useless_family_label", "Called useless", "family labels her useless while depending on her invisible labor."),
-        storyOption("funeral_or_will_humiliation", "Funeral/will humiliation", "humiliation lands during a funeral, will reading, lock change, or family meeting."),
-      ],
-      revengeMode: [
-        storyOption("lawyer_reads_truth", "Lawyer reads the truth", "a will, contract, or lawyer reveals the family stole what was hers."),
-        storyOption("built_life_without_family", "Built life without family", "she builds a life they never expected and stops needing family permission."),
-      ],
-      endingMode: [
-        storyOption("family_begs_no_auto_forgiveness", "Family begs, no auto-forgiveness", "family begs to return, but forgiveness is not automatic."),
-        storyOption("home_reclaimed", "Home reclaimed", "home, name, and legal dignity are reclaimed."),
-      ],
-    },
-    cheating_ex_wedding_drama: {
-      betrayalType: [
-        storyOption("wedding_day_betrayal", "Wedding day betrayal", "betrayal erupts at a wedding, engagement, plane ride, or public romantic ritual."),
-        storyOption("mistress_took_place", "Mistress took my place", "a mistress, sister, or fake bride tries to take the heroine's place."),
-      ],
-      shameType: [
-        storyOption("backup_bride_shame", "Backup bride shame", "she discovers she was treated as a backup bride in her own love story."),
-        storyOption("ex_too_late_public", "Ex too late", "the ex returns publicly only after she is no longer available."),
-      ],
-      revengeMode: [
-        storyOption("leave_with_assets_truth", "Leave with assets/truth", "she leaves with the truth, assets, or legal leverage they assumed she would not use."),
-        storyOption("wedding_truth_reveal", "Wedding truth reveal", "the wedding becomes the place where the truth is revealed."),
-      ],
-      endingMode: [
-        storyOption("marriage_ends_before_landing", "Ends before landing", "she ends the marriage before he can control the story."),
-        storyOption("best_man_knows_secret", "Best man knows secret", "an unexpected witness knows the secret and helps expose the lie."),
-      ],
-    },
-    single_mom_poor_woman_comeback: {
-      betrayalType: [
-        storyOption("single_mom_mocked_at_work", "Single mom mocked at work", "a single mom or poor woman is mocked at work while protecting her child or dignity."),
-        storyOption("abandoned_wife_comeback", "Abandoned wife comeback", "an abandoned wife becomes powerful after everyone assumes she is finished."),
-      ],
-      shameType: [
-        storyOption("poor_mother_public_shame", "Poor mother public shame", "public shame targets poverty, motherhood, clothing, or a child's needs."),
-        storyOption("child_truth_trigger", "Child reveals truth", "a child carries or reveals the truth adults tried to hide."),
-      ],
-      revengeMode: [
-        storyOption("ceo_walked_in", "CEO walked in", "a CEO, owner, or authority enters after the mockery is visible."),
-        storyOption("poor_woman_saved_powerful", "Poor woman saved powerful", "the poor woman saves someone powerful before they know who she is."),
-      ],
-      endingMode: [
-        storyOption("warm_comeback", "Warm comeback", "the comeback restores safety and dignity without cheap cruelty."),
-        storyOption("child_protected_future", "Child protected", "the ending secures the child's future and the woman's self-worth."),
-      ],
-    },
-    social_injustice_discrimination_drama: {
-      betrayalType: [
-        storyOption("refused_service_public", "Refused service", "an innocent or vulnerable person is refused service, accused, or publicly mistreated."),
-        storyOption("manager_regretted_it", "Manager regretted it", "a manager or authority abuses power, then learns who they targeted."),
-      ],
-      shameType: [
-        storyOption("restaurant_humiliation", "Restaurant humiliation", "restaurant humiliation or public refusal creates a visible injustice."),
-        storyOption("discrimination_without_extremism", "Careful discrimination drama", "discrimination is written carefully, concrete, and not as cheap shock."),
-      ],
-      revengeMode: [
-        storyOption("owner_reveal_justice", "Owner reveal justice", "owner, boss, camera, or policy truth reveals the injustice."),
-        storyOption("public_shame_to_justice", "Public shame to justice", "public shame turns into justice through evidence and consequence."),
-      ],
-      endingMode: [
-        storyOption("justice_policy_change", "Justice and policy change", "the ending includes real consequence and safer rules."),
-        storyOption("dignity_over_spectacle", "Dignity over spectacle", "the heroine keeps dignity instead of turning justice into cruelty."),
-      ],
-    },
-    workplace_ceo_power_struggle: {
-      betrayalType: [
-        storyOption("stolen_startup_pitch", "Stolen startup pitch", "a founder, assistant, or intern has her startup pitch stolen before investors and must let the version history mature before the reveal."),
-        storyOption("public_layoff_scapegoat", "Public layoff scapegoat", "HR and a toxic boss fire her in public to hide an executive failure."),
-        storyOption("assistant_erased_by_ceo", "Assistant erased by CEO", "the CEO depends on her invisible work but lets the board treat her as disposable."),
-      ],
-      shameType: [
-        storyOption("all_hands_humiliation", "All-hands humiliation", "office humiliation in an all-hands, HR room, demo day, or Slack thread with witnesses."),
-        storyOption("coffee_run_class_shame", "Coffee-run class shame", "coworkers reduce her to errands, clothes, badge color, or contract status before needing her work."),
-      ],
-      revengeMode: [
-        storyOption("audit_trail_reversal", "Audit trail reversal", "repo history, pitch deck metadata, cap table, access logs, and board minutes flip the power room."),
-        storyOption("boardroom_status_reversal", "Boardroom status reversal", "the board needs the fired woman to save the deal after the public humiliation is documented."),
-      ],
-      endingMode: [
-        storyOption("career_restitution_first", "Career restitution first", "the ending restores authorship, title, equity, and record before any personal forgiveness."),
-        storyOption("new_company_boundary", "New company boundary", "she leaves or rebuilds with clean ownership instead of returning to the old toxic office."),
-      ],
-    },
-    medical_hidden_doctor_life_care: {
-      betrayalType: [
-        storyOption("triage_abuse_hidden_doctor", "Triage abuse", "triage staff or a rich family humiliates a hidden doctor, nurse, or poor patient before a chart-backed truth lands."),
-        storyOption("nurse_blamed_for_vip_lie", "Nurse blamed for VIP lie", "a nurse or junior doctor is blamed to protect a donor family and must defend patient safety first."),
-        storyOption("consent_record_betrayal", "Consent record betrayal", "a family member manipulates consent or billing records to control care and reputation."),
-      ],
-      shameType: [
-        storyOption("patient_dignity_shame", "Patient dignity shame", "a poor, elderly, disabled, or uninsured patient is treated as less worthy of care."),
-        storyOption("scrubs_rank_humiliation", "Scrubs rank humiliation", "status shame lands through scrubs, badge hierarchy, insurance desk, visiting privileges, or donor wings."),
-      ],
-      revengeMode: [
-        storyOption("chart_audit_reveal", "Chart audit reveal", "chart audit, consent forms, medication logs, and surgery schedules expose who actually saved the patient."),
-        storyOption("ethics_review_justice", "Ethics review justice", "an ethics review or patient-rights hearing forces institutional correction."),
-      ],
-      endingMode: [
-        storyOption("care_before_status", "Care before status", "the heroine protects the patient before accepting public authority."),
-        storyOption("patient_rights_restored", "Patient rights restored", "the ending changes the unsafe rule and restores dignity without cheap spectacle."),
-      ],
-    },
-    school_campus_bullying_identity: {
-      betrayalType: [
-        storyOption("scholarship_student_bullied", "Scholarship student bullied", "a scholarship student is bullied by donor classmates who think poverty means no protection."),
-        storyOption("campus_identity_erased", "Campus identity erased", "a hidden heiress, founder's daughter, or talented student is cut from a team photo, stage, or record."),
-        storyOption("teacher_protects_bully", "Teacher protects bully", "a teacher, coach, or principal protects the powerful bully until evidence becomes public."),
-      ],
-      shameType: [
-        storyOption("cafeteria_group_chat_shame", "Cafeteria/group-chat shame", "the school turns against her through cafeteria mockery, group chats, uniforms, scholarship labels, or dorm rumors."),
-        storyOption("talent_show_public_shame", "Talent show shame", "a public school stage, debate, audition, or talent show becomes the humiliation room."),
-      ],
-      revengeMode: [
-        storyOption("scholarship_exam_reveal", "Scholarship/exam reveal", "scholarship ledgers, exam metadata, CCTV, and donor emails expose the manipulation."),
-        storyOption("assembly_status_reversal", "Assembly reversal", "the truth lands at assembly, competition day, parent council, or graduation rehearsal."),
-      ],
-      endingMode: [
-        storyOption("merit_record_restored", "Merit restored", "the ending restores her record and protects the next targeted student."),
-        storyOption("identity_without_vanity", "Identity without vanity", "her hidden identity becomes protection and accountability, not a shallow flex."),
-      ],
-    },
-  };
+  let nicheStoryControls = {};
 
   const STYLE_LENSES = [
     { value: "clean_short_quote_pain", label: "Câu đau ngắn, dễ quote" },
@@ -845,12 +662,14 @@
     initPayload: null,
     routerSettings: null,
     automationConfig: null,
+    prosePolishConfig: null,
     storyHistory: [],
     selectedHistoryId: "",
     ttsConfig: null,
     ttsVoices: [],
     ttsBusy: false,
     ttsProgress: null,
+    ttsSession: null,
     progress: createIdleProgressState(),
     userTouchedLinePreset: false,
   };
@@ -866,6 +685,7 @@
     dialogueRatio: byId("dialogue-ratio"),
     hookDensity: byId("hook-density"),
     generateFullButton: byId("generate-full-button"),
+    automationNicheSelect: byId("automation-niche-select"),
     automationStoryCount: byId("automation-story-count"),
     automationPdfDirectory: byId("automation-pdf-directory"),
     automationPdfBrowseButton: byId("automation-pdf-browse-button"),
@@ -879,6 +699,7 @@
     metricRouter: byId("metric-router"),
     statusPill: byId("status-pill"),
     routerSettingsButton: byId("router-settings-button"),
+    modelPresetSelect: byId("model-preset-select"),
     routerConfigHint: byId("router-config-hint"),
     routerSettingsModal: byId("router-settings-modal"),
     routerSettingsCloseButton: byId("router-settings-close-button"),
@@ -899,6 +720,7 @@
     regenerateInstruction: byId("regenerate-instruction"),
     regenerateButton: byId("regenerate-button"),
     continueMissingChaptersButton: byId("continue-missing-chapters-button"),
+    openStoryPosterButton: byId("open-story-poster-button"),
     saveChaptersMarkdownButton: byId("save-chapters-markdown-button"),
     saveStoryPdfButton: byId("save-story-pdf-button"),
     ttsStatus: byId("tts-status"),
@@ -909,7 +731,13 @@
     ttsSpeed: byId("tts-speed"),
     ttsPitch: byId("tts-pitch"),
     generateStoryVoiceButton: byId("generate-story-voice-button"),
+    pauseStoryVoiceButton: byId("pause-story-voice-button"),
+    stopStoryVoiceButton: byId("stop-story-voice-button"),
+    resumeStoryVoiceButton: byId("resume-story-voice-button"),
+    retryStoryVoiceButton: byId("retry-story-voice-button"),
     voiceProgress: byId("voice-progress"),
+    renderAllButton: byId("render-all-button"),
+    renderAllStatus: byId("render-all-status"),
     historyList: byId("history-list"),
     loadHistoryButton: byId("load-history-button"),
     openHistoryExportButton: byId("open-history-export-button"),
@@ -929,12 +757,20 @@
       const payload = await window.dramaStudio.init();
       state.initPayload = payload;
       state.routerSettings = payload.routerSettings || null;
+      replaceNicheStoryControls(payload.storyControls || {});
+      state.prosePolishConfig = payload.prosePolishConfig || null;
       applyAutomationConfig(payload.automationConfig || null);
       const ttsConfigResponse = await window.dramaStudio.getTtsConfig();
       applyTtsConfig(ttsConfigResponse?.data || null);
+      const ttsSessionResponse = await window.dramaStudio.getTtsSession?.();
+      state.ttsSession = ttsSessionResponse?.data || null;
       await loadOmniVoiceVoices(false);
       state.storyHistory = payload.storyHistory || [];
       populateSelect(elements.linePreset, payload.linePresets);
+      populateSelect(
+        elements.automationNicheSelect,
+        [{ value: "__random__", label: "Ng\u1eabu nhi\u00ean (1 trong 10 niche)" }, ...payload.linePresets],
+      );
       populateSelect(
         elements.outputLanguage,
         Object.entries(OUTPUT_LANGUAGE_LABELS).map(([value, label]) => ({ value, label })),
@@ -976,6 +812,16 @@
     ].forEach((input) => {
       input.addEventListener("input", scheduleSessionSave);
       input.addEventListener("change", scheduleSessionSave);
+    });
+
+    elements.modelPresetSelect.addEventListener("change", async () => {
+      const model = elements.modelPresetSelect.value;
+      try {
+        await window.dramaStudio.setModelPreset({ modelPreset: model });
+        writeStatus(`Model đã đổi sang ${model}.`);
+      } catch (error) {
+        writeStatus(`Không đổi được model: ${translateErrorMessage(error?.message || error)}.`, true);
+      }
     });
 
     elements.routerSettingsButton.addEventListener("click", () => {
@@ -1049,6 +895,30 @@
     elements.generateStoryVoiceButton.addEventListener("click", async () => {
       await generateStoryVoice();
     });
+    elements.pauseStoryVoiceButton.addEventListener("click", async () => {
+      await controlStoryVoice("pause");
+    });
+    elements.stopStoryVoiceButton.addEventListener("click", async () => {
+      await controlStoryVoice("stop");
+    });
+    elements.resumeStoryVoiceButton.addEventListener("click", async () => {
+      await resumeStoryVoice();
+    });
+    elements.retryStoryVoiceButton.addEventListener("click", async () => {
+      await retryStoryVoice();
+    });
+
+    elements.renderAllButton.addEventListener("click", async () => {
+      if (elements.renderAllStatus) elements.renderAllStatus.textContent = "�ang m? Render All...";
+      try {
+        const result = await window.dramaStudio.launchRenderAll();
+        if (elements.renderAllStatus) {
+          elements.renderAllStatus.textContent = result.ok ? "�� m? FFmpeg Render Tool." : (result.error || "L?i m? tool.");
+        }
+      } catch (err) {
+        if (elements.renderAllStatus) elements.renderAllStatus.textContent = String(err);
+      }
+    });
 
     elements.settingSeedMode.addEventListener("change", () => {
       syncSettingSeedMode();
@@ -1111,6 +981,10 @@
 
     elements.continueMissingChaptersButton.addEventListener("click", async () => {
       await continueMissingChapters();
+    });
+
+    elements.openStoryPosterButton.addEventListener("click", async () => {
+      await openCurrentStoryPoster();
     });
 
     elements.saveChaptersMarkdownButton.addEventListener("click", async () => {
@@ -1181,6 +1055,16 @@
   }
 
   async function runBusyTask(mode, task) {
+    if (mode === "tts") {
+      try {
+        await task();
+        scheduleSessionSave();
+      } catch (error) {
+        showError(error);
+      }
+      return;
+    }
+
     if (state.storyBusy) {
       return;
     }
@@ -1216,7 +1100,10 @@
     const continueDisabled = storyDisabled || !canContinueMissingChapters();
     const draftedExportDisabled = storyDisabled || !hasDraftedChapters();
     const historyActionDisabled = storyDisabled || !state.selectedHistoryId;
-    const ttsControlsDisabled = storyDisabled || state.ttsBusy;
+    const ttsActive = isActiveTtsSessionStatus(state.ttsSession?.status) || state.ttsBusy;
+    const ttsPaused = state.ttsSession?.status === "paused" || state.ttsSession?.status === "pause-requested";
+    const ttsCanResumeFromDisk = ["stopped", "failed"].includes(state.ttsSession?.status || "");
+    const ttsControlsDisabled = storyDisabled || ttsActive;
     const ttsDisabled = ttsControlsDisabled || !hasCompleteDraftedStory() || !elements.voiceIdSelect.value;
     [
       elements.generateFullButton,
@@ -1227,6 +1114,7 @@
       button.disabled = storyDisabled;
     });
     elements.automationStoryCount.disabled = storyDisabled;
+    elements.automationNicheSelect.disabled = storyDisabled;
     elements.automationPdfDirectory.disabled = storyDisabled;
 
     [
@@ -1241,6 +1129,7 @@
     elements.loadHistoryButton.disabled = historyActionDisabled;
     elements.openHistoryExportButton.disabled = historyActionDisabled || !getSelectedHistoryExportPath();
     elements.deleteHistoryButton.disabled = historyActionDisabled;
+    elements.openStoryPosterButton.disabled = storyDisabled || !getCurrentPosterPath();
     elements.saveChaptersMarkdownButton.disabled = draftedExportDisabled;
     elements.saveStoryPdfButton.disabled = draftedExportDisabled;
     elements.generateStoryVoiceButton.disabled = ttsDisabled;
@@ -1250,6 +1139,15 @@
     elements.ttsPitch.disabled = ttsControlsDisabled;
     elements.saveTtsConfigButton.disabled = ttsControlsDisabled;
     elements.refreshTtsVoicesButton.disabled = ttsControlsDisabled;
+    elements.pauseStoryVoiceButton.disabled = storyDisabled || !["running"].includes(state.ttsSession?.status || "");
+    elements.stopStoryVoiceButton.disabled = storyDisabled || !isActiveTtsSessionStatus(state.ttsSession?.status);
+    elements.resumeStoryVoiceButton.disabled =
+      storyDisabled ||
+      !hasCompleteDraftedStory() ||
+      !elements.voiceIdSelect.value ||
+      (!ttsPaused && !ttsCanResumeFromDisk) ||
+      (ttsActive && !ttsPaused);
+    elements.retryStoryVoiceButton.disabled = storyDisabled || ttsActive || !hasCompleteDraftedStory() || !elements.voiceIdSelect.value;
     elements.regenerateButton.disabled = regenerateDisabled;
     elements.continueMissingChaptersButton.disabled = continueDisabled;
     elements.continueMissingChaptersButton.textContent = getContinueMissingChaptersButtonLabel();
@@ -1269,7 +1167,7 @@
     }
 
     if (!nextChapter) {
-      return "Đã đủ 15 chương";
+      return "Đã đủ 10 chương";
     }
 
     return `Tiếp tục từ chương ${nextChapter}`;
@@ -1529,7 +1427,7 @@
       storyControls: buildAutoStoryControls(linePreset),
       customCreativeInputs: collectCustomCreativeInputs(),
       settingSeed: resolveSettingSeedValue(),
-      chapterCount: 15,
+      chapterCount: 10,
     };
   }
 
@@ -1593,7 +1491,7 @@
       },
       storyControls: seedPackage?.storyControls || buildAutoStoryControls(linePreset, { ignoreGenerated: true }),
       settingSeed: seedPackage?.settingSeed || SETTING_SEED_RANDOM_PROMPT,
-      chapterCount: 15,
+      chapterCount: 10,
       draftControls: {
         dialogueRatio: Number(seedPackage?.draftControls?.dialogueRatio ?? elements.dialogueRatio.value ?? 0.55),
         hookDensity: seedPackage?.draftControls?.hookDensity || elements.hookDensity.value || "high",
@@ -1618,7 +1516,10 @@
   }
 
   function pickAutoFillLinePreset(random = Math.random) {
-    const presets = Object.keys(NICHE_STORY_CONTROLS);
+    const presets = Object.keys(nicheStoryControls);
+    if (!presets.length) {
+      return DEFAULT_LINE_PRESET;
+    }
     const randomValue = Number(random());
     const safeRandom = Number.isFinite(randomValue) ? Math.min(0.999_999, Math.max(0, randomValue)) : 0;
     const index = Math.floor(safeRandom * presets.length);
@@ -1727,9 +1628,9 @@
     }
   }
 
-  async function generateStoryVoice() {
+  async function generateStoryVoice(mode = "full", chapterNumber = null) {
     if (!hasCompleteDraftedStory()) {
-      writeStatus("Cần đủ 15 chương đã draft trước khi gen voice.", true);
+      writeStatus("Cần đủ 10 chương đã draft trước khi gen voice.", true);
       return;
     }
 
@@ -1741,6 +1642,17 @@
     await runBusyTask("tts", async () => {
       state.ttsBusy = true;
       state.ttsProgress = null;
+      state.ttsSession = {
+        status: "running",
+        mode,
+        currentChapter: chapterNumber || 0,
+        totalChapters: 10,
+        message: mode === "resume"
+          ? "Đang chạy tiếp voice từ file còn thiếu."
+          : mode === "retry"
+            ? `Đang retry voice chương ${chapterNumber}.`
+            : "Đang gen voice 10 chương.",
+      };
       syncButtons();
       renderTtsProgress();
       try {
@@ -1749,13 +1661,26 @@
           voiceId: elements.voiceIdSelect.value,
           speed: Number(elements.ttsSpeed.value || 1),
           pitch: Number(elements.ttsPitch.value || 0),
+          mode,
+          chapterNumber,
         });
         if (!result?.ok) {
+          state.ttsSession = result?.data || result?.session || state.ttsSession;
           throw new Error(result?.error || "Gen voice lỗi.");
         }
 
+        state.ttsSession = result.session || {
+          ...state.ttsSession,
+          status: result.data?.status === "stopped" ? "stopped" : "completed",
+          directoryPath: result.data?.directoryPath,
+          filePaths: result.data?.filePaths || [],
+        };
         applyStoryHistoryPayload(result);
-        writeStatus(`Đã gen ${result.data.filePaths.length} file voice tại ${result.data.directoryPath}.`);
+        if (result.data?.status === "stopped") {
+          writeStatus(`Đã dừng gen voice. Giữ ${result.data.filePaths.length} file tại ${result.data.directoryPath}.`);
+        } else {
+          writeStatus(`Đã gen ${result.data.filePaths.length} file voice tại ${result.data.directoryPath}.`);
+        }
       } finally {
         state.ttsBusy = false;
       }
@@ -1763,9 +1688,50 @@
     });
   }
 
+  async function controlStoryVoice(action) {
+    try {
+      const response = await window.dramaStudio.controlStoryVoice({ action });
+      if (!response?.ok) {
+        throw new Error(response?.error || "Không điều khiển được voice.");
+      }
+      state.ttsSession = response.data || state.ttsSession;
+      writeStatus(state.ttsSession?.message || `Đã gửi lệnh ${action}.`);
+      syncButtons();
+      renderTtsProgress();
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  async function resumeStoryVoice() {
+    if (state.ttsSession?.status === "paused" || state.ttsSession?.status === "pause-requested") {
+      await controlStoryVoice("resume");
+      return;
+    }
+
+    await generateStoryVoice("resume");
+  }
+
+  async function retryStoryVoice() {
+    await generateStoryVoice("retry", getRetryVoiceChapterNumber());
+  }
+
   function handleTtsProgressEvent(event) {
     state.ttsProgress = event;
+    const pendingStatus = state.ttsSession?.status;
+    state.ttsSession = {
+      ...(state.ttsSession || {}),
+      status: event.status === "paused" || event.status === "stopped" || event.status === "failed"
+        ? event.status
+        : pendingStatus === "pause-requested" || pendingStatus === "stop-requested"
+          ? pendingStatus
+        : "running",
+      currentChapter: event.chapterNumber,
+      totalChapters: event.totalChapters,
+      message: event.message,
+    };
     renderTtsProgress();
+    syncButtons();
   }
 
   function renderTtsProgress() {
@@ -1774,13 +1740,25 @@
     }
 
     if (!state.ttsProgress) {
-      elements.voiceProgress.textContent = "Chưa chạy voice.";
+      elements.voiceProgress.textContent = state.ttsSession?.message || "Chưa chạy voice.";
       return;
     }
 
     const event = state.ttsProgress;
     elements.voiceProgress.textContent =
-      `Chương ${event.chapterNumber}/15 · ${Number(event.progress) || 0}% · ${normalizeDisplayText(event.message)}`;
+      `Chương ${event.chapterNumber}/10 · ${Number(event.progress) || 0}% · ${normalizeDisplayText(event.message)}`;
+  }
+
+  function isActiveTtsSessionStatus(status) {
+    return ["running", "pause-requested", "paused", "stop-requested"].includes(status || "");
+  }
+
+  function getRetryVoiceChapterNumber() {
+    if (["failed", "stopped"].includes(state.ttsSession?.status || "") && state.ttsSession?.currentChapter) {
+      return Number(state.ttsSession.currentChapter);
+    }
+
+    return Number(state.selectedChapterNumber || state.ttsProgress?.chapterNumber || 1);
   }
 
   async function runAutomationBatch() {
@@ -1792,7 +1770,8 @@
 
       for (let index = 0; index < count; index += 1) {
         const storyNumber = index + 1;
-        const linePreset = pickAutoFillLinePreset();
+        const automationNiche = elements.automationNicheSelect?.value || "__random__";
+        const linePreset = automationNiche === "__random__" ? pickAutoFillLinePreset() : automationNiche;
         const nicheLabel = formatSelectOptionLabel("line-preset", linePreset);
         writeStatus(`Automation ${storyNumber}/${count}: tự tạo thiết lập cho ${nicheLabel}.`);
 
@@ -1899,8 +1878,41 @@
     }
   }
 
+  async function openCurrentStoryPoster() {
+    const targetPath = getCurrentPosterPath();
+    if (!targetPath) {
+      writeStatus("Truyện hiện tại chưa có poster để mở.", true);
+      return;
+    }
+
+    const response = await window.dramaStudio.openStoryHistoryPath({
+      path: targetPath,
+    });
+    if (!response?.ok) {
+      throw new Error(response?.error || "Không mở được poster.");
+    }
+  }
+
   function getSelectedHistoryEntry() {
     return state.storyHistory.find((entry) => entry.id === state.selectedHistoryId) || null;
+  }
+
+  function getCurrentPosterPath(story = state.currentStory) {
+    return story?.meta?.poster?.status === "completed" ? story.meta.poster.filePath || "" : "";
+  }
+
+  function formatPosterImageSrc(filePath) {
+    const normalized = String(filePath || "").replace(/\\/g, "/");
+    const encoded = encodeURI(normalized).replace(/#/g, "%23");
+    if (/^[A-Za-z]:\//.test(normalized)) {
+      return `file:///${encoded}`;
+    }
+
+    if (normalized.startsWith("/")) {
+      return `file://${encoded}`;
+    }
+
+    return encoded;
   }
 
   function getSelectedHistoryExportPath() {
@@ -1913,6 +1925,7 @@
       entry.exports.chapterMarkdownDirectories?.[0]?.directoryPath ||
       entry.exports.pdfFiles?.[0]?.filePath ||
       entry.exports.voiceDirectories?.[0]?.directoryPath ||
+      entry.exports.posterImages?.[0]?.filePath ||
       ""
     );
   }
@@ -1973,7 +1986,8 @@
         const exportCount =
           Number(entry.exports?.chapterMarkdownDirectories?.length || 0) +
           Number(entry.exports?.pdfFiles?.length || 0) +
-          Number(entry.exports?.voiceDirectories?.length || 0);
+          Number(entry.exports?.voiceDirectories?.length || 0) +
+          Number(entry.exports?.posterImages?.length || 0);
         return `
           <button class="history-item ${entry.id === state.selectedHistoryId ? "active" : ""}" data-history-id="${escapeHtml(entry.id)}" type="button">
             <strong>${escapeHtml(entry.title)}</strong>
@@ -2048,6 +2062,7 @@
     const story = state.currentStory;
     elements.overviewView.innerHTML = `
       <div class="story-grid">
+        ${renderPosterPreview(story)}
         <article class="story-block">
           <h3>Concept</h3>
           <p><strong>Logline:</strong> ${escapeHtml(story.concept.logline)}</p>
@@ -2071,6 +2086,34 @@
           <p><strong>Kiểu kết thúc:</strong> ${escapeHtml(story.storyBible.endingMode)}</p>
         </article>
       </div>
+    `;
+  }
+
+  function renderPosterPreview(story) {
+    const poster = story.meta?.poster;
+    if (!poster) {
+      return "";
+    }
+
+    if (poster.status === "completed" && poster.filePath) {
+      return `
+        <article class="story-block full poster-preview">
+          <div>
+            <h3>Poster</h3>
+            <p>${escapeHtml(poster.title || story.title)} · ${escapeHtml(poster.model)} · ${escapeHtml(poster.size)}</p>
+          </div>
+          <img class="poster-image" src="${escapeHtml(formatPosterImageSrc(poster.filePath))}" alt="${escapeHtml(poster.title || story.title)} poster" />
+        </article>
+      `;
+    }
+
+    return `
+      <article class="story-block full poster-preview">
+        <div>
+          <h3>Poster</h3>
+          <p>${escapeHtml(poster.status)}${poster.error ? ` · ${escapeHtml(poster.error)}` : ""}</p>
+        </div>
+      </article>
     `;
   }
 
@@ -2259,7 +2302,7 @@
       };
     }
 
-    const controls = NICHE_STORY_CONTROLS[branchId] || NICHE_STORY_CONTROLS[DEFAULT_LINE_PRESET];
+    const controls = getNicheStoryControls(branchId);
     return {
       betrayalType: pickStoryPrompt(controls.betrayalType),
       shameType: pickStoryPrompt(controls.shameType),
@@ -2267,6 +2310,22 @@
       endingMode: pickStoryPrompt(controls.endingMode),
       intensity: Number(elements.intensity.value || 0.84),
     };
+  }
+
+  function getNicheStoryControls(branchId) {
+    return nicheStoryControls[branchId] || nicheStoryControls[DEFAULT_LINE_PRESET] || {
+      betrayalType: [],
+      shameType: [],
+      revengeMode: [],
+      endingMode: [],
+    };
+  }
+
+  function replaceNicheStoryControls(nextControls) {
+    Object.keys(nicheStoryControls).forEach((key) => {
+      delete nicheStoryControls[key];
+    });
+    Object.assign(nicheStoryControls, nextControls || {});
   }
 
   function pickStoryPrompt(options) {
@@ -2496,8 +2555,8 @@
 
     state.progress.operation = event.operation;
     state.progress.status = "running";
-    state.progress.current = Number(event.current) || 0;
-    state.progress.total = Number(event.total) || 0;
+    state.progress.current = Math.max(state.progress.current, Number(event.current) || 0);
+    state.progress.total = Math.max(state.progress.total, Number(event.total) || 0);
     state.progress.label = event.label || "Đang chạy";
     state.progress.detail = event.detail || "";
 
@@ -2524,8 +2583,6 @@
 
       if (step.current < event.current && step.status !== "error") {
         step.status = "done";
-      } else if (step.current > event.current) {
-        step.status = "pending";
       }
     });
 
@@ -2583,7 +2640,7 @@
 
   function hasCompleteDraftedStory() {
     const chapterNumbers = new Set((state.currentStory?.chapters || []).map((chapter) => Number(chapter.chapterNumber)));
-    return Array.from({ length: 15 }, (_, index) => index + 1).every((chapterNumber) => chapterNumbers.has(chapterNumber));
+    return Array.from({ length: 10 }, (_, index) => index + 1).every((chapterNumber) => chapterNumbers.has(chapterNumber));
   }
 
   function emptyState(message) {
@@ -2697,7 +2754,7 @@
       [/^Story payload does not define chapter (\d+) in the chapter plan\.$/i, "Story payload không có chương $1 trong outline."],
       [/^Chapter (\d+) has not been drafted yet\. Generate Full Story before using Regenerate Chapter\.$/i, "Chương $1 chưa được tạo bản thảo. Hãy bấm Tạo toàn bộ truyện trước khi dùng Viết lại chương."],
       [/^Chapter (\d+) still failed quality thresholds after (\d+) repair attempts: (.+)\.$/i, "Chương $1 vẫn chưa đạt quality gate sau $2 lần sửa: $3."],
-      [/^chapterCount must be 15$/i, "chapterCount phải bằng 15."],
+      [/^chapterCount must be 10$/i, "chapterCount phải bằng 10."],
     ];
 
     for (const [pattern, replacement] of translations) {

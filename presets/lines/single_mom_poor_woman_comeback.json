@@ -1,0 +1,114 @@
+{
+  "id": "single_mom_poor_woman_comeback",
+  "displayName": "Niche 6: Mẹ đơn thân / Phụ nữ nghèo lật kèo",
+  "description": "Romance and urban comeback drama centered on a single mom or poor woman protecting a child or younger sibling, surviving secret-child pressure, custody threats, daycare and school-gate shame, gig and shift labor, hidden skill behind the day job, and a late-arc protective love story or restored career. The engine is care labor + comeback through hidden skill, not corporate paperwork (-> Niche 8) and not blood-family inheritance (-> Niche 4).",
+  "emotionalAxis": "single mom dignity, urban romance pressure, poor woman comeback, custody threat, secret child truth, work survival, hidden skill behind survival labor, protective love arrives only after dignity is rebuilt",
+  "coreKeywords": [
+    "single mom romance",
+    "single mother comeback",
+    "urban comeback drama",
+    "poor woman lifts herself up",
+    "secret child reveal",
+    "custody hearing",
+    "daycare shame",
+    "school gate shame",
+    "mocked at work",
+    "night shift mom",
+    "delivery driver mom",
+    "gig worker survival",
+    "rent crisis",
+    "eviction notice",
+    "pawn shop survival",
+    "free clinic mom",
+    "food bank mom",
+    "absent father returns",
+    "child support fight",
+    "co-parenting boundary",
+    "hidden skill behind survival job",
+    "comeback business launch",
+    "she protected the child first",
+    "competence over pity"
+  ],
+  "seriesExamples": [
+    "Single Mom Was Mocked At Work",
+    "Single Mom Won The Custody Hearing",
+    "Secret Child Exposed The Lie",
+    "Poor Mother Built The Comeback App",
+    "They Laughed At The Single Mom",
+    "Night Shift Mom Outranked The Day Shift",
+    "Delivery Driver Mom Beat The MBA Brunch",
+    "School Gate Mocked Her, The Principal Hired Her",
+    "Daycare Worker Was The Real Designer",
+    "She Refused The Hush Money And Filed For Custody",
+    "The Absent Father Came Back With A Better Lawyer",
+    "Eviction Notice Met The Patent Filing"
+  ],
+  "tropeWeights": {
+    "single_mom_dignity": 1,
+    "poor_woman_comeback": 0.95,
+    "secret_child_reveal": 0.9,
+    "custody_threat": 0.92,
+    "daycare_or_school_shame": 0.88,
+    "workplace_mockery": 0.86,
+    "gig_or_shift_labor": 0.86,
+    "hidden_skill_behind_survival": 0.92,
+    "protective_love_late_arc": 0.85,
+    "absent_father_returns": 0.84,
+    "child_support_fight": 0.84,
+    "comeback_through_competence": 0.92,
+    "refused_hush_money": 0.86,
+    "rebuilt_through_chosen_community": 0.86,
+    "female_agency": 0.95,
+    "child_as_emotional_truth_carrier": 0.9
+  },
+  "chapterArcDefaults": {
+    "hookStyle": "vulnerable woman is mocked while quietly protecting someone (child, sibling, elderly parent), with hidden skill and dignity already in place",
+    "shameEscalationStart": 2,
+    "revengeActivationChapter": 9,
+    "dignityRecoveryChapter": 10
+  },
+  "humiliationPacing": [
+    "she is mocked as poor or single in front of the child or in front of the child's school",
+    "workplace, daycare, school gate, clinic, or pawn-shop shame escalates with audience",
+    "a custody threat or absent father returns the moment her comeback begins",
+    "the child or sibling becomes the emotional truth carrier she must protect",
+    "the mockers assume her hidden skill belongs to a man (boss, ex, tutor, fake mentor)",
+    "she is offered hush money to stay silent about a powerful person's child",
+    "the school or daycare uses 'community standards' to push her out",
+    "she is denied a promotion because someone says she will leave for the child",
+    "the rent / eviction / clinic-bill crisis hits during the same week as the public mockery"
+  ],
+  "revengeActivation": [
+    "her competence proves itself in front of the same mockers",
+    "the child reveals a hidden truth (parentage, talent, witness statement) at the right moment",
+    "custody, daycare, school, or clinic records clear her formally",
+    "she gains institutional power (license, contract, equity, patent, board seat)",
+    "the same mockers come back asking for her professional help",
+    "she refuses hush money and files her own custody / paternity / wage-theft packet",
+    "a protective partner arrives only after dignity is already rebuilt, not as rescuer",
+    "she funds another single mom's exit so the comeback is structural, not personal",
+    "the absent father is held accountable on paper before any reconciliation conversation"
+  ],
+  "dignityRecoveryTiming": "warm but firm late comeback — she rebuilds career, custody, and chosen community first, and only then accepts romance or family healing on her own terms",
+  "constraints": {
+    "fixedChapterCount": 10,
+    "minWordsPerChapter": 800,
+    "maxWordsPerChapter": 3000
+  },
+  "scopeBoundaries": {
+    "belongsHere": [
+      "single mom or poor woman protecting a child / sibling / elderly parent",
+      "custody, daycare, school, clinic, and gig-labor survival drama",
+      "hidden skill behind the day job, comeback through competence",
+      "absent father return and child-support / paternity paperwork",
+      "protective love story that arrives after dignity is rebuilt, not as rescue"
+    ],
+    "doesNotBelongHere": [
+      "blood-family inheritance / will / deed fraud (-> Niche 4)",
+      "office contract wife / paper marriage / hostile takeover (-> Niche 8)",
+      "wedding day cheating / mistress drama (-> Niche 5)",
+      "rich-poor courtship without single-mom or poor-woman engine (-> Niche 1)",
+      "campus / scholarship stigma drama (-> Niche 10)"
+    ]
+  }
+}

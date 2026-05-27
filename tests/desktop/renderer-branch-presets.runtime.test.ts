@@ -5,6 +5,8 @@ import test from "node:test";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
+import { getLocalStoryControls, type StoryControlsByNiche } from "../../src/modules/presets/story-controls";
+
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testDir, "..", "..");
 
@@ -33,7 +35,7 @@ function createFakeElement(id: string) {
   };
 }
 
-function loadRendererTestApi() {
+async function loadRendererTestApi() {
   const elements = new Map<string, ReturnType<typeof createFakeElement>>();
   const document = {
     createElement: createFakeElement,
@@ -63,6 +65,8 @@ function loadRendererTestApi() {
           "workplace_ceo_power_struggle",
           "medical_hidden_doctor_life_care",
           "school_campus_bullying_identity",
+          "werewolf_luna_alpha_soulmate",
+          "steamy_alien_captive_romance",
         ],
         sampleOutlineRequest: {
           linePreset: "billionaire_rich_poor_romance",
@@ -73,6 +77,7 @@ function loadRendererTestApi() {
         automationConfig: {
           pdfOutputDirectory: "D:\\\\Drama15\\\\PDF",
         },
+        storyControls: getLocalStoryControls(),
       }),
       getTtsConfig: async () => ({
         ok: true,
@@ -113,8 +118,7 @@ function loadRendererTestApi() {
     RANDOM_STORY_CONTROL_VALUE,
     RANDOM_SETTING_SEED_VALUE,
     SETTING_SEED_RANDOM_PROMPT,
-    NICHE_STORY_CONTROLS,
-    storyOption,
+    nicheStoryControls,
     pickAutoFillLinePreset,
     buildSeedPayload,
     getAutomationStoryCount,
@@ -146,6 +150,8 @@ function loadRendererTestApi() {
 
   vm.createContext(sandbox);
   new vm.Script(source, { filename: rendererPath }).runInContext(sandbox);
+  await Promise.resolve();
+  await Promise.resolve();
 
   return (window as typeof window & { __rendererTestApi?: RendererTestApi }).__rendererTestApi;
 }
@@ -154,8 +160,7 @@ type RendererTestApi = {
   RANDOM_STORY_CONTROL_VALUE: string;
   RANDOM_SETTING_SEED_VALUE: string;
   SETTING_SEED_RANDOM_PROMPT: string;
-  NICHE_STORY_CONTROLS: Record<string, Record<string, Array<{ value: string; label: string; prompt: string }>>>;
-  storyOption: (value: string, label: string, prompt: string) => { value: string; label: string; prompt: string };
+  nicheStoryControls: StoryControlsByNiche;
   pickAutoFillLinePreset: (random?: () => number) => string;
   buildSeedPayload: () => Record<string, unknown>;
   getAutomationStoryCount: (rawValue?: string | number) => number;
@@ -227,7 +232,7 @@ function createPartialStoryPayload(chapterCount = 6): RendererStoryPayload {
     storyBible: {
       premise: "A poor bride enters a hostile rich family.",
     },
-    chapterPlan: Array.from({ length: 15 }, (_, index) => ({
+    chapterPlan: Array.from({ length: 10 }, (_, index) => ({
       chapterNumber: index + 1,
       title: `Plan ${index + 1}`,
     })),
@@ -251,19 +256,19 @@ function createPartialStoryPayload(chapterCount = 6): RendererStoryPayload {
   };
 }
 
-test("renderer exposes niche-driven preset helpers without runtime crashes", () => {
-  const api = loadRendererTestApi();
+test("renderer exposes niche-driven preset helpers without runtime crashes", async () => {
+  const api = await loadRendererTestApi();
 
-  assert.equal(typeof api?.storyOption, "function");
   assert.equal(typeof api?.buildAutoStoryControls, "function");
+  assert.equal(Object.keys(api?.nicheStoryControls ?? {}).length, 12);
 });
 
-test("each drama niche produces hidden story controls for full generation", () => {
-  const api = loadRendererTestApi();
+test("each drama niche produces hidden story controls for full generation", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
-  assert.equal(Object.keys(api.NICHE_STORY_CONTROLS).length, 10);
-  for (const branchId of Object.keys(api.NICHE_STORY_CONTROLS)) {
+  assert.equal(Object.keys(api.nicheStoryControls).length, 12);
+  for (const branchId of Object.keys(api.nicheStoryControls)) {
     const controls = api.buildAutoStoryControls(branchId);
     assert.equal(typeof controls.betrayalType, "string");
     assert.equal(typeof controls.shameType, "string");
@@ -273,44 +278,70 @@ test("each drama niche produces hidden story controls for full generation", () =
   }
 });
 
-test("billionaire niche keeps rich-poor romance controls available", () => {
-  const api = loadRendererTestApi();
+test("billionaire niche keeps rich-poor romance controls focused on courtship and family opposition", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
-  const controls = api.NICHE_STORY_CONTROLS.billionaire_rich_poor_romance;
-  assert.match(JSON.stringify(controls), /contract marriage/i);
-  assert.match(JSON.stringify(controls), /rich family hates her/i);
-  assert.match(JSON.stringify(controls), /poor girl rich boy/i);
+  const controls = api.nicheStoryControls.billionaire_rich_poor_romance;
+  const serialized = JSON.stringify(controls);
+  assert.match(serialized, /rich family hates her/i);
+  assert.match(serialized, /poor girl rich boy|poor boy loved by rich girl|hidden heir/i);
+  assert.match(serialized, /publicly chooses her|public choice|stand up to his family|stands up to|walks away to protect/i);
+  assert.match(serialized, /service entrance|arranged match|gala|family lunch|engagement/i);
+  // contract / divorce / pregnant secretary belong to Niche 8 now
+  assert.doesNotMatch(serialized, /contract marriage/i);
+  assert.doesNotMatch(serialized, /paper marriage/i);
+  assert.doesNotMatch(serialized, /pregnant secretary/i);
 });
 
-test("auto-fill can pick a non-default niche when the user has not chosen one manually", () => {
-  const api = loadRendererTestApi();
+test("workplace ceo niche absorbs CEO contract / paper marriage / divorce / pregnant secretary controls", async () => {
+  const api = await loadRendererTestApi();
+  assert.ok(api);
+
+  const controls = api.nicheStoryControls.workplace_ceo_power_struggle;
+  const serialized = JSON.stringify(controls);
+  assert.match(serialized, /contract wife|contract marriage|paper marriage/i);
+  assert.match(serialized, /pregnant secretary/i);
+  assert.match(serialized, /ex-wife|divorce regret|female billionaire/i);
+  assert.match(serialized, /hidden heiress/i);
+});
+
+test("auto-fill can pick a non-default niche when the user has not chosen one manually", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   assert.equal(api.pickAutoFillLinePreset(() => 0), "billionaire_rich_poor_romance");
-  assert.equal(api.pickAutoFillLinePreset(() => 0.999_999), "school_campus_bullying_identity");
+  assert.equal(api.pickAutoFillLinePreset(() => 0.999_999), "steamy_alien_captive_romance");
   assert.equal(api.pickAutoFillLinePreset(() => 0.4), "cheating_ex_wedding_drama");
 });
 
-test("new workplace medical and school niches expose concrete hidden story controls", () => {
-  const api = loadRendererTestApi();
+test("new workplace medical and school niches expose concrete hidden story controls", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
-  assert.match(JSON.stringify(api.NICHE_STORY_CONTROLS.workplace_ceo_power_struggle), /startup pitch|layoff|board/i);
-  assert.match(JSON.stringify(api.NICHE_STORY_CONTROLS.medical_hidden_doctor_life_care), /triage|patient|doctor/i);
-  assert.match(JSON.stringify(api.NICHE_STORY_CONTROLS.school_campus_bullying_identity), /scholarship|campus|bully/i);
+  assert.match(JSON.stringify(api.nicheStoryControls.workplace_ceo_power_struggle), /startup pitch|layoff|board/i);
+  assert.match(JSON.stringify(api.nicheStoryControls.medical_hidden_doctor_life_care), /triage|patient|doctor/i);
+  assert.match(JSON.stringify(api.nicheStoryControls.school_campus_bullying_identity), /scholarship|campus|bully/i);
 });
 
-test("renderer migrates saved legacy branch ids before building payloads", () => {
-  const api = loadRendererTestApi();
+test("new werewolf and steamy alien niches expose concrete hidden story controls", async () => {
+  const api = await loadRendererTestApi();
+  assert.ok(api);
+
+  assert.match(JSON.stringify(api.nicheStoryControls.werewolf_luna_alpha_soulmate), /werewolf|Luna|Alpha soulmate|second chance/i);
+  assert.match(JSON.stringify(api.nicheStoryControls.steamy_alien_captive_romance), /alien captive|dominant|sensual|consent/i);
+});
+
+test("renderer migrates saved legacy branch ids before building payloads", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   assert.equal(api.normalizeLinePresetValue("betrayal_romance_revenge_class_shame"), "billionaire_rich_poor_romance");
   assert.equal(api.normalizeLinePresetValue("social_class_power_drama"), "social_injustice_discrimination_drama");
 });
 
-test("auto-fill payload preserves a manually entered custom niche as the active creative branch", () => {
-  const api = loadRendererTestApi();
+test("auto-fill payload preserves a manually entered custom niche as the active creative branch", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   api.elements.linePreset.value = "__custom__";
@@ -326,8 +357,8 @@ test("auto-fill payload preserves a manually entered custom niche as the active 
   );
 });
 
-test("automation story count uses a safe default and clamps user input", () => {
-  const api = loadRendererTestApi();
+test("automation story count uses a safe default and clamps user input", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   assert.equal(api.getAutomationStoryCount(""), 10);
@@ -337,8 +368,8 @@ test("automation story count uses a safe default and clamps user input", () => {
   assert.equal(api.getAutomationStoryCount("abc"), 10);
 });
 
-test("automation seed payload uses the random niche passed by the batch runner", () => {
-  const api = loadRendererTestApi();
+test("automation seed payload uses the random niche passed by the batch runner", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   api.elements.outputLanguage.value = "english";
@@ -357,8 +388,8 @@ test("automation seed payload uses the random niche passed by the batch runner",
   assert.equal((payload.customCreativeInputs as unknown) ?? undefined, undefined);
 });
 
-test("automation full payload converts a generated seed package into a complete full-story request", () => {
-  const api = loadRendererTestApi();
+test("automation full payload converts a generated seed package into a complete full-story request", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   api.elements.outputLanguage.value = "vietnamese";
@@ -387,13 +418,13 @@ test("automation full payload converts a generated seed package into a complete 
   assert.equal(payload.linePreset, "medical_hidden_doctor_life_care");
   assert.equal(payload.stylePreset, "medical_hidden_doctor_life_care__tiktok_hook_pacing");
   assert.equal(payload.outputLanguage, "vietnamese");
-  assert.equal(payload.chapterCount, 15);
+  assert.equal(payload.chapterCount, 10);
   assert.equal((payload.draftControls as { dialogueRatio?: number }).dialogueRatio, 0.52);
   assert.equal((payload.draftControls as { hookDensity?: string }).hookDensity, "high");
 });
 
-test("automation pdf output directory comes from the saved config field", () => {
-  const api = loadRendererTestApi();
+test("automation pdf output directory comes from the saved config field", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   api.elements.automationPdfDirectory.value = "  D:\\\\Drama15\\\\Batch PDFs  ";
@@ -401,8 +432,8 @@ test("automation pdf output directory comes from the saved config field", () => 
   assert.equal(api.getAutomationPdfOutputDirectory(), "D:\\\\Drama15\\\\Batch PDFs");
 });
 
-test("auto-fill keeps the visible niche custom even if a model returns a routed preset id", () => {
-  const api = loadRendererTestApi();
+test("auto-fill keeps the visible niche custom even if a model returns a routed preset id", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   api.elements.linePreset.value = "__custom__";
@@ -439,8 +470,8 @@ test("auto-fill keeps the visible niche custom even if a model returns a routed 
   assert.equal(api.elements.customLinePreset.value, "Workplace Layoff Revenge / Corporate Betrayal");
 });
 
-test("random setting seed resolves to a compact trending-drama prompt", () => {
-  const api = loadRendererTestApi();
+test("random setting seed resolves to a compact trending-drama prompt", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   const randomSeed = api.resolveSettingSeedValue(api.RANDOM_SETTING_SEED_VALUE, "startup xa xỉ");
@@ -452,8 +483,8 @@ test("random setting seed resolves to a compact trending-drama prompt", () => {
   assert.equal(customSeed, "startup xa xỉ");
 });
 
-test("renderer builds a continuation request from the first missing chapter", () => {
-  const api = loadRendererTestApi();
+test("renderer builds a continuation request from the first missing chapter", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   const story = createPartialStoryPayload(6);
@@ -475,8 +506,8 @@ test("renderer builds a continuation request from the first missing chapter", ()
   ]);
 });
 
-test("renderer merges continued chapters by replacing duplicates and sorting by chapter number", () => {
-  const api = loadRendererTestApi();
+test("renderer merges continued chapters by replacing duplicates and sorting by chapter number", async () => {
+  const api = await loadRendererTestApi();
   assert.ok(api);
 
   const story = createPartialStoryPayload(3);

@@ -1,0 +1,32 @@
+node_modules/
+dist/
+release/
+outputs/*
+!outputs/.gitkeep
+.env
+.env.*
+!.env.example
+drama15-router-config.json
+.learnings/
+
+# Playwright CLI captures may include screenshots of authenticated UI
+.playwright-cli/
+
+# Local data caches that can contain user/session content
+drama15-session.json
+drama15-story-history.json
+drama15-seed-history.json
+apps/api/drama15-web-seed-history.json
+apps/api/pending-stories.json
+apps/api/pending-stories.json.tmp-*
+data/published-stories.json
+data/published-stories.json.tmp-*
+
+# Tooling
+.scratch_*.cjs
+*.tmp-*
+
+# Build & log artifacts
+*.log
+*.err.log
+*.tsbuildinfo
