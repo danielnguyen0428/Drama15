@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: drama15-api
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    autoDeploy: true
+    buildCommand: npm --prefix apps/api ci --include=dev && npm --prefix apps/api run typecheck
+    startCommand: npm --prefix apps/api start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: CORS_ORIGINS
+        value: https://drama.novelkit.cc
+      - key: OPENAI_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MODEL_PRESET
+        value: default
+      - key: ROUTER_DEFAULT_TIMEOUT_MS
+        value: "300000"
+      - key: ROUTER_PLANNING_TIMEOUT_MS
+        value: "240000"
+      - key: ROUTER_CHAPTER_TIMEOUT_MS
+        value: "600000"
+      - key: ROUTER_MAX_RETRIES
+        value: "2"
+      - key: ROUTER_FALLBACK_ENABLED
+        value: "true"
+      - key: DEFAULT_LINE_PRESET
+        value: billionaire_rich_poor_romance
+      - key: DEFAULT_STYLE_PRESET
+        value: wharton_class_shame_elegance
+      - key: DEFAULT_CHAPTER_COUNT
+        value: "10"
+      - key: WRITE_EXPORT_FILES
+        value: "false"

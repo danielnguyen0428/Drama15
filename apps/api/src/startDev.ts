@@ -100,7 +100,12 @@ const app = fastify({
 
 app.addHook('onRequest', (request, reply, done) => {
   const origin = request.headers.origin;
-  reply.header('Access-Control-Allow-Origin', typeof origin === 'string' ? origin : '*');
+  const allowedOrigin =
+    typeof origin === 'string' && env.corsOrigins.includes(origin)
+      ? origin
+      : env.corsOrigins[0] ?? 'https://drama.novelkit.cc';
+
+  reply.header('Access-Control-Allow-Origin', allowedOrigin);
   reply.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   reply.header('Access-Control-Allow-Headers', 'content-type');
   reply.header('Vary', 'Origin');
