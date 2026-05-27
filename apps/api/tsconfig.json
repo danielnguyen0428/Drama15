@@ -1,34 +1,33 @@
 {
-    "compilerOptions":  {
-                            "target":  "ES2022",
-                            "module":  "NodeNext",
-                            "moduleResolution":  "NodeNext",
-                            "lib":  [
-                                        "ES2022"
-                                    ],
-                            "outDir":  "dist",
-                            "rootDir":  "src",
-                            "strict":  false,
-                            "esModuleInterop":  true,
-                            "forceConsistentCasingInFileNames":  true,
-                            "skipLibCheck":  true,
-                            "resolveJsonModule":  true,
-                            "declaration":  true,
-                            "declarationMap":  true,
-                            "sourceMap":  true,
-                            "noUncheckedIndexedAccess":  true,
-                            "noImplicitOverride":  true,
-                            "noFallthroughCasesInSwitch":  true,
-                            "isolatedModules":  true,
-                            "verbatimModuleSyntax":  false
-                        },
-    "include":  [
-                    "src/**/*.ts"
-                ],
-    "exclude":  [
-                    "dist",
-                    "node_modules",
-                    "test",
-                    "src/**/*.test.ts"
-                ]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "noEmit": true,
+    "strict": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "baseUrl": ".",
+    "paths": {
+      "dotenv": ["node_modules/dotenv"],
+      "jsonrepair": ["node_modules/jsonrepair"],
+      "zod": ["node_modules/zod"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

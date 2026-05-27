@@ -1,8 +1,12 @@
 import { env } from "../../lib/env";
 import { AppError, isAppError } from "../../lib/errors";
 import { parseJsonText } from "../../lib/json";
-import type { RouterRuntimeConfig } from "./router-auth-config";
 
+type RouterRuntimeConfig = {
+  apiKey: string;
+  baseUrl: string;
+  source: "env";
+};
 type ChatMessage = {
   role: "system" | "user";
   content: string;
