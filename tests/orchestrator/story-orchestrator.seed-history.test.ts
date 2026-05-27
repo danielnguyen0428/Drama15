@@ -87,6 +87,13 @@ class FakeRouterClient {
   public lastUserPrompt = "";
 
   async generateJson<T>(params: { userPrompt: string }) {
+    if (params.userPrompt.includes("Post-process humanizer pass")) {
+      return {
+        data: { text: extractOriginalPostProcessText(params.userPrompt) } as T,
+        modelUsed: "post-process-model",
+      };
+    }
+
     this.lastUserPrompt = params.userPrompt;
 
     return {
@@ -111,6 +118,21 @@ class FakeRouterClient {
       } as T,
       modelUsed: "planner-model",
     };
+  }
+}
+
+function extractOriginalPostProcessText(userPrompt: string) {
+  const marker = "Original text:";
+  const markerIndex = userPrompt.indexOf(marker);
+  if (markerIndex === -1) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(userPrompt.slice(markerIndex + marker.length).trim()) as { text?: unknown };
+    return typeof parsed.text === "string" ? parsed.text : "";
+  } catch {
+    return "";
   }
 }
 

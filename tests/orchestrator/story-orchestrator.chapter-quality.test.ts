@@ -128,6 +128,13 @@ class FakeRouterClient {
   constructor(private readonly responses: Array<{ data: unknown; modelUsed: string }>) {}
 
   async generateJson<T>(params: { userPrompt: string; systemPrompt?: string; timeoutMs?: number }) {
+    if (params.userPrompt.includes("Post-process humanizer pass")) {
+      return {
+        data: { text: extractOriginalPostProcessText(params.userPrompt) } as T,
+        modelUsed: "post-process-model",
+      };
+    }
+
     this.calls.push({
       userPrompt: params.userPrompt,
       systemPrompt: params.systemPrompt,
@@ -148,6 +155,21 @@ class FakeRouterClient {
     }
 
     return next as { data: T; modelUsed: string };
+  }
+}
+
+function extractOriginalPostProcessText(userPrompt: string) {
+  const marker = "Original text:";
+  const markerIndex = userPrompt.indexOf(marker);
+  if (markerIndex === -1) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(userPrompt.slice(markerIndex + marker.length).trim()) as { text?: unknown };
+    return typeof parsed.text === "string" ? parsed.text : "";
+  } catch {
+    return "";
   }
 }
 

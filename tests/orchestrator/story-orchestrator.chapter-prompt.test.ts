@@ -102,9 +102,18 @@ class FakePresetLoader {
 
 class FakeRouterClient {
   public lastUserPrompt = "";
+  public calls: Array<{ userPrompt: string }> = [];
 
   async generateJson<T>(params: { userPrompt: string }) {
+    if (params.userPrompt.includes("Post-process humanizer pass")) {
+      return {
+        data: { text: extractOriginalPostProcessText(params.userPrompt) } as T,
+        modelUsed: "post-process-model",
+      };
+    }
+
     this.lastUserPrompt = params.userPrompt;
+    this.calls.push({ userPrompt: params.userPrompt });
 
     return {
       data: {
@@ -121,6 +130,21 @@ class FakeRouterClient {
       } as T,
       modelUsed: "drafter-model",
     };
+  }
+}
+
+function extractOriginalPostProcessText(userPrompt: string) {
+  const marker = "Original text:";
+  const markerIndex = userPrompt.indexOf(marker);
+  if (markerIndex === -1) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(userPrompt.slice(markerIndex + marker.length).trim()) as { text?: unknown };
+    return typeof parsed.text === "string" ? parsed.text : "";
+  } catch {
+    return "";
   }
 }
 
@@ -153,12 +177,13 @@ test("generateChapter treats request.storyTitle as story title while progress de
   );
 
   const draftEvent = progressEvents.find((event) => event.stageId === "draft-chapter" && event.status === "started");
+  const draftPrompt = routerClient.calls[0]?.userPrompt ?? "";
   assert.ok(draftEvent);
   assert.equal(chapter.title, "The Wrong Table");
   assert.equal(draftEvent.detail, 'Đang viết "The Wrong Table".');
-  assert.match(routerClient.lastUserPrompt, /Story title:/);
-  assert.match(routerClient.lastUserPrompt, /"title": "The Glass Reception"/);
-  assert.match(routerClient.lastUserPrompt, /Target chapter plan item:/);
-  assert.match(routerClient.lastUserPrompt, /"title": "The Wrong Table"/);
-  assert.match(routerClient.lastUserPrompt, /Write the chapter title, summary, and full prose in Vietnamese\./);
+  assert.match(draftPrompt, /Story title:/);
+  assert.match(draftPrompt, /"title": "The Glass Reception"/);
+  assert.match(draftPrompt, /Target chapter plan item:/);
+  assert.match(draftPrompt, /"title": "The Wrong Table"/);
+  assert.match(draftPrompt, /Write the chapter title, summary, and full prose in Vietnamese\./);
 });
