@@ -1,0 +1,74 @@
+{
+  "name": "@drama15/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TypeScript contracts (types + DTOs) for the Drama15 commercial web SaaS (api, web, admin).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js"
+    },
+    "./plan": {
+      "types": "./dist/plan.d.ts",
+      "import": "./dist/plan.js"
+    },
+    "./quota": {
+      "types": "./dist/quota.d.ts",
+      "import": "./dist/quota.js"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
+    },
+    "./devices": {
+      "types": "./dist/devices.d.ts",
+      "import": "./dist/devices.js"
+    },
+    "./stories": {
+      "types": "./dist/stories.d.ts",
+      "import": "./dist/stories.js"
+    },
+    "./rewrite": {
+      "types": "./dist/rewrite.d.ts",
+      "import": "./dist/rewrite.js"
+    },
+    "./automation": {
+      "types": "./dist/automation.d.ts",
+      "import": "./dist/automation.js"
+    },
+    "./voice": {
+      "types": "./dist/voice.d.ts",
+      "import": "./dist/voice.js"
+    },
+    "./export": {
+      "types": "./dist/export.d.ts",
+      "import": "./dist/export.js"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.ts",
+      "import": "./dist/admin.js"
+    },
+    "./locale": {
+      "types": "./dist/locale.d.ts",
+      "import": "./dist/locale.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{ recursive: true, force: true })\""
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

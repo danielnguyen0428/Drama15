@@ -32,7 +32,8 @@ import {
   buildStoryBiblePrompt,
 } from "../prompts/story-prompts";
 import { createSeedBlueprint, type SeedHistoryEntry } from "../prompts/seed-blueprint";
-import { getLocalProsePolishConfig, type LocalProsePolishConfig } from "../presets/prose-polish-config";
+import { getLocalProsePolishConfig, type LocalProsePolishConfig, type ProsePolishTarget } from "../presets/prose-polish-config";
+import { postProcessProseHumanizer } from "../postprocessors/prose-humanizer-post-processor";
 import { RouterClient } from "../router/router-client";
 import {
   createContinuityLite,
@@ -110,6 +111,11 @@ type SeedHistoryStorePort = {
 
 type StoryPosterGeneratorPort = {
   generatePoster(storyPayload: StoryPayload): Promise<StoryPosterResult>;
+};
+
+type PostProcessModels = {
+  rewriter: string;
+  fallback?: string;
 };
 
 const CHAPTER_DRAFT_TEMPERATURE = 0.58;
@@ -315,12 +321,24 @@ export class StoryOrchestrator {
 
     const rawSeedPackage = GeneratedSettingSeedSchema.parse(unwrapEnvelope(result.data, "seedPackage"));
     const customDramaBranch = request.customCreativeInputs?.dramaBranch?.trim();
-    const seedPackage = customDramaBranch
+    const normalizedSeedPackage = customDramaBranch
       ? GeneratedSettingSeedSchema.parse({
           ...rawSeedPackage,
           linePreset: customDramaBranch,
         })
       : rawSeedPackage;
+    const postProcessedSeedPackage = GeneratedSettingSeedSchema.safeParse({
+      ...normalizedSeedPackage,
+      settingSeed: await this.postProcessText({
+        text: normalizedSeedPackage.settingSeed,
+        target: "settingSeed",
+        outputLanguage: request.outputLanguage,
+        models: context.models,
+        timeoutMs: env.routerPlanningTimeoutMs,
+        contextLabel: "setting seed",
+      }),
+    });
+    const seedPackage = postProcessedSeedPackage.success ? postProcessedSeedPackage.data : normalizedSeedPackage;
     await this.seedHistoryStore?.append({
       fingerprint: seedBlueprint.fingerprint,
       linePreset: seedPackage.linePreset,
@@ -560,9 +578,18 @@ export class StoryOrchestrator {
         detail: "Đang kiểm tra chất lượng, tính nhất quán nhân vật và thử sửa nếu cần.",
       },
       async () => {
-        const chapter = alignChapterTitleWithPlan(
-          validateChapterDraft(chapterResult.chapter, parsed.chapterNumber),
-          chapterPlanItem.title,
+        const chapter = await this.postProcessChapterText(
+          alignChapterTitleWithPlan(
+            validateChapterDraft(chapterResult.chapter, parsed.chapterNumber),
+            chapterPlanItem.title,
+          ),
+          {
+            target: "chapter",
+            outputLanguage: parsed.outputLanguage ?? "english",
+            models: context.models,
+            timeoutMs: env.routerChapterTimeoutMs,
+            contextLabel: `chapter ${parsed.chapterNumber}`,
+          },
         );
         let metrics = analyzeChapterQuality(chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
 
@@ -634,9 +661,18 @@ export class StoryOrchestrator {
             temperature: CHAPTER_REPAIR_TEMPERATURE,
             timeoutMs: env.routerChapterTimeoutMs,
           });
-          repairedChapter = alignChapterTitleWithPlan(
-            validateChapterDraft(unwrapEnvelope(repairedResult.data, "chapter"), parsed.chapterNumber),
-            chapterPlanItem.title,
+          repairedChapter = await this.postProcessChapterText(
+            alignChapterTitleWithPlan(
+              validateChapterDraft(unwrapEnvelope(repairedResult.data, "chapter"), parsed.chapterNumber),
+              chapterPlanItem.title,
+            ),
+            {
+              target: "chapter",
+              outputLanguage: parsed.outputLanguage ?? "english",
+              models: context.models,
+              timeoutMs: env.routerChapterTimeoutMs,
+              contextLabel: `chapter ${parsed.chapterNumber} repair ${repairAttempt}`,
+            },
           );
           metrics = analyzeChapterQuality(repairedChapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
 
@@ -820,11 +856,22 @@ export class StoryOrchestrator {
           timeoutMs: env.routerChapterTimeoutMs,
         });
 
-        return {
-          chapter: alignChapterTitleWithPlan(
+        const chapter = await this.postProcessChapterText(
+          alignChapterTitleWithPlan(
             validateChapterDraft(unwrapEnvelope(regenerateResult.data, "chapter"), parsed.targetChapter),
             targetChapterPlan.title,
           ),
+          {
+            target: "regenerate",
+            outputLanguage: storyPayload.request.outputLanguage,
+            models: context.models,
+            timeoutMs: env.routerChapterTimeoutMs,
+            contextLabel: `regenerated chapter ${parsed.targetChapter}`,
+          },
+        );
+
+        return {
+          chapter,
           modelUsed: regenerateResult.modelUsed,
         };
       },
@@ -917,6 +964,52 @@ export class StoryOrchestrator {
       stylePreset,
       models,
     };
+  }
+
+  private async postProcessChapterText(
+    chapter: Chapter,
+    options: {
+      target: ProsePolishTarget;
+      outputLanguage: string;
+      models: PostProcessModels;
+      timeoutMs?: number;
+      contextLabel?: string;
+    },
+  ): Promise<Chapter> {
+    const text = await this.postProcessText({
+      text: chapter.text,
+      ...options,
+    });
+
+    if (text === chapter.text) {
+      return chapter;
+    }
+
+    return {
+      ...chapter,
+      text,
+    };
+  }
+
+  private postProcessText(params: {
+    text: string;
+    target: ProsePolishTarget;
+    outputLanguage: string;
+    models: PostProcessModels;
+    timeoutMs?: number;
+    contextLabel?: string;
+  }) {
+    return postProcessProseHumanizer({
+      text: params.text,
+      target: params.target,
+      outputLanguage: params.outputLanguage,
+      config: this.prosePolishConfig,
+      routerClient: this.routerClient,
+      model: params.models.rewriter,
+      fallbackModel: params.models.fallback,
+      timeoutMs: params.timeoutMs,
+      contextLabel: params.contextLabel,
+    });
   }
 
   private startPosterGeneration(outline: StoryPayload, progress: ResolvedStoryProgressOptions) {

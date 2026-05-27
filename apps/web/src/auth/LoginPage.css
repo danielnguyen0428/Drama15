@@ -1,0 +1,10 @@
+/* LoginPage responsive overrides */
+@media (max-width: 768px) {
+  .login-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .login-card-grid .login-panel {
+    order: -1;
+  }
+}

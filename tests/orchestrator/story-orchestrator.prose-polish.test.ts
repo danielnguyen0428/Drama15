@@ -48,6 +48,17 @@ const modelPresetFixture: ModelPreset = {
   fallback: "fallback-model",
 };
 
+const draftText = Array.from({ length: 240 }, () =>
+  "\"Yes one two three four\" five six seven eight nine",
+).join(" ");
+
+const postProcessedText = Array.from({ length: 38 }, () => [
+  "\"Don't touch the card until you say my name,\" Mina said.",
+  "Mina waited.",
+  "Celeste saw the donor badge, the wrong chair, and the folded place card before the room decided what silence was worth.",
+  "\"If you leave it there, everyone sees exactly what you chose,\" she said, and the sentence made Evan look at the chair, the board packet, the closed door, anything except her.",
+].join(" ")).join(" ");
+
 const storyBibleFixture: StoryBible = {
   premise: "A hotel founder's daughter is erased from the public future she built.",
   heroine: {
@@ -93,13 +104,22 @@ class FakeRouterClient {
   async generateJson<T>(params: { userPrompt: string }) {
     this.calls.push({ userPrompt: params.userPrompt });
 
+    if (params.userPrompt.includes("Post-process humanizer pass")) {
+      return {
+        data: {
+          text: postProcessedText,
+        } as T,
+        modelUsed: "rewriter-model",
+      };
+    }
+
     return {
       data: {
         chapter: {
           chapterNumber: 1,
           title: "Chapter 1",
           summary: "summary",
-          text: Array.from({ length: 240 }, () => "\"Yes one two three four\" five six seven eight nine").join(" "),
+          text: draftText,
         },
       } as T,
       modelUsed: "drafter-model",
@@ -148,8 +168,30 @@ test("generateChapter injects local humanizer prose polish rules into the draft 
 
   await orchestrator.generateChapter(makeRequest());
 
-  assert.equal(routerClient.calls.length, 1);
+  const postProcessCall = routerClient.calls.find((call) =>
+    call.userPrompt.includes("Post-process humanizer pass"),
+  );
+
   assert.match(routerClient.calls[0]?.userPrompt ?? "", /Humanizer \/ prose polish pass/);
   assert.match(routerClient.calls[0]?.userPrompt ?? "", /Preserve plot facts, character names, chapter number, continuity/);
   assert.match(routerClient.calls[0]?.userPrompt ?? "", /Remove common AI tells/);
+  assert.ok(postProcessCall);
+  assert.match(postProcessCall.userPrompt, /Return JSON with exactly one key: text/);
+});
+
+test("generateChapter returns post-processed humanized chapter text after the draft model responds", async () => {
+  const routerClient = new FakeRouterClient();
+  const orchestrator = new StoryOrchestrator(
+    new FakePresetLoader() as never,
+    routerClient as never,
+    "default-models",
+    undefined,
+    undefined,
+    getLocalProsePolishConfig(),
+  );
+
+  const chapter = await orchestrator.generateChapter(makeRequest());
+
+  assert.equal(chapter.text, postProcessedText);
+  assert.notEqual(chapter.text, draftText);
 });

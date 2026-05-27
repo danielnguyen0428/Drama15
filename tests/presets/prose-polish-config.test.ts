@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   getLocalProsePolishConfig,
   renderProsePolishInstructions,
+  shouldRunProsePostProcess,
 } from "../../src/modules/presets/prose-polish-config";
 
 test("local prose polish config enables light humanizer rules for generated prose", () => {
@@ -14,6 +15,11 @@ test("local prose polish config enables light humanizer rules for generated pros
   assert.equal(config.applyTo.concept, true);
   assert.equal(config.applyTo.chapter, true);
   assert.equal(config.applyTo.regenerate, true);
+  assert.equal(config.postProcess.enabled, true);
+  assert.equal(config.postProcess.applyTo.settingSeed, true);
+  assert.equal(config.postProcess.applyTo.concept, false);
+  assert.equal(config.postProcess.applyTo.chapter, true);
+  assert.equal(config.postProcess.applyTo.regenerate, true);
   assert.ok(config.rules.removeAiTells.length >= 8);
   assert.ok(config.rules.preserve.length >= 5);
 });
@@ -49,14 +55,37 @@ test("renderProsePolishInstructions returns nothing when mode or target disables
   );
 });
 
+test("shouldRunProsePostProcess follows mode and per-target post-process switches", () => {
+  const config = getLocalProsePolishConfig();
+
+  assert.equal(shouldRunProsePostProcess(config, "chapter"), true);
+  assert.equal(shouldRunProsePostProcess(config, "concept"), false);
+  assert.equal(shouldRunProsePostProcess({ ...config, mode: "off" }, "chapter"), false);
+  assert.equal(
+    shouldRunProsePostProcess(
+      {
+        ...config,
+        postProcess: {
+          ...config.postProcess,
+          enabled: false,
+        },
+      },
+      "chapter",
+    ),
+    false,
+  );
+});
+
 test("getLocalProsePolishConfig returns a defensive copy", () => {
   const first = getLocalProsePolishConfig();
   first.mode = "strong";
   first.applyTo.chapter = false;
+  first.postProcess.applyTo.chapter = false;
   first.rules.removeAiTells.length = 0;
 
   const second = getLocalProsePolishConfig();
   assert.equal(second.mode, "light");
   assert.equal(second.applyTo.chapter, true);
+  assert.equal(second.postProcess.applyTo.chapter, true);
   assert.ok(second.rules.removeAiTells.length >= 8);
 });

@@ -1,0 +1,47 @@
+{
+  "name": "@drama15/test-helpers",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared fast-check generators and vitest project configuration for Drama15 commercial web SaaS property tests.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./helpers": {
+      "types": "./dist/_helpers.d.ts",
+      "import": "./dist/_helpers.js"
+    },
+    "./vitest": {
+      "types": "./dist/vitestProjectsConfig.d.ts",
+      "import": "./dist/vitestProjectsConfig.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{ recursive: true, force: true })\"",
+    "test": "vitest run",
+    "test:property": "vitest run --project property",
+    "test:unit": "vitest run --project unit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@drama15/contracts": "file:../contracts",
+    "fast-check": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  }
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://drama.novelkit.cc/sitemap.xml

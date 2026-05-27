@@ -5,6 +5,10 @@ export type ProsePolishTarget = "settingSeed" | "concept" | "chapter" | "regener
 export type LocalProsePolishConfig = {
   mode: ProsePolishMode;
   applyTo: Record<ProsePolishTarget, boolean>;
+  postProcess: {
+    enabled: boolean;
+    applyTo: Record<ProsePolishTarget, boolean>;
+  };
   rules: {
     preserve: string[];
     removeAiTells: string[];
@@ -19,6 +23,15 @@ export const LOCAL_PROSE_POLISH_CONFIG: LocalProsePolishConfig = {
     concept: true,
     chapter: true,
     regenerate: true,
+  },
+  postProcess: {
+    enabled: true,
+    applyTo: {
+      settingSeed: true,
+      concept: false,
+      chapter: true,
+      regenerate: true,
+    },
   },
   rules: {
     preserve: [
@@ -78,4 +91,16 @@ export function renderProsePolishInstructions(
     "Do not add new plot beats, new characters, new setting logic, new moral commentary, or extra aftermath.",
     modeInstruction,
   ].join("\n");
+}
+
+export function shouldRunProsePostProcess(
+  config: LocalProsePolishConfig | undefined,
+  target: ProsePolishTarget,
+) {
+  return Boolean(
+    config &&
+      config.mode !== "off" &&
+      config.postProcess.enabled &&
+      config.postProcess.applyTo[target],
+  );
 }

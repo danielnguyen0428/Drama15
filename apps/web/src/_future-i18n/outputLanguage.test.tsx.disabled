@@ -1,0 +1,176 @@
+/**
+ * Unit tests for the output-language store and picker.
+ *
+ * Covers Requirements 6.12 and 19.3:
+ *   - `outputLanguage` is stored under its own key (`output_language`)
+ *     separate from `ui_locale`.
+ *   - Updating one preference must NOT mutate the other (verified for
+ *     all four combinations of `(ui_locale, outputLanguage) ∈
+ *     {vi, en} × {vi, en}`).
+ *   - `withOutputLanguage(payload)` attaches the stored language as
+ *     `outputLanguage` on the payload.
+ *   - The default output language is `'vi'` when no value is stored.
+ */
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { LOCALE_STORAGE_KEY } from '../../i18n/types';
+import { OutputLanguagePicker } from '../OutputLanguagePicker';
+import {
+  DEFAULT_OUTPUT_LANGUAGE,
+  OUTPUT_LANGUAGE_STORAGE_KEY,
+  getOutputLanguage,
+  setOutputLanguage,
+  withOutputLanguage,
+  type OutputLanguage,
+} from '../outputLanguage';
+
+const ALL_LANGS: ReadonlyArray<OutputLanguage> = ['vi', 'en'] as const;
+
+describe('outputLanguage store', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('uses a storage key distinct from ui_locale', () => {
+    expect(OUTPUT_LANGUAGE_STORAGE_KEY).toBe('output_language');
+    expect(LOCALE_STORAGE_KEY).toBe('ui_locale');
+    expect(OUTPUT_LANGUAGE_STORAGE_KEY).not.toBe(LOCALE_STORAGE_KEY);
+  });
+
+  it('defaults to "vi" when no value is stored', () => {
+    expect(getOutputLanguage()).toBe('vi');
+    expect(DEFAULT_OUTPUT_LANGUAGE).toBe('vi');
+  });
+
+  it('round-trips set/get for every supported language', () => {
+    for (const lang of ALL_LANGS) {
+      setOutputLanguage(lang);
+      expect(getOutputLanguage()).toBe(lang);
+      expect(window.localStorage.getItem(OUTPUT_LANGUAGE_STORAGE_KEY)).toBe(
+        lang,
+      );
+    }
+  });
+
+  it('falls back to the default when the stored value is invalid', () => {
+    window.localStorage.setItem(OUTPUT_LANGUAGE_STORAGE_KEY, 'fr');
+    expect(getOutputLanguage()).toBe(DEFAULT_OUTPUT_LANGUAGE);
+  });
+
+  describe('independence from ui_locale (all 4 combinations)', () => {
+    for (const uiLocale of ALL_LANGS) {
+      for (const outputLang of ALL_LANGS) {
+        it(`ui_locale=${uiLocale} & outputLanguage=${outputLang} stay independent`, () => {
+          // Seed both stores via their own keys.
+          window.localStorage.setItem(LOCALE_STORAGE_KEY, uiLocale);
+          setOutputLanguage(outputLang);
+
+          expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe(
+            uiLocale,
+          );
+          expect(getOutputLanguage()).toBe(outputLang);
+
+          // Flip the OUTPUT language to its opposite. ui_locale must
+          // remain untouched.
+          const otherOutput: OutputLanguage =
+            outputLang === 'vi' ? 'en' : 'vi';
+          setOutputLanguage(otherOutput);
+          expect(getOutputLanguage()).toBe(otherOutput);
+          expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe(
+            uiLocale,
+          );
+
+          // Flip the UI locale to its opposite. outputLanguage must
+          // remain untouched.
+          const otherUi: OutputLanguage = uiLocale === 'vi' ? 'en' : 'vi';
+          window.localStorage.setItem(LOCALE_STORAGE_KEY, otherUi);
+          expect(getOutputLanguage()).toBe(otherOutput);
+          expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe(
+            otherUi,
+          );
+        });
+      }
+    }
+  });
+
+  describe('withOutputLanguage(payload)', () => {
+    it('attaches the stored output language as `outputLanguage`', () => {
+      setOutputLanguage('en');
+      const payload = { title: 'Hook', niche: 'billionaire' };
+      const out = withOutputLanguage(payload);
+      expect(out).toEqual({
+        title: 'Hook',
+        niche: 'billionaire',
+        outputLanguage: 'en',
+      });
+    });
+
+    it('uses the default language when nothing is stored', () => {
+      const out = withOutputLanguage({});
+      expect(out.outputLanguage).toBe(DEFAULT_OUTPUT_LANGUAGE);
+    });
+
+    it('does not derive the field from ui_locale', () => {
+      // ui_locale = en, outputLanguage = vi → request must carry `vi`.
+      window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en');
+      setOutputLanguage('vi');
+      expect(withOutputLanguage({}).outputLanguage).toBe('vi');
+
+      // Inverse: ui_locale = vi, outputLanguage = en → request `en`.
+      window.localStorage.setItem(LOCALE_STORAGE_KEY, 'vi');
+      setOutputLanguage('en');
+      expect(withOutputLanguage({}).outputLanguage).toBe('en');
+    });
+
+    it('preserves existing payload fields', () => {
+      setOutputLanguage('vi');
+      const payload = { a: 1, b: 'two', c: { nested: true } };
+      const out = withOutputLanguage(payload);
+      expect(out.a).toBe(1);
+      expect(out.b).toBe('two');
+      expect(out.c).toEqual({ nested: true });
+      expect(out.outputLanguage).toBe('vi');
+    });
+  });
+});
+
+describe('OutputLanguagePicker', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('renders with the currently stored output language preselected', () => {
+    setOutputLanguage('en');
+    render(<OutputLanguagePicker />);
+    const select = screen.getByTestId(
+      'output-language-picker',
+    ) as HTMLSelectElement;
+    expect(select.value).toBe('en');
+  });
+
+  it('updates the output-language store but not ui_locale', () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'vi');
+    setOutputLanguage('vi');
+    render(<OutputLanguagePicker />);
+    const select = screen.getByTestId(
+      'output-language-picker',
+    ) as HTMLSelectElement;
+
+    fireEvent.change(select, { target: { value: 'en' } });
+
+    expect(getOutputLanguage()).toBe('en');
+    expect(window.localStorage.getItem(OUTPUT_LANGUAGE_STORAGE_KEY)).toBe('en');
+    // Critical: the UI locale store is untouched.
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('vi');
+  });
+});
