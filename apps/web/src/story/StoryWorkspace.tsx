@@ -58,11 +58,11 @@ const NICHES = [
   ['cheating_ex_wedding_drama', 'Ngoại tình / drama cưới'],
   ['single_mom_poor_woman_comeback', 'Mẹ đơn thân / lật kèo'],
   ['social_injustice_discrimination_drama', 'Bất công xã hội'],
-  ['workplace_ceo_power_struggle', 'Công sở / CEO / tranh quyền'],
+  ['workplace_ceo_power_struggle', 'Công sở / tổng tài / tranh quyền'],
   ['medical_hidden_doctor_life_care', 'Y tế / bác sĩ ẩn danh'],
   ['school_campus_bullying_identity', 'Học đường / bắt nạt'],
-  ['werewolf_luna_alpha_soulmate', 'Werewolf / Alpha soulmate'],
-  ['steamy_alien_captive_romance', 'Steamy / dark romance'],
+  ['werewolf_luna_alpha_soulmate', 'Người sói / thủ lĩnh định mệnh'],
+  ['steamy_alien_captive_romance', 'Lãng mạn nóng bỏng / u tối'],
   ['custom', 'Nhánh tùy biến'],
 ] as const;
 
@@ -273,7 +273,7 @@ export function StoryWorkspace(): JSX.Element {
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Drama15 Lite Studio</p>
-          <h1>Studio sáng tác drama ngắn</h1>
+          <h1>Không gian sáng tác drama ngắn</h1>
           <p>Dựng ý tưởng, nhân vật, dàn ý, chương truyện và bản viết lại trong một không gian sáng tác tập trung.</p>
         </div>
         <aside className="status-card">
@@ -288,7 +288,7 @@ export function StoryWorkspace(): JSX.Element {
 
       <section className="workspace-grid">
         <aside className="setup-panel">
-          <PanelHeading label="Thiết lập" value="Studio" />
+          <PanelHeading label="Thiết lập" value="Sáng tác" />
           <label>Chủ đề<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Nhánh tùy biến<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị coi thường" /></label>}
           <label>Gợi ý nhan đề<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
