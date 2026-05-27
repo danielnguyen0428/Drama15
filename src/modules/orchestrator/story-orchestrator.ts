@@ -47,7 +47,7 @@ import {
   validateStoryPayload,
 } from "../validators/story-validator";
 import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, getOrCreatePhraseReuseIndex, resetPhraseReuseIndex, indexChapter } from "../validators/chapter-quality";
-// â”€â”€â”€ Character Consistency (shared core-pipeline) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Character Consistency (shared core-pipeline) ────────────────────────────
 import {
   createEmptyMemoryStore,
   addFactSheet,
@@ -161,11 +161,11 @@ export class StoryOrchestrator {
       1,
       {
         id: "load-context",
-        label: "Náº¡p preset",
-        detail: "Äang náº¡p preset vÃ  alias model.",
+        label: "Nạp preset",
+        detail: "Đang nạp preset và alias model.",
       },
       () => this.loadGenerationContext(request.linePreset, request.stylePreset),
-      "ÄÃ£ náº¡p preset vÃ  alias model.",
+      "Đã nạp preset và alias model.",
     );
     if (request.chapterCount !== context.linePreset.constraints.fixedChapterCount) {
       throw new AppError("VALIDATION_ERROR", `chapterCount must be ${context.linePreset.constraints.fixedChapterCount}`, 400);
@@ -176,8 +176,8 @@ export class StoryOrchestrator {
       2,
       {
         id: "concept",
-        label: "Táº¡o concept",
-        detail: "Äang phÃ¡c tiÃªu Ä‘á», logline vÃ  trá»¥c xung Ä‘á»™t.",
+        label: "Tạo concept",
+        detail: "Đang phác tiêu đề, logline và trục xung đột.",
       },
       async () => {
         const conceptPrompt = buildConceptPrompt({
@@ -199,7 +199,7 @@ export class StoryOrchestrator {
           modelUsed: conceptResult.modelUsed,
         };
       },
-      (result) => `ÄÃ£ táº¡o concept báº±ng ${result.modelUsed}.`,
+      (result) => `Đã tạo concept bằng ${result.modelUsed}.`,
     );
 
     const storyBible = await runProgressStage(
@@ -207,8 +207,8 @@ export class StoryOrchestrator {
       3,
       {
         id: "story-bible",
-        label: "Dá»±ng story bible",
-        detail: "Äang xÃ¡c Ä‘á»‹nh dÃ n nhÃ¢n váº­t, premise vÃ  cÃ¡c engine cáº£m xÃºc.",
+        label: "Dựng story bible",
+        detail: "Đang xác định dàn nhân vật, premise và các engine cảm xúc.",
       },
       async () => {
         const biblePrompt = buildStoryBiblePrompt({
@@ -229,7 +229,7 @@ export class StoryOrchestrator {
           modelUsed: bibleResult.modelUsed,
         };
       },
-      (result) => `ÄÃ£ dá»±ng story bible báº±ng ${result.modelUsed}.`,
+      (result) => `Đã dựng story bible bằng ${result.modelUsed}.`,
     );
 
     const chapterPlan = await runProgressStage(
@@ -237,8 +237,8 @@ export class StoryOrchestrator {
       4,
       {
         id: "chapter-plan",
-        label: "Láº­p 10 chÆ°Æ¡ng",
-        detail: "Äang dá»±ng outline tá»«ng chÆ°Æ¡ng.",
+        label: "Lập 10 chương",
+        detail: "Đang dựng outline từng chương.",
       },
       async () => {
         const chapterPlanPrompt = buildChapterPlanPrompt({
@@ -260,7 +260,7 @@ export class StoryOrchestrator {
           modelUsed: chapterPlanResult.modelUsed,
         };
       },
-      (result) => `ÄÃ£ láº­p chapter plan báº±ng ${result.modelUsed}.`,
+      (result) => `Đã lập chapter plan bằng ${result.modelUsed}.`,
     );
 
     return runProgressStage(
@@ -268,8 +268,8 @@ export class StoryOrchestrator {
       5,
       {
         id: "assemble-outline",
-        label: "GhÃ©p outline",
-        detail: "Äang kiá»ƒm tra outline vÃ  chuáº©n bá»‹ payload cho studio.",
+        label: "Ghép outline",
+        detail: "Đang kiểm tra outline và chuẩn bị payload cho studio.",
       },
       async () => {
         validateOutlineGeneration({
@@ -299,7 +299,7 @@ export class StoryOrchestrator {
           },
         });
       },
-      "Outline Ä‘Ã£ sáºµn sÃ ng.",
+      "Outline đã sẵn sàng.",
     );
   }
 
@@ -374,7 +374,7 @@ export class StoryOrchestrator {
     const posterPromise = this.startPosterGeneration(outline, progress);
     const chapters: Chapter[] = [];
 
-    // â”€â”€â”€ Character Consistency System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── Character Consistency System ──────────────────────────────────────
     const memoryStore: CharacterMemoryStore = createEmptyMemoryStore();
     const continuityTracker = new ContinuityTracker({
       storyBible: outline.storyBible,
@@ -387,8 +387,8 @@ export class StoryOrchestrator {
     for (const chapterPlanItem of outline.chapterPlan) {
       const chapterStage = {
         id: `chapter-${chapterPlanItem.chapterNumber}`,
-        label: `Viáº¿t chÆ°Æ¡ng ${chapterPlanItem.chapterNumber}/${outline.chapterPlan.length}`,
-        detail: `Äang viáº¿t "${chapterPlanItem.title}".`,
+        label: `Viết chương ${chapterPlanItem.chapterNumber}/${outline.chapterPlan.length}`,
+        detail: `Đang viết "${chapterPlanItem.title}".`,
       };
       const chapter = await runProgressStage(
         progress,
@@ -422,13 +422,13 @@ export class StoryOrchestrator {
                   chapterStage,
                   event.status,
                   event.status === "started"
-                    ? `Äang sá»­a "${chapterPlanItem.title}" sau khi kiá»ƒm tra cháº¥t lÆ°á»£ng.`
-                    : `ÄÃ£ sá»­a xong "${chapterPlanItem.title}".`,
+                    ? `Đang sửa "${chapterPlanItem.title}" sau khi kiểm tra chất lượng.`
+                    : `Đã sửa xong "${chapterPlanItem.title}".`,
                 );
               },
             },
           ),
-        `ChÆ°Æ¡ng ${chapterPlanItem.chapterNumber} Ä‘Ã£ sáºµn sÃ ng.`,
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
       );
 
       chapters.push(chapter);
@@ -465,7 +465,7 @@ export class StoryOrchestrator {
         chapterStageOffset + chapterPlanItem.chapterNumber,
         chapterStage,
         "completed",
-        `ChÆ°Æ¡ng ${chapterPlanItem.chapterNumber} Ä‘Ã£ sáºµn sÃ ng.`,
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
         {
           chapter,
           storyPayload: partialStoryPayload,
@@ -492,11 +492,11 @@ export class StoryOrchestrator {
       finalizeStageNumber,
       {
         id: "finalize-story",
-        label: "HoÃ n táº¥t truyá»‡n",
-        detail: "Äang kiá»ƒm tra báº£n tháº£o Ä‘Ã£ ghÃ©p.",
+        label: "Hoàn tất truyện",
+        detail: "Đang kiểm tra bản thảo đã ghép.",
       },
       async () => assembledStoryPayload,
-      `ÄÃ£ ghÃ©p ${chapters.length} chÆ°Æ¡ng.`,
+      `Đã ghép ${chapters.length} chương.`,
     );
   }
 
@@ -522,18 +522,18 @@ export class StoryOrchestrator {
       1,
       {
         id: "load-context",
-        label: "Náº¡p ngá»¯ cáº£nh chÆ°Æ¡ng",
-        detail: "Äang náº¡p preset vÄƒn phong vÃ  alias model cho báº£n tháº£o.",
+        label: "Nạp ngữ cảnh chương",
+        detail: "Đang nạp preset văn phong và alias model cho bản thảo.",
       },
       () =>
         this.loadGenerationContext(
           env.defaultLinePreset,
           stylePresetName ?? "wharton_class_shame_elegance",
         ),
-      "ÄÃ£ náº¡p xong ngá»¯ cáº£nh chÆ°Æ¡ng.",
+      "Đã nạp xong ngữ cảnh chương.",
     );
 
-    // â”€â”€â”€ Enhanced continuity context (includes character memory) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── Enhanced continuity context (includes character memory) ───────────
     const memoryStore = parsed.memoryStore as CharacterMemoryStore | undefined;
     const continuityTracker = parsed.continuityTracker as ContinuityTracker | undefined;
     const enhancedContinuity: StoryPayload["continuityLite"] | undefined = continuityTracker
@@ -557,8 +557,8 @@ export class StoryOrchestrator {
       2,
       {
         id: "draft-chapter",
-        label: `Viáº¿t chÆ°Æ¡ng ${parsed.chapterNumber}`,
-        detail: `Äang viáº¿t "${chapterPlanItem.title}".`,
+        label: `Viết chương ${parsed.chapterNumber}`,
+        detail: `Đang viết "${chapterPlanItem.title}".`,
       },
       async () => {
         const result = await this.routerClient.generateJson<unknown>({
@@ -574,7 +574,7 @@ export class StoryOrchestrator {
           modelUsed: result.modelUsed,
         };
       },
-      (result) => `ÄÃ£ nháº­n báº£n tháº£o tá»« ${result.modelUsed}.`,
+      (result) => `Đã nhận bản thảo từ ${result.modelUsed}.`,
     );
 
     const draftedChapter = await runProgressStage(
@@ -582,8 +582,8 @@ export class StoryOrchestrator {
       3,
       {
         id: "repair-chapter",
-        label: "Sá»­a chÆ°Æ¡ng náº¿u cáº§n",
-        detail: "Äang kiá»ƒm tra cháº¥t lÆ°á»£ng, tÃ­nh nháº¥t quÃ¡n nhÃ¢n váº­t vÃ  thá»­ sá»­a náº¿u cáº§n.",
+        label: "Sửa chương nếu cần",
+        detail: "Đang kiểm tra chất lượng, tính nhất quán nhân vật và thử sửa nếu cần.",
       },
       async () => {
         const chapter = await this.postProcessChapterText(
@@ -601,7 +601,7 @@ export class StoryOrchestrator {
         );
         let metrics = analyzeChapterQuality(chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
 
-        // â”€â”€â”€ Character Consistency Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Character Consistency Check ──────────────────────────────────
         let driftReport: DriftReport | null = null;
         if (memoryStore && memoryStore.chapters.size > 0) {
           driftReport = await validateConsistency(
@@ -756,10 +756,10 @@ export class StoryOrchestrator {
       },
       (result) => {
         if (!result.repaired) {
-          return "Cháº¥t lÆ°á»£ng Ä‘Ã£ Ä‘áº¡t; khÃ´ng cáº§n sá»­a.";
+          return "Chất lượng đã đạt; không cần sửa.";
         }
 
-        return `ÄÃ£ sá»­a xong chÆ°Æ¡ng ${parsed.chapterNumber}.`;
+        return `Đã sửa xong chương ${parsed.chapterNumber}.`;
       },
     );
 
@@ -768,8 +768,8 @@ export class StoryOrchestrator {
       4,
       {
         id: "validate-chapter",
-        label: "Chá»‘t chÆ°Æ¡ng",
-        detail: "Äang xÃ¡c nháº­n báº£n tháº£o cuá»‘i há»£p lá»‡ vÃ  sáºµn sÃ ng tráº£ vá».",
+        label: "Chốt chương",
+        detail: "Đang xác nhận bản thảo cuối hợp lệ và sẵn sàng trả về.",
       },
       async () => {
         if (!draftedChapter.repaired) {
@@ -792,7 +792,7 @@ export class StoryOrchestrator {
 
         return draftedChapter.chapter;
       },
-      `ChÆ°Æ¡ng ${parsed.chapterNumber} Ä‘Ã£ sáºµn sÃ ng.`,
+      `Chương ${parsed.chapterNumber} đã sẵn sàng.`,
     );
   }
 
@@ -822,15 +822,15 @@ export class StoryOrchestrator {
       1,
       {
         id: "load-context",
-        label: "Náº¡p ngá»¯ cáº£nh viáº¿t láº¡i",
-        detail: "Äang náº¡p preset vÃ  alias model cho lÆ°á»£t viáº¿t láº¡i.",
+        label: "Nạp ngữ cảnh viết lại",
+        detail: "Đang nạp preset và alias model cho lượt viết lại.",
       },
       () =>
         this.loadGenerationContext(
           storyPayload.request.linePreset,
           storyPayload.request.stylePreset,
         ),
-      "ÄÃ£ náº¡p xong ngá»¯ cáº£nh viáº¿t láº¡i.",
+      "Đã nạp xong ngữ cảnh viết lại.",
     );
 
     const rewrittenChapter = await runProgressStage(
@@ -838,8 +838,8 @@ export class StoryOrchestrator {
       2,
       {
         id: "rewrite-chapter",
-        label: `Viáº¿t láº¡i chÆ°Æ¡ng ${parsed.targetChapter}`,
-        detail: `Äang Ã¡p dá»¥ng ${parsed.mode} cho chÆ°Æ¡ng ${parsed.targetChapter}.`,
+        label: `Viết lại chương ${parsed.targetChapter}`,
+        detail: `Đang áp dụng ${parsed.mode} cho chương ${parsed.targetChapter}.`,
       },
       async () => {
         const regeneratePrompt = buildRegenerateChapterPrompt({
@@ -883,7 +883,7 @@ export class StoryOrchestrator {
           modelUsed: regenerateResult.modelUsed,
         };
       },
-      (result) => `ÄÃ£ nháº­n báº£n viáº¿t láº¡i tá»« ${result.modelUsed}.`,
+      (result) => `Đã nhận bản viết lại từ ${result.modelUsed}.`,
     );
 
     return runProgressStage(
@@ -891,8 +891,8 @@ export class StoryOrchestrator {
       3,
       {
         id: "merge-story",
-        label: "Gá»™p chÆ°Æ¡ng Ä‘Ã£ viáº¿t láº¡i",
-        detail: "Äang cáº­p nháº­t story payload báº±ng báº£n tháº£o má»›i.",
+        label: "Gộp chương đã viết lại",
+        detail: "Đang cập nhật story payload bằng bản thảo mới.",
       },
       async () => {
         const chapters = storyPayload.chapters.map((chapter) =>
@@ -913,7 +913,7 @@ export class StoryOrchestrator {
           storyPayload: nextPayload,
         };
       },
-      `ÄÃ£ gá»™p chÆ°Æ¡ng ${parsed.targetChapter} vÃ o truyá»‡n.`,
+      `Đã gộp chương ${parsed.targetChapter} vào truyện.`,
     );
   }
 
@@ -1027,8 +1027,8 @@ export class StoryOrchestrator {
 
     const posterStage = {
       id: "poster-image",
-      label: "TÃ¡ÂºÂ¡o poster",
-      detail: "Ã„Âang tÃ¡ÂºÂ¡o poster 16:9 bÃ¡ÂºÂ±ng GPT-Image 2.",
+      label: "Tạo poster",
+      detail: "Đang tạo poster 16:9 bằng GPT-Image 2.",
     };
     emitProgress(progress, 6, posterStage, "started");
 
@@ -1040,8 +1040,8 @@ export class StoryOrchestrator {
           posterStage,
           "completed",
           poster.status === "completed"
-            ? `Ã„ÂÃƒÂ£ tÃ¡ÂºÂ¡o poster: ${poster.filePath}.`
-            : `Poster ${poster.status}: ${poster.error || "khÃƒÂ´ng cÃƒÂ³ chi tiÃ¡ÂºÂ¿t."}`,
+            ? `Đã tạo poster: ${poster.filePath}.`
+            : `Poster ${poster.status}: ${poster.error || "không có chi tiết."}`,
         );
         return poster;
       })

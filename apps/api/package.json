@@ -9,7 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "tsx src/startDev.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test:stream-headers": "tsx --test src/streamHeaders.test.ts"
+    "test:stream-headers": "tsx --test src/streamHeaders.test.ts",
+    "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
