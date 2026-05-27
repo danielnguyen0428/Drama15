@@ -22,6 +22,16 @@
 - API production dependency audit currently reports 5 high vulnerabilities through Fastify's `fast-uri` dependency chain. The web production audit reports 0 vulnerabilities.
 - There are no tests in the trimmed repo; the meaningful baseline check today is build/typecheck plus an API smoke test.
 
+## Execution Notes
+
+- `5bfda3e` pushed `render.yaml` plus API CORS allowlist.
+- `10dd1ca` pushed Vercel web config, production metadata, and `apps/web/.env.production.example`.
+- `eba9849` upgraded Fastify from 4.x to 5.8.5 so `npm --prefix apps/api audit --omit=dev --audit-level=high` reports 0 vulnerabilities.
+- Verified `npm --prefix apps/api run typecheck`, `VITE_API_URL=https://drama-api.novelkit.cc npm run build`, `npm --prefix apps/web audit --omit=dev --audit-level=moderate`, and local API `/healthz` smoke test.
+- Vercel account `danielnguyen0428-9389s-projects` has project `web` assigned to `drama.novelkit.cc`, but its current project settings show root directory `.` and framework preset `Next.js`; production deploy must be done carefully from `apps/web` or after fixing project settings.
+- `drama-api.novelkit.cc` currently resolves through Vercel wildcard DNS and returns 404 because the Render API service/custom domain has not been created yet.
+- Blocker for completing online deploy: Render access is not available locally (`RENDER_API_KEY` is missing), and production `OPENAI_BASE_URL` / `OPENAI_API_KEY` values must be supplied as Render secrets.
+
 ## Success Criteria
 
 - `npm --prefix apps/api ci` completes.
