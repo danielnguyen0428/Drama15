@@ -208,17 +208,17 @@ test("buildSettingSeedPrompt asks AI to generate a complete settings form packag
   assert.match(prompt.userPrompt, /Fill title, niche, setting seed, hidden story config, and drafting controls/);
   assert.match(prompt.userPrompt, /titleHint must be newly generated for the chosen Niche/);
   assert.match(prompt.userPrompt, /Do not reuse the incoming request titleHint/);
-  assert.match(prompt.userPrompt, /Create a high-CTR YouTube Title for an emotional audio drama/);
+  assert.match(prompt.userPrompt, /Create a high-CTR webnovel title for a ROMANCE short drama about love across class lines/);
   assert.match(prompt.userPrompt, /titleHint must follow the selected outputLanguage/);
-  assert.match(prompt.userPrompt, /curiosity gap/);
-  assert.match(prompt.userPrompt, /emotional stakes/);
+  assert.match(prompt.userPrompt, /ROMANTIC TENSION/);
+  assert.match(prompt.userPrompt, /LOVE STORY/);
   assert.match(prompt.userPrompt, /For billionaire_rich_poor_romance, titleHint must center the rich-poor love story/);
   assert.match(prompt.userPrompt, /He Chose The Poor Bride In Front Of His Family/);
   assert.match(prompt.userPrompt, /Cinderella Of The Charity Gala/);
   assert.match(prompt.userPrompt, /For workplace_ceo_power_struggle, titleHint must use first-person webnovel viral format with corporate-power reversal/);
   assert.match(prompt.userPrompt, /Hidden Heiress Signed As His Secretary/);
   assert.match(prompt.userPrompt, /Pregnant Secretary Refused The CEO's Buyout/);
-  assert.match(prompt.userPrompt, /Female Billionaire Bought Her Ex's Wedding Venue/);
+  assert.match(prompt.userPrompt, /After Divorce She Bought His Company/);
   assert.match(prompt.userPrompt, /topicAnchor/);
   assert.match(prompt.userPrompt, /at least 30 hot motif anchors per Niche/);
   assert.match(prompt.userPrompt, /Do not default back to fake wife or contract marriage/);
@@ -354,10 +354,10 @@ test("buildSettingSeedPrompt blocks repeated skeletons inside the same niche", (
   assert.match(prompt.userPrompt, /revealMechanism/);
   assert.match(prompt.userPrompt, /endingShape/);
   assert.match(prompt.userPrompt, /Do not reuse the same story skeleton/i);
-  assert.match(prompt.userPrompt, /poor girl \+ rich boy \+ rich family apologizes/i);
+  assert.match(prompt.userPrompt, /five different axes: pressure engine, arena, humiliation method, leverage object, and reveal venue/i);
 });
 
-test("buildSettingSeedPrompt keeps generated titles in output-language YouTube audio drama grammar", () => {
+test("buildSettingSeedPrompt keeps generated titles in output-language webnovel grammar", () => {
   const prompt = buildSettingSeedPrompt({
     request: {
       ...requestFixture,
@@ -368,15 +368,14 @@ test("buildSettingSeedPrompt keeps generated titles in output-language YouTube a
   });
 
   assert.match(prompt.userPrompt, /Write all human-readable JSON values in Vietnamese/);
-  assert.match(prompt.userPrompt, /Create a high-CTR YouTube Title for an emotional audio drama/);
+  assert.match(prompt.userPrompt, /Create a high-CTR webnovel title for a ROMANCE short drama about love across class lines/);
   assert.match(prompt.userPrompt, /titleHint must follow the selected outputLanguage/);
-  assert.match(prompt.userPrompt, /curiosity gap/);
-  assert.match(prompt.userPrompt, /emotional stakes/);
+  assert.match(prompt.userPrompt, /ROMANTIC TENSION/);
+  assert.match(prompt.userPrompt, /LOVE STORY/);
   assert.match(prompt.userPrompt, /Do not force titleHint into English unless outputLanguage is English/);
-  assert.match(prompt.userPrompt, /Strong Vietnamese shapes/);
-  assert.match(prompt.userPrompt, /Chồng Tỷ Phú Chọn Cô Ta/);
-  assert.match(prompt.userPrompt, /Strong English shapes/);
-  assert.match(prompt.userPrompt, /The CEO Fired His Secret Wife/);
+  assert.match(prompt.userPrompt, /STRONG Vietnamese ROMANCE title examples/);
+  assert.match(prompt.userPrompt, /STRONG English ROMANCE title examples/);
+  assert.match(prompt.userPrompt, /He Chose The Poor Bride In Front Of His Family/);
 });
 
 test("buildStoryBiblePrompt composes the vendored system prompt with bible instructions", () => {
@@ -681,8 +680,8 @@ test("buildConceptPrompt preserves output-language viral title grammar when titl
   });
 
   assert.match(prompt.userPrompt, /For title and titleCandidates, follow request\.outputLanguage/);
-  assert.match(prompt.userPrompt, /If request\.titleHint is already a compact viral drama title in that language/);
-  assert.match(prompt.userPrompt, /keep that same language and title grammar/);
+  assert.match(prompt.userPrompt, /If request\.titleHint is already strong, keep it and generate 4 diverse alternatives/);
+  assert.match(prompt.userPrompt, /Keep titles compact; put longer explanation into logline, promise, or conflictEngine/);
 });
 
 test("buildChapterRepairPrompt repairs dialogue without length-gate instructions", () => {

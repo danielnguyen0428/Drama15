@@ -1,7 +1,7 @@
 {
-  "planner": "kr/claude-sonnet-4.6",
-  "bible": "kr/claude-sonnet-4.6",
-  "drafter": "kr/claude-sonnet-4.6",
-  "rewriter": "kr/claude-sonnet-4.6",
-  "fallback": "kr/claude-sonnet-4.6"
+  "planner": "cx/gpt-5.5",
+  "bible": "cx/gpt-5.5",
+  "drafter": "cx/gpt-5.5",
+  "rewriter": "cx/gpt-5.5",
+  "fallback": "cx/gpt-5.5"
 }

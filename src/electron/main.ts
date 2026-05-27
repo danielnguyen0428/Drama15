@@ -78,6 +78,7 @@ const PRESET_ORDERS: Record<"lines" | "styles", string[]> = {
   styles: [
     "wharton_class_shame_elegance",
     "austen_social_knife",
+    "gu_man_sunshine_romance",
     "bronte_gothic_romance_wound",
     "du_maurier_psychological_shadow",
     "fitzgerald_glittering_decay",

@@ -147,13 +147,18 @@ test("style presets use famous author craft lanes instead of removed inspiration
     "bronte_gothic_romance_wound",
     "du_maurier_psychological_shadow",
     "fitzgerald_glittering_decay",
+    "gu_man_sunshine_romance",
     "highsmith_cold_paranoia",
     "wharton_class_shame_elegance",
   ]);
 
   const wharton = readJson(path.join(stylesDir, "wharton_class_shame_elegance.json"));
-  assert.equal(wharton.displayName, "Edith Wharton - class shame elegance");
+  assert.equal(wharton.displayName, "Sỉ nhục giai cấp tinh tế - Wharton");
   assert.match(JSON.stringify(wharton), /broad craft traits only/i);
+
+  const guMan = readJson(path.join(stylesDir, "gu_man_sunshine_romance.json"));
+  assert.equal(guMan.id, "gu_man_sunshine_romance");
+  assert.match(JSON.stringify(guMan), /small actions to carry emotion/i);
 });
 
 test("preset loader supports branch-scoped virtual style preset ids", async () => {
@@ -162,7 +167,8 @@ test("preset loader supports branch-scoped virtual style preset ids", async () =
 
   assert.equal(stylePreset.id, "billionaire_rich_poor_romance__tiktok_hook_pacing");
   assert.match(stylePreset.displayName, /Billionaire Rich Poor Romance/);
-  assert.match(stylePreset.displayName, /TikTok hook pacing/);
+  assert.match(stylePreset.displayName, /TikTok/);
+  assert.match(stylePreset.displayName, /hook viral|hook pacing/i);
   assert.match(stylePreset.notes.join("\n"), /Apply this style lens to the selected drama branch/);
 });
 

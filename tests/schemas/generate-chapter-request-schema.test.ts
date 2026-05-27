@@ -89,7 +89,10 @@ test("GenerateChapterRequestSchema preserves continuation style and continuity c
   });
 
   assert.equal(parsed.stylePreset, "billionaire_rich_poor_romance__tiktok_hook_pacing");
-  assert.deepEqual(parsed.continuityLite, continuityLite);
+  assert.deepEqual(parsed.continuityLite, {
+    ...continuityLite,
+    speechPatterns: {},
+  });
 });
 
 test("DraftControlsSchema does not inject deprecated chapter word target", () => {

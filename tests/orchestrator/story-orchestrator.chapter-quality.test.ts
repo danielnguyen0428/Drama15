@@ -134,6 +134,14 @@ class FakeRouterClient {
       timeoutMs: params.timeoutMs,
     });
 
+    if (params.userPrompt.includes("Extract character facts")) {
+      return { data: { characters: [] }, modelUsed: "fact-extractor-model" } as { data: T; modelUsed: string };
+    }
+
+    if (params.systemPrompt?.includes("Character Consistency Validator")) {
+      return { data: { violations: [] }, modelUsed: "consistency-validator-model" } as { data: T; modelUsed: string };
+    }
+
     const next = this.responses.shift();
     if (!next) {
       throw new Error("No fake response remaining.");
@@ -175,6 +183,7 @@ function architectureWordUnits(chapterNumber: number) {
 }
 
 function makeBalancedDraft(chapterNumber = 1) {
+  const chapterLexeme = `chapter${chapterNumber}`;
   return {
     data: {
       chapter: {
@@ -182,7 +191,7 @@ function makeBalancedDraft(chapterNumber = 1) {
         title: `Chapter ${chapterNumber}`,
         summary: "summary",
         text: Array.from({ length: architectureWordUnits(chapterNumber) }, () =>
-          "\"Yes one two three four\" five six seven eight nine",
+          `\"${chapterLexeme} yes ${chapterLexeme} one ${chapterLexeme} two\" ${chapterLexeme} five ${chapterLexeme} six ${chapterLexeme} seven`,
         ).join(" "),
       },
     },
@@ -234,7 +243,7 @@ test("generateChapter retries once when the first draft misses quality threshold
       .filter((event) => event.stageId === "repair-chapter")
       .map((event) => [event.status, event.detail]),
     [
-      ["started", "Đang kiểm tra chất lượng và thử sửa một lần nếu cần."],
+      ["started", "Đang kiểm tra chất lượng, tính nhất quán nhân vật và thử sửa nếu cần."],
       ["completed", "Đã sửa xong chương 1."],
     ],
   );

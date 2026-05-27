@@ -26,6 +26,12 @@ data/published-stories.json.tmp-*
 .scratch_*.cjs
 *.tmp-*
 
+# Source-adjacent TypeScript emit artifacts
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+
 # Build & log artifacts
 *.log
 *.err.log
