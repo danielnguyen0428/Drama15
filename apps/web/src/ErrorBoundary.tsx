@@ -26,10 +26,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       <main style={styles.shell}>
         <section style={styles.panel}>
           <p style={styles.eyebrow}>Drama15 Lite Studio</p>
-          <h1 style={styles.title}>App crashed</h1>
-          <p style={styles.copy}>Reload the page to restart this writing session.</p>
+          <h1 style={styles.title}>Phiên sáng tác bị gián đoạn</h1>
+          <p style={styles.copy}>Tải lại trang để khởi động lại không gian viết truyện.</p>
           {this.state.error && <pre style={styles.pre}>{this.state.error.message}</pre>}
-          <button type="button" onClick={() => window.location.reload()} style={styles.button}>Reload</button>
+          <button type="button" onClick={() => window.location.reload()} style={styles.button}>Tải lại trang</button>
         </section>
       </main>
     );
@@ -42,15 +42,15 @@ const styles = {
     display: 'grid',
     placeItems: 'center',
     padding: '24px',
-    background: '#101113',
+    background: '#101214',
     color: '#f6f0e8',
-    fontFamily: 'Inter, system-ui, sans-serif',
+    fontFamily: '"Sora", "DM Sans", "Segoe UI", sans-serif',
   },
   panel: {
     width: 'min(520px, 100%)',
     border: '1px solid rgba(246,240,232,0.14)',
     borderRadius: '8px',
-    background: 'rgba(22,24,27,0.9)',
+    background: 'rgba(21,24,27,0.9)',
     padding: '28px',
   },
   eyebrow: { margin: '0 0 8px', color: '#f0b56a', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase' as const },

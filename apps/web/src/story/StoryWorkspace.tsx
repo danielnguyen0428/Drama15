@@ -51,29 +51,62 @@ const DEFAULT_CONFIG: StoryConfig = {
 };
 
 const NICHES = [
-  ['billionaire_rich_poor_romance', 'Ty phu / tinh yeu vuot giai cap'],
-  ['humiliation_revenge_justice', 'Si nhuc / tra dua / cong ly'],
-  ['secret_identity_hidden_heiress', 'Than phan bi mat / thien kim'],
-  ['toxic_family_betrayal', 'Gia dinh doc hai / phan boi'],
-  ['cheating_ex_wedding_drama', 'Ngoai tinh / drama cuoi'],
-  ['single_mom_poor_woman_comeback', 'Me don than / lat keo'],
-  ['social_injustice_discrimination_drama', 'Bat cong xa hoi'],
-  ['workplace_ceo_power_struggle', 'Cong so / CEO / tranh quyen'],
-  ['medical_hidden_doctor_life_care', 'Y te / bac si an danh'],
-  ['school_campus_bullying_identity', 'Hoc duong / bat nat'],
+  ['billionaire_rich_poor_romance', 'Tỷ phú / tình yêu vượt giai cấp'],
+  ['humiliation_revenge_justice', 'Sỉ nhục / trả đũa / công lý'],
+  ['secret_identity_hidden_heiress', 'Thân phận bí mật / thiên kim'],
+  ['toxic_family_betrayal', 'Gia đình độc hại / phản bội'],
+  ['cheating_ex_wedding_drama', 'Ngoại tình / drama cưới'],
+  ['single_mom_poor_woman_comeback', 'Mẹ đơn thân / lật kèo'],
+  ['social_injustice_discrimination_drama', 'Bất công xã hội'],
+  ['workplace_ceo_power_struggle', 'Công sở / CEO / tranh quyền'],
+  ['medical_hidden_doctor_life_care', 'Y tế / bác sĩ ẩn danh'],
+  ['school_campus_bullying_identity', 'Học đường / bắt nạt'],
   ['werewolf_luna_alpha_soulmate', 'Werewolf / Alpha soulmate'],
   ['steamy_alien_captive_romance', 'Steamy / dark romance'],
-  ['custom', 'Nhanh tuy bien'],
+  ['custom', 'Nhánh tùy biến'],
 ] as const;
+
+const PHASE_LABELS: Record<Phase, string> = {
+  idle: 'Sẵn sàng',
+  suggesting: 'Đang gợi ý',
+  creating: 'Đang khởi tạo',
+  streaming: 'Đang viết',
+  completed: 'Hoàn tất',
+  failed: 'Có lỗi',
+};
+
+const LANGUAGE_OPTIONS = [
+  ['vietnamese', 'Tiếng Việt'],
+  ['english', 'Tiếng Anh'],
+  ['japanese', 'Tiếng Nhật'],
+  ['korean', 'Tiếng Hàn'],
+  ['spanish', 'Tiếng Tây Ban Nha'],
+  ['portuguese', 'Tiếng Bồ Đào Nha'],
+] as const;
+
+const REWRITE_MODES = [
+  ['full_chapter', 'Viết lại toàn chương'],
+  ['opening_hook', 'Móc mở đầu'],
+  ['closing_beat', 'Nhịp kết chương'],
+  ['dialogue_tone', 'Giọng thoại'],
+  ['class_humiliation', 'Cảm giác bị hạ thấp'],
+  ['retaliation_sharpness', 'Độ sắc của phản đòn'],
+] as const;
+
+const FALLBACK_STYLE: StylePreset = {
+  id: DEFAULT_CONFIG.stylePreset,
+  displayName: 'Sỉ nhục thượng lưu kiểu Wharton',
+  description: '',
+};
 
 export function StoryWorkspace(): JSX.Element {
   const [config, setConfig] = useState<StoryConfig>(DEFAULT_CONFIG);
   const [styles, setStyles] = useState<StylePreset[]>([]);
   const [phase, setPhase] = useState<Phase>('idle');
   const [storyId, setStoryId] = useState<string | null>(null);
-  const [storyTitle, setStoryTitle] = useState('Untitled Drama');
+  const [storyTitle, setStoryTitle] = useState('Drama chưa đặt tên');
   const [progress, setProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState('Ready');
+  const [progressLabel, setProgressLabel] = useState('Sẵn sàng bắt đầu');
   const [result, setResult] = useState<StoryResult>(EMPTY_RESULT);
   const [activeChapter, setActiveChapter] = useState(1);
   const [panel, setPanel] = useState<'chapters' | 'overview' | 'plan' | 'bible'>('chapters');
@@ -115,17 +148,17 @@ export function StoryWorkspace(): JSX.Element {
   async function suggestSetup() {
     setPhase('suggesting');
     setError(null);
-    setProgressLabel('Suggesting seed...');
+    setProgressLabel('Đang gợi ý mầm truyện...');
     try {
       const response = await httpFetch('/story/setup-suggest', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
       const data = (await response.json()) as { title?: string; seed?: string };
       setConfig((current) => ({ ...current, title: data.title || current.title, seed: data.seed || current.seed }));
-      setStoryTitle(data.title || config.title || 'Untitled Drama');
-      setProgressLabel('Seed ready');
+      setStoryTitle(data.title || config.title || 'Drama chưa đặt tên');
+      setProgressLabel('Đã có mầm truyện');
       setPhase('idle');
     } catch (err) {
-      fail(err, 'Could not suggest setup.');
+      fail(err, 'Không thể gợi ý thiết lập truyện.');
     }
   }
 
@@ -134,10 +167,10 @@ export function StoryWorkspace(): JSX.Element {
     setPhase('creating');
     setError(null);
     setProgress(0);
-    setProgressLabel('Creating story job...');
+    setProgressLabel('Đang tạo phiên sáng tác...');
     setResult(EMPTY_RESULT);
     setActiveChapter(1);
-    setStoryTitle(config.title || 'Untitled Drama');
+    setStoryTitle(config.title || 'Drama chưa đặt tên');
     try {
       const response = await httpFetch('/stories', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
@@ -145,7 +178,7 @@ export function StoryWorkspace(): JSX.Element {
       setStoryId(data.storyId);
       connectStream(data.storyId);
     } catch (err) {
-      fail(err, 'Could not create story.');
+      fail(err, 'Không thể bắt đầu viết truyện.');
     }
   }
 
@@ -156,7 +189,7 @@ export function StoryWorkspace(): JSX.Element {
     source.onmessage = (event) => handleStreamEvent(JSON.parse(event.data) as StreamEvent);
     source.onerror = () => {
       source.close();
-      setError('The API stream disconnected. Check backend health and try again.');
+      setError('Luồng dữ liệu bị ngắt. Kiểm tra API rồi thử viết lại.');
       setPhase('failed');
     };
   }
@@ -165,7 +198,7 @@ export function StoryWorkspace(): JSX.Element {
     if (payload.stage === 'progress') {
       const total = Math.max(payload.total ?? 1, 1);
       setProgress(Math.round(((payload.current ?? 0) / total) * 100));
-      setProgressLabel(payload.detail || payload.label || 'Working...');
+      setProgressLabel(payload.detail || payload.label || 'Đang xử lý...');
       return;
     }
     if (payload.stage === 'overview') {
@@ -189,12 +222,12 @@ export function StoryWorkspace(): JSX.Element {
     if (payload.stage === 'done') {
       streamRef.current?.close();
       setProgress(100);
-      setProgressLabel('Story complete');
+      setProgressLabel('Truyện đã hoàn tất');
       setPhase('completed');
       return;
     }
     if (payload.stage === 'error') {
-      fail(payload.error, 'Story generation failed.');
+      fail(payload.error, 'Quá trình viết truyện thất bại.');
       streamRef.current?.close();
     }
   }
@@ -214,7 +247,7 @@ export function StoryWorkspace(): JSX.Element {
       setResult((current) => ({ ...current, chapters: upsertChapter(current.chapters, data.chapter) }));
       setRewriteInstruction('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not rewrite chapter.');
+      setError(err instanceof Error ? err.message : 'Không thể viết lại chương.');
     } finally {
       setRewriteBusy(false);
     }
@@ -240,11 +273,11 @@ export function StoryWorkspace(): JSX.Element {
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Drama15 Lite Studio</p>
-          <h1>AI sang tac drama ngan</h1>
-          <p>Generate concepts, characters, beat sheets, chapters, and rewrites from one focused writing workspace.</p>
+          <h1>Studio sáng tác drama ngắn</h1>
+          <p>Dựng ý tưởng, nhân vật, dàn ý, chương truyện và bản viết lại trong một không gian sáng tác tập trung.</p>
         </div>
         <aside className="status-card">
-          <span>{phase}</span>
+          <span>{PHASE_LABELS[phase]}</span>
           <strong>{progress}%</strong>
           <div className="progress-track"><i style={{ width: `${progress}%` }} /></div>
           <small>{progressLabel}</small>
@@ -255,29 +288,29 @@ export function StoryWorkspace(): JSX.Element {
 
       <section className="workspace-grid">
         <aside className="setup-panel">
-          <PanelHeading label="Setup" value="Studio" />
-          <label>Niche<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          {config.niche === 'custom' && <label>Custom branch<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: me don than bi coi thuong" /></label>}
-          <label>Title hint<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Optional" /></label>
-          <label>Setting seed<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Canh mo dau, bi mat, vat chung, quan he..." rows={6} /></label>
-          <label>Style<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [{ id: DEFAULT_CONFIG.stylePreset, displayName: 'Wharton class shame elegance', description: '' }]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
-          <label>Language<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}><option value="vietnamese">Vietnamese</option><option value="english">English</option><option value="japanese">Japanese</option><option value="korean">Korean</option><option value="spanish">Spanish</option><option value="portuguese">Portuguese</option></select></label>
-          <Range label="Intensity" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
-          <Range label="Dialogue" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
-          <Range label="Hook" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void suggestSetup()}>Goi y seed</button><button type="button" className="primary-button" disabled={busy} onClick={() => void createStory()}>Viet truyen</button></div>
+          <PanelHeading label="Thiết lập" value="Studio" />
+          <label>Chủ đề<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          {config.niche === 'custom' && <label>Nhánh tùy biến<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị coi thường" /></label>}
+          <label>Gợi ý nhan đề<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
+          <label>Mầm truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Cảnh mở đầu, bí mật, vật chứng, mối quan hệ..." rows={6} /></label>
+          <label>Phong cách<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
+          <label>Ngôn ngữ đầu ra<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <Range label="Cường độ" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
+          <Range label="Đối thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
+          <Range label="Móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy} onClick={() => void createStory()}>Viết truyện</button></div>
         </aside>
 
         <section className="story-panel">
-          <div className="story-toolbar"><div><p className="eyebrow">Manuscript</p><h2>{storyTitle}</h2></div><button type="button" disabled={result.chapters.length === 0} onClick={exportMarkdown}>Tai Markdown</button></div>
-          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chapters</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Overview</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Plan</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Bible</button></nav>
+          <div className="story-toolbar"><div><p className="eyebrow">Bản thảo</p><h2>{storyTitle}</h2></div><button type="button" disabled={result.chapters.length === 0} onClick={exportMarkdown}>Tải Markdown</button></div>
+          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương truyện</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Tổng quan</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ truyện</button></nav>
 
           {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} />}
-          {panel === 'overview' && <TextPanel title="Concept" content={result.concept} />}
-          {panel === 'plan' && <TextPanel title="Chapter plan" content={result.plan} />}
-          {panel === 'bible' && <TextPanel title="Story bible" content={result.bible ? JSON.stringify(result.bible, null, 2) : ''} />}
+          {panel === 'overview' && <TextPanel title="Ý tưởng truyện" content={result.concept} />}
+          {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} />}
+          {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={result.bible ? JSON.stringify(result.bible, null, 2) : ''} />}
 
-          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Rewrite" value={`Chapter ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}><option value="full_chapter">Rewrite full chapter</option><option value="opening_hook">Opening hook</option><option value="closing_beat">Closing beat</option><option value="dialogue_tone">Dialogue tone</option><option value="class_humiliation">Class humiliation</option><option value="retaliation_sharpness">Retaliation sharpness</option></select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giu plot, tang cam giac bi coi thuong." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim()} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Dang rewrite...' : 'Rewrite chuong'}</button></section>}
+          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Viết lại" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị coi thường." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim()} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
         </section>
       </section>
     </main>
@@ -285,11 +318,11 @@ export function StoryWorkspace(): JSX.Element {
 }
 
 function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void }) {
-  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Waiting'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chapter ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">No chapter yet. Start generation to stream the manuscript here.</div>}</article></div>;
+  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết truyện” để bản thảo hiện ở đây.</div>}</article></div>;
 }
 
 function TextPanel({ title, content }: { title: string; content: string }) {
-  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : <div className="empty-state">Waiting for stream data.</div>}</article>;
+  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : <div className="empty-state">Đang chờ dữ liệu từ phiên viết truyện.</div>}</article>;
 }
 
 function PanelHeading({ label, value }: { label: string; value: string }) {
@@ -309,10 +342,10 @@ function upsertChapter(chapters: Chapter[], next: Chapter) {
 }
 
 function buildMarkdown(title: string, result: StoryResult) {
-  const parts = [`# ${title || 'Drama15 Story'}`];
-  if (result.concept) parts.push('## Concept', result.concept);
-  if (result.plan) parts.push('## Plan', result.plan);
-  for (const chapter of result.chapters) parts.push(`## Chapter ${chapter.index}: ${chapter.title || ''}`.trim(), chapter.content.trim());
+  const parts = [`# ${title || 'Truyện Drama15'}`];
+  if (result.concept) parts.push('## Ý tưởng', result.concept);
+  if (result.plan) parts.push('## Dàn ý', result.plan);
+  for (const chapter of result.chapters) parts.push(`## Chương ${chapter.index}: ${chapter.title || ''}`.trim(), chapter.content.trim());
   return `${parts.join('\n\n')}\n`;
 }
 
