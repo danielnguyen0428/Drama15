@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import lottie from 'lottie-web/build/player/lottie_light';
 
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
@@ -500,9 +501,10 @@ export function StoryWorkspace(): JSX.Element {
         </div>
         <aside className="status-card">
           <span>{PHASE_LABELS[phase]}</span>
+          <small className="loading-action">{progressLabel}</small>
           <strong>{progress}%</strong>
+          <LoadingAnimation active={busy} />
           <div className="progress-track"><i style={{ width: `${progress}%` }} /></div>
-          <small>{progressLabel}</small>
         </aside>
       </header>
 
@@ -556,6 +558,37 @@ export function StoryWorkspace(): JSX.Element {
       </section>
     </main>
   );
+}
+
+function LoadingAnimation({ active }: { active: boolean }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const animationRef = useRef<ReturnType<typeof lottie.loadAnimation> | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    animationRef.current = lottie.loadAnimation({
+      container: containerRef.current,
+      renderer: 'svg',
+      loop: true,
+      autoplay: active,
+      path: '/loading-cat.json',
+      rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
+    });
+
+    return () => {
+      animationRef.current?.destroy();
+      animationRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const animation = animationRef.current;
+    if (!animation) return;
+    if (active) animation.play();
+    else animation.pause();
+  }, [active]);
+
+  return <div className={active ? 'loading-lottie active' : 'loading-lottie'} ref={containerRef} aria-hidden="true" />;
 }
 
 function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {

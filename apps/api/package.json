@@ -10,6 +10,7 @@
     "start": "tsx src/startDev.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:stream-headers": "tsx --test src/streamHeaders.test.ts",
+    "test:story-quota-migration": "tsx --test src/storyQuotaMigration.test.ts",
     "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts",
     "test:quota": "tsx --test src/quota.test.ts",
     "test:relationship-graph": "tsx --test src/relationshipGraph.test.ts",

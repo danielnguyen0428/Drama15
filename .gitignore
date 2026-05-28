@@ -20,6 +20,7 @@ apps/api/drama15-seed-history.json
 .backups/
 .playwright-cli/
 .superpowers/
+supabase/.temp/
 .scratch_*.cjs
 *.tmp-*
 
