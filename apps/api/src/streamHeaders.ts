@@ -11,8 +11,8 @@ export function resolveAllowedOrigin(origin: string | undefined, corsOrigins: re
 export function buildCorsHeaders(origin: string | undefined, corsOrigins: readonly string[]): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': resolveAllowedOrigin(origin, corsOrigins),
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'content-type',
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization,content-type,x-admin-api-key',
     Vary: 'Origin',
   };
 }
