@@ -38,6 +38,10 @@ const EnvSchema = z.object({
   OUTPUT_DIR: z.string().optional(),
   WRITE_EXPORT_FILES: z.string().optional().transform((value) => value === "true"),
   MODEL_PRESET: z.string().default("default"),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  ADMIN_API_KEY: z.string().optional(),
 });
 
 const parsedEnv = EnvSchema.parse(process.env);
@@ -60,6 +64,10 @@ export const env = {
   outputDir: resolveOutputDir(parsedEnv.OUTPUT_DIR),
   writeExportFiles: parsedEnv.WRITE_EXPORT_FILES,
   modelPreset: parsedEnv.MODEL_PRESET,
+  supabaseUrl: parsedEnv.SUPABASE_URL,
+  supabaseAnonKey: parsedEnv.SUPABASE_ANON_KEY,
+  supabaseServiceRoleKey: parsedEnv.SUPABASE_SERVICE_ROLE_KEY,
+  adminApiKey: parsedEnv.ADMIN_API_KEY,
 } as const;
 
 function resolveOutputDir(value: string | undefined) {

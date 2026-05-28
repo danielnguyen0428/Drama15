@@ -9,6 +9,8 @@ import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
 import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
+import { consumeStoryQuota, getQuotaSnapshot, getSupabaseAdmin, isAdminRequest, requireUser } from './supabaseServer.js';
+import { StoryStore } from './storyStore.js';
 import type {
   Chapter,
   NormalizedFullGenerateRequest,
@@ -43,20 +45,30 @@ type ClientChapter = {
 };
 
 type StreamPayload = Record<string, unknown> & {
-  stage: 'progress' | 'overview' | 'bible' | 'plan' | 'chapter' | 'done' | 'error';
+  stage: 'progress' | 'overview' | 'bible' | 'plan' | 'relationshipGraph' | 'chapter' | 'done' | 'error';
 };
 
 type StoryJob = {
   id: string;
+  userId: string;
   createdAt: string;
   request: NormalizedFullGenerateRequest;
   events: StreamPayload[];
   clients: Set<(payload: StreamPayload) => void>;
   promise?: Promise<StoryPayload>;
+  saveChain?: Promise<void>;
   storyPayload?: StoryPayload;
   status: 'queued' | 'running' | 'completed' | 'failed';
   error?: string;
 };
+
+const RenameStorySchema = z.object({
+  title: z.string().trim().min(1).max(120),
+});
+
+const UpdateTierSchema = z.object({
+  tier: z.enum(['free', 'pro', 'premium']),
+});
 
 const StoryConfigSchema = z.object({
   niche: z.string().trim().min(1).default(env.defaultLinePreset),
@@ -96,6 +108,10 @@ const orchestrator = new StoryOrchestrator(
   new SeedHistoryStore(),
 );
 
+function getStoryStore() {
+  return new StoryStore(getSupabaseAdmin());
+}
+
 const app = fastify({
   bodyLimit: 1024 * 1024,
   logger: { level: env.logLevel },
@@ -128,7 +144,22 @@ app.get('/story/style-presets', async (_request, reply) => {
   }
 });
 
+app.get('/auth/me', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const quota = await getQuotaSnapshot(user);
+    return reply.send({ user, quota });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
 app.post('/story/setup-suggest', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
   try {
     const config = StoryConfigSchema.parse(request.body);
     const suggestionRequest = normalizeOutlineRequest(config);
@@ -146,13 +177,40 @@ app.post('/story/setup-suggest', async (request, reply) => {
   }
 });
 
+app.get('/stories', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const stories = await getStoryStore().listStories(user);
+    return reply.send({ stories });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
 app.post('/stories', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
   try {
     const config = StoryConfigSchema.parse(request.body);
     const storyRequest = normalizeFullRequest(config);
+    const quota = await consumeStoryQuota(user);
+    if (!quota.allowed) {
+      return reply.code(429).send({
+        error: {
+          code: 'quota_exceeded',
+          message: `Bạn đã dùng hết ${quota.limit} lượt viết truyện hôm nay. Nâng cấp Pro hoặc Premium để có thêm lượt.`,
+        },
+        quota,
+      });
+    }
+
     const id = randomUUID();
     const job: StoryJob = {
       id,
+      userId: user.id,
       createdAt: new Date().toISOString(),
       request: storyRequest,
       events: [],
@@ -160,20 +218,46 @@ app.post('/stories', async (request, reply) => {
       status: 'queued',
     };
 
+    await getStoryStore().createQueuedStory({
+      id,
+      user,
+      title: config.title || 'Drama chưa đặt tên',
+      config,
+      request: storyRequest,
+    });
     jobs.set(id, job);
 
-    return reply.code(201).send({ storyId: id, status: job.status });
+    return reply.code(201).send({ storyId: id, status: job.status, quota });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.get('/stories/:id', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const story = await getStoryStore().getStory(user, id);
+    if (!story) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    return reply.send({ story });
   } catch (error) {
     return sendError(reply, error);
   }
 });
 
 app.get('/stories/:id/stream', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
   const job = jobs.get(id);
 
-  if (!job) {
-    return reply.code(404).send({ error: { code: 'not_found', message: 'Story job not found.' } });
+  if (!job || job.userId !== user.id) {
+    return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy phiên viết truyện.' } });
   }
 
   reply.raw.writeHead(200, buildStreamHeaders(request.headers.origin, env.corsOrigins));
@@ -199,20 +283,28 @@ app.get('/stories/:id/stream', async (request, reply) => {
 });
 
 app.post('/stories/:id/rewrite', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
   try {
     const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
     const job = jobs.get(id);
+    if (job && job.userId !== user.id) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    const storedStory = job?.storyPayload ? null : await getStoryStore().getStory(user, id);
+    const storyPayload = job?.storyPayload ?? storedStory?.storyPayload;
 
-    if (!job?.storyPayload) {
+    if (!storyPayload) {
       return reply.code(409).send({
-        error: { code: 'story_not_ready', message: 'Generate the full story before rewriting a chapter.' },
+        error: { code: 'story_not_ready', message: 'Cần tạo xong bản thảo trước khi viết lại chương.' },
       });
     }
 
     const body = RewriteBodySchema.parse(request.body);
     const mode = modeMap[body.mode] ?? 'rewrite_chapter';
     const result = await orchestrator.regenerateChapter({
-      storyPayload: job.storyPayload,
+      storyPayload,
       targetChapter: body.chapterIndex,
       mode,
       instruction: body.instruction,
@@ -223,11 +315,67 @@ app.post('/stories/:id/rewrite', async (request, reply) => {
       },
     });
 
-    job.storyPayload = result.storyPayload;
+    if (job) job.storyPayload = result.storyPayload;
+    await getStoryStore().saveStoryPayload(user.id, id, result.storyPayload, 'completed');
 
     return reply.send({
       chapter: toClientChapter(result.chapter),
+      storyPayload: result.storyPayload,
+      relationshipGraph: result.storyPayload.relationshipGraph,
     });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.patch('/stories/:id', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const body = RenameStorySchema.parse(request.body);
+    const story = await getStoryStore().renameStory(user, id, body.title);
+    if (!story) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    return reply.send({ story });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.delete('/stories/:id', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const story = await getStoryStore().getStory(user, id);
+    if (!story) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    await getStoryStore().deleteStory(user, id);
+    jobs.delete(id);
+    return reply.code(204).send();
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.patch('/admin/users/:id/tier', async (request, reply) => {
+  if (!isAdminRequest(request)) {
+    return reply.code(401).send({ error: { code: 'unauthorized', message: 'Admin API key không hợp lệ.' } });
+  }
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const body = UpdateTierSchema.parse(request.body);
+    const user = await getStoryStore().updateUserTier(id, body.tier);
+    if (!user) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy người dùng.' } });
+    }
+    return reply.send({ user });
   } catch (error) {
     return sendError(reply, error);
   }
@@ -235,6 +383,7 @@ app.post('/stories/:id/rewrite', async (request, reply) => {
 
 async function runStoryJob(job: StoryJob) {
   job.status = 'running';
+  await getStoryStore().updateStatus(job.userId, job.id, 'running');
   const sent = {
     outline: false,
     chapters: new Set<number>(),
@@ -255,6 +404,11 @@ async function runStoryJob(job: StoryJob) {
         if (event.storyPayload) {
           emitStoryPayload(job, event.storyPayload, sent);
           job.storyPayload = event.storyPayload;
+          job.saveChain = (job.saveChain ?? Promise.resolve())
+            .then(() => getStoryStore().saveStoryPayload(job.userId, job.id, event.storyPayload!, 'running'))
+            .catch((error) => {
+              app.log.error({ error, storyId: job.id }, 'failed to save partial story payload');
+            });
         }
 
         if (event.chapter && !sent.chapters.has(event.chapter.chapterNumber)) {
@@ -270,11 +424,16 @@ async function runStoryJob(job: StoryJob) {
     job.storyPayload = storyPayload;
     emitStoryPayload(job, storyPayload, sent);
     job.status = 'completed';
+    await job.saveChain;
+    await getStoryStore().saveStoryPayload(job.userId, job.id, storyPayload, 'completed');
     broadcast(job, { stage: 'done', title: storyPayload.title });
     return storyPayload;
   } catch (error) {
     job.status = 'failed';
     job.error = error instanceof Error ? error.message : 'Story generation failed.';
+    await getStoryStore().updateStatus(job.userId, job.id, 'failed', job.error).catch((storeError) => {
+      app.log.error({ error: storeError, storyId: job.id }, 'failed to save failed story status');
+    });
     broadcast(job, { stage: 'error', error: job.error });
     throw error;
   }
@@ -294,6 +453,7 @@ function emitStoryPayload(
     });
     broadcast(job, { stage: 'bible', bible: storyPayload.storyBible });
     broadcast(job, { stage: 'plan', plan: formatPlan(storyPayload) });
+    broadcast(job, { stage: 'relationshipGraph', relationshipGraph: storyPayload.relationshipGraph });
   }
 
   for (const chapter of storyPayload.chapters) {
@@ -392,10 +552,10 @@ function toClientChapter(chapter: Chapter): ClientChapter {
 
 function formatConcept(storyPayload: StoryPayload) {
   return [
-    `Title: ${storyPayload.title}`,
-    `Logline: ${storyPayload.concept.logline}`,
-    `Promise: ${storyPayload.concept.promise}`,
-    `Conflict: ${storyPayload.concept.conflictEngine}`,
+    `Nhan đề: ${storyPayload.title}`,
+    `Tóm tắt một câu: ${storyPayload.concept.logline}`,
+    `Lời hứa thể loại: ${storyPayload.concept.promise}`,
+    `Xung đột: ${storyPayload.concept.conflictEngine}`,
   ].join('\n');
 }
 
@@ -403,9 +563,9 @@ function formatPlan(storyPayload: StoryPayload) {
   return storyPayload.chapterPlan
     .map((chapter) => [
       `${chapter.chapterNumber}. ${chapter.title}`,
-      `Beat: ${chapter.mainBeat}`,
-      `Hook: ${chapter.hook}`,
-      `Ending: ${chapter.endingBeat}`,
+      `Nhịp chính: ${chapter.mainBeat}`,
+      `Móc câu: ${chapter.hook}`,
+      `Kết chương: ${chapter.endingBeat}`,
     ].join('\n'))
     .join('\n\n');
 }
@@ -415,7 +575,7 @@ function sendError(reply: FastifyReply, error: unknown) {
     return reply.code(400).send({
       error: {
         code: 'validation_error',
-        message: 'Request payload is invalid.',
+        message: 'Dữ liệu gửi lên không hợp lệ.',
         issues: error.issues,
       },
     });
@@ -434,12 +594,16 @@ function sendError(reply: FastifyReply, error: unknown) {
   return reply.code(500).send({
     error: {
       code: 'unknown_error',
-      message: error instanceof Error ? error.message : 'Unexpected API error.',
+      message: error instanceof Error ? error.message : 'API gặp lỗi ngoài dự kiến.',
     },
   });
 }
 
 async function start() {
+  if (env.supabaseUrl && env.supabaseServiceRoleKey) {
+    await getStoryStore().markStaleRunningStoriesFailed();
+  }
+
   await app.listen({ port: env.port, host: env.host });
   app.log.info(`Drama15 API listening on http://${env.host}:${env.port}`);
 }

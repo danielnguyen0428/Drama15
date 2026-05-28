@@ -1,0 +1,35 @@
+export type UserTier = "free" | "pro" | "premium";
+
+export const STORY_QUOTA_BY_TIER: Record<UserTier, number> = {
+  free: 1,
+  pro: 3,
+  premium: 5,
+};
+
+export function resolveStoryQuotaLimit(tier: string | undefined): number {
+  return STORY_QUOTA_BY_TIER[parseUserTier(tier)];
+}
+
+export function parseUserTier(value: string | undefined): UserTier {
+  if (value === "pro" || value === "premium") return value;
+  return "free";
+}
+
+export function getVietnamUsageDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!year || !month || !day) {
+    return now.toISOString().slice(0, 10);
+  }
+
+  return `${year}-${month}-${day}`;
+}

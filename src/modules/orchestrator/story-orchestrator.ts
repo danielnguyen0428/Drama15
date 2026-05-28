@@ -65,6 +65,7 @@ import {
   ContinuityTracker,
   type MinimalChapterRef,
 } from "../core-pipeline/continuity-tracker";
+import { applyCharacterFactsToRelationshipGraph, createInitialRelationshipGraph } from "../relationship/relationship-graph";
 import { resolveFinalStoryTitle } from "./story-title";
 
 export type StoryProgressOperation = "outline" | "full" | "chapter" | "regenerate";
@@ -374,6 +375,7 @@ export class StoryOrchestrator {
     const outline = await this.generateOutline(request, progress, options);
     const posterPromise = this.startPosterGeneration(outline, progress);
     const chapters: Chapter[] = [];
+    let relationshipGraph = createInitialRelationshipGraph(outline.storyBible);
 
     // ─── Character Consistency System ──────────────────────────────────────
     const memoryStore: CharacterMemoryStore = createEmptyMemoryStore();
@@ -440,6 +442,7 @@ export class StoryOrchestrator {
       // Update continuity tracker with character facts
       const factSheet = memoryStore.chapters.get(chapter.chapterNumber);
       if (factSheet) {
+        relationshipGraph = applyCharacterFactsToRelationshipGraph(relationshipGraph, factSheet);
         const chapterRef: MinimalChapterRef = {
           chapterNumber: chapter.chapterNumber,
           title: chapter.title,
@@ -456,6 +459,7 @@ export class StoryOrchestrator {
           draftControls: request.draftControls,
         },
         chapters: [...chapters],
+        relationshipGraph,
         meta: {
           ...outline.meta,
           generatedAt: new Date().toISOString(),
@@ -482,6 +486,7 @@ export class StoryOrchestrator {
         draftControls: request.draftControls,
       },
       chapters,
+      relationshipGraph,
       meta: {
         ...outline.meta,
         generatedAt: new Date().toISOString(),
@@ -627,7 +632,7 @@ export class StoryOrchestrator {
                 parsed.outputLanguage ?? "english",
                 this.routerClient,
               );
-              addFactSheet(memoryStore, factSheet);
+              memoryStore.chapters = addFactSheet(memoryStore, factSheet).chapters;
             } catch {
               // Fail-open: character extraction should not block chapter completion
             }
@@ -709,7 +714,7 @@ export class StoryOrchestrator {
                   parsed.outputLanguage ?? "english",
                   this.routerClient,
                 );
-                addFactSheet(memoryStore, factSheet);
+                memoryStore.chapters = addFactSheet(memoryStore, factSheet).chapters;
               } catch {
                 // Fail-open
               }
@@ -731,7 +736,7 @@ export class StoryOrchestrator {
               parsed.outputLanguage ?? "english",
               this.routerClient,
             );
-            addFactSheet(memoryStore, factSheet);
+            memoryStore.chapters = addFactSheet(memoryStore, factSheet).chapters;
           } catch {
             // Fail-open
           }
