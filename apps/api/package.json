@@ -13,6 +13,7 @@
     "test:story-quota-migration": "tsx --test src/storyQuotaMigration.test.ts",
     "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts",
     "test:quota": "tsx --test src/quota.test.ts",
+    "test:quota-copy": "tsx --test src/quotaCopy.test.ts",
     "test:relationship-graph": "tsx --test src/relationshipGraph.test.ts",
     "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts",
     "test:story-title": "tsx --test src/storyTitleResolution.test.ts",

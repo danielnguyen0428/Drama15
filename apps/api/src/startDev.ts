@@ -201,7 +201,7 @@ app.post('/stories', async (request, reply) => {
       return reply.code(429).send({
         error: {
           code: 'quota_exceeded',
-          message: `Bạn đã dùng hết ${quota.limit} lượt viết truyện hôm nay. Nâng cấp Pro hoặc Premium để có thêm lượt.`,
+          message: `Bạn đã dùng hết ${quota.limit} bộ drama hôm nay. Nâng cấp Pro hoặc Premium để có thêm bộ drama có thể sáng tác.`,
         },
         quota,
       });

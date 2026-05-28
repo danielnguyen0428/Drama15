@@ -315,7 +315,7 @@ export function StoryWorkspace(): JSX.Element {
   async function createStory() {
     if (!requireLogin()) return;
     if (outOfQuota) {
-      setError('Bạn đã hết lượt viết truyện hôm nay. Nâng cấp Pro hoặc Premium để viết thêm.');
+      setError('Bạn đã hết số bộ drama có thể sáng tác hôm nay. Nâng cấp Pro hoặc Premium để tạo thêm drama.');
       return;
     }
 
@@ -514,7 +514,7 @@ export function StoryWorkspace(): JSX.Element {
             {user.avatarUrl && <img src={user.avatarUrl} alt="Ảnh đại diện" />}
             <div>
               <strong>{user.displayName || user.email}</strong>
-              <span>{TIER_LABELS[user.tier]} · Hôm nay còn {quota?.remaining ?? 0}/{quota?.limit ?? 1} lượt viết truyện</span>
+              <span>{TIER_LABELS[user.tier]} · Hôm nay còn {quota?.remaining ?? 0}/{quota?.limit ?? 1} bộ drama có thể sáng tác</span>
             </div>
           </div>
         ) : <p>Đăng nhập Google để gợi ý mầm truyện, viết bản thảo và quản lý danh sách truyện.</p>}
@@ -528,7 +528,7 @@ export function StoryWorkspace(): JSX.Element {
       <section className="workspace-grid">
         <aside className="setup-panel">
           <PanelHeading label="Thiết lập" value="Sáng tác" />
-          {quota && <div className={outOfQuota ? 'quota-card blocked' : 'quota-card'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} lượt viết truyện</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để viết thêm.' : 'Quota được reset theo giờ Việt Nam.'}</span></div>}
+          {quota && <div className={outOfQuota ? 'quota-card blocked' : 'quota-card'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bộ drama có thể sáng tác</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để tạo thêm drama.' : 'Mỗi bộ drama gồm mầm truyện, nhan đề, hồ sơ truyện, dàn ý, quan hệ nhân vật và toàn bộ chương.'}</span></div>}
           <label>Chủ đề<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Nhánh tùy biến<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị coi thường" /></label>}
           <label>Gợi ý nhan đề<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
@@ -538,7 +538,7 @@ export function StoryWorkspace(): JSX.Element {
           <Range label="Cường độ" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
           <Range label="Đối thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label="Móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết truyện</button></div>
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Sáng tác drama</button></div>
 
           <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onRename={renameStory} onDelete={deleteStory} />
         </aside>
