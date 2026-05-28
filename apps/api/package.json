@@ -12,6 +12,7 @@
     "test:stream-headers": "tsx --test src/streamHeaders.test.ts",
     "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts",
     "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts",
+    "test:story-title": "tsx --test src/storyTitleResolution.test.ts",
     "test:style-blueprints": "tsx --test src/styleBlueprintPresets.test.ts"
   },
   "dependencies": {

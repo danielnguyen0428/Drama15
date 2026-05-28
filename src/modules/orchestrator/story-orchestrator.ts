@@ -65,6 +65,7 @@ import {
   ContinuityTracker,
   type MinimalChapterRef,
 } from "../core-pipeline/continuity-tracker";
+import { resolveFinalStoryTitle } from "./story-title";
 
 export type StoryProgressOperation = "outline" | "full" | "chapter" | "regenerate";
 export type StoryProgressStatus = "started" | "completed";
@@ -278,7 +279,7 @@ export class StoryOrchestrator {
           chapterPlan: chapterPlan.chapterPlan,
         });
 
-        const title = concept.concept.title || request.titleHint || concept.concept.titleCandidates[0];
+        const title = resolveFinalStoryTitle(concept.concept, request.titleHint);
         return StoryPayloadSchema.parse({
           title,
           request,
