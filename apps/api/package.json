@@ -10,7 +10,8 @@
     "start": "tsx src/startDev.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:stream-headers": "tsx --test src/streamHeaders.test.ts",
-    "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts"
+    "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts",
+    "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

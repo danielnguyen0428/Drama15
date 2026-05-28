@@ -4,6 +4,33 @@
 
 export type FictionMeEntry = { title: string; premise: string };
 
+export type FictionMeStructuralSignals = {
+  pressure: string;
+  arena: string;
+  leverage: string;
+  reveal: string;
+  ending: string;
+};
+
+export type FictionMeSeedSignalBank = {
+  linePreset: string;
+  sourceEntryCount: number;
+  motifFamilies: string[];
+  socialPains: string[];
+  arenas: string[];
+  hiddenLeverages: string[];
+  evidenceObjects: string[];
+  betrayerPressures: string[];
+  statusForces: string[];
+  publicRevealVenues: string[];
+  freshnessAngles: string[];
+  relationshipDynamics: string[];
+  protagonistAgencies: string[];
+  antagonistWebs: string[];
+  revealMechanisms: string[];
+  endingShapes: string[];
+};
+
 export const FICTIONME_BILLIONAIRE_CEO: FictionMeEntry[] = [
   {
     "title": "Sold to the Heartless CEO",
@@ -1064,6 +1091,18 @@ const NICHE_REFERENCE_MAP: Record<string, FictionMeEntry[]> = {
   werewolf_luna_alpha_soulmate: FICTIONME_DARK_ROMANCE,
 };
 
+const SEED_SIGNAL_REFERENCE_MAP: Record<string, FictionMeEntry[]> = {
+  billionaire_rich_poor_romance: FICTIONME_BILLIONAIRE_CEO,
+  workplace_ceo_power_struggle: FICTIONME_BILLIONAIRE_CEO,
+  secret_identity_hidden_heiress: FICTIONME_BILLIONAIRE_CEO,
+  cheating_ex_wedding_drama: FICTIONME_BILLIONAIRE_CEO,
+  single_mom_poor_woman_comeback: FICTIONME_BILLIONAIRE_CEO,
+  toxic_family_betrayal: FICTIONME_BILLIONAIRE_CEO,
+  humiliation_revenge_justice: FICTIONME_BILLIONAIRE_CEO,
+  steamy_alien_captive_romance: FICTIONME_DARK_ROMANCE,
+  werewolf_luna_alpha_soulmate: FICTIONME_DARK_ROMANCE,
+};
+
 /**
  * Returns a few-shot reference block for the given niche.
  * Picks a random sample of entries to keep prompt size bounded.
@@ -1096,7 +1135,39 @@ export function renderFictionMeReferenceForPrompt(
   ].join('\n');
 }
 
-function extractReferenceSignals(entry: FictionMeEntry) {
+export function buildFictionMeSeedSignalBank(linePreset: string): FictionMeSeedSignalBank | undefined {
+  const pool = SEED_SIGNAL_REFERENCE_MAP[linePreset];
+  if (!pool || pool.length === 0) return undefined;
+
+  const signals = pool.map(extractReferenceSignals);
+  const pressures = unique(signals.map((signal) => signal.pressure));
+  const arenas = unique(signals.map((signal) => signal.arena));
+  const leverages = unique(signals.map((signal) => signal.leverage));
+  const reveals = unique(signals.map((signal) => signal.reveal));
+  const endings = unique(signals.map((signal) => signal.ending));
+  const compactPairs = unique(signals.map((signal) => `${signal.pressure} through ${signal.leverage}`));
+
+  return {
+    linePreset,
+    sourceEntryCount: pool.length,
+    motifFamilies: compactPairs.map((pair) => `market-tested ${pair} motif transformed for the selected niche`),
+    socialPains: pressures.map((pressure) => `market-tested pain of ${pressure} becoming public loss of dignity`),
+    arenas: arenas.map((arena) => `market-tested ${arena}`),
+    hiddenLeverages: leverages.map((leverage) => `market-tested ${leverage}`),
+    evidenceObjects: leverages.map((leverage) => `compressed ${leverage}`),
+    betrayerPressures: pressures.map((pressure) => `betrayer escalates because ${pressure} would expose their status lie`),
+    statusForces: pressures.map((pressure) => `status system built around ${pressure}`),
+    publicRevealVenues: reveals.map((reveal) => `market-tested ${reveal} venue`),
+    freshnessAngles: endings.map((ending) => `transform reference-pattern ${ending} into an original non-copy plot spine`),
+    relationshipDynamics: compactPairs.map((pair) => `heroine and betrayer locked in ${pair}`),
+    protagonistAgencies: leverages.map((leverage) => `waits until the ${leverage} is undeniable before acting`),
+    antagonistWebs: pressures.map((pressure) => `family, workplace, or elite allies protecting ${pressure}`),
+    revealMechanisms: reveals.map((reveal) => `market-tested ${reveal} converted into fresh evidence logic`),
+    endingShapes: endings.map((ending) => `market-tested ${ending} resolved through heroine agency first`),
+  };
+}
+
+function extractReferenceSignals(entry: FictionMeEntry): FictionMeStructuralSignals {
   const text = `${entry.title} ${entry.premise}`.toLowerCase();
   return {
     pressure: firstMatch(text, [
@@ -1142,6 +1213,10 @@ function extractReferenceSignals(entry: FictionMeEntry) {
       ["revenge|betray|expose", "evidence justice, not apology only"],
     ], "status restored with agency"),
   };
+}
+
+function unique(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 function firstMatch(text: string, patterns: Array<[string, string]>, fallback: string) {

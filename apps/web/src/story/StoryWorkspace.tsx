@@ -16,6 +16,15 @@ type StoryConfig = {
   dialogueRatio: number;
   hookDensity: number;
   stylePreset: string;
+  storyControls?: StoryControls;
+};
+
+type StoryControls = {
+  betrayalType: string;
+  shameType: string;
+  revengeMode: string;
+  endingMode: string;
+  intensity: number;
 };
 
 type StylePreset = { id: string; displayName: string; description: string };
@@ -152,8 +161,13 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const response = await httpFetch('/story/setup-suggest', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { title?: string; seed?: string };
-      setConfig((current) => ({ ...current, title: data.title || current.title, seed: data.seed || current.seed }));
+      const data = (await response.json()) as { title?: string; seed?: string; storyControls?: StoryControls };
+      setConfig((current) => ({
+        ...current,
+        title: data.title || current.title,
+        seed: data.seed || current.seed,
+        storyControls: data.storyControls ?? current.storyControls,
+      }));
       setStoryTitle(data.title || config.title || 'Drama chưa đặt tên');
       setProgressLabel('Đã có mầm truyện');
       setPhase('idle');

@@ -1,4 +1,5 @@
 import { HOT_MOTIF_ANCHORS } from "./hot-motif-anchors";
+import { buildFictionMeSeedSignalBank } from "./fictionme-reference";
 
 export type SeedBlueprint = {
   linePreset: string;
@@ -917,7 +918,7 @@ const STEAMY_ALIEN_SKELETONS: SeedSkeletonBank = {
   ],
 };
 
-const SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
+const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
   billionaire_rich_poor_romance: {
     topicAnchors: HOT_MOTIF_ANCHORS.billionaire_rich_poor_romance,
     motifFamilies: [
@@ -2834,6 +2835,7 @@ const SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
 };
 
 const FALLBACK_LINE_PRESET = "billionaire_rich_poor_romance";
+const SEED_BLUEPRINT_BANKS = mergeFictionMeSeedSignals(BASE_SEED_BLUEPRINT_BANKS);
 
 export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBlueprint {
   const random = options.random ?? Math.random;
@@ -2966,6 +2968,86 @@ export function getSeedBlueprintBankDiagnostics() {
     revealMechanismCount: new Set(bank.revealMechanisms).size,
     endingShapeCount: new Set(bank.endingShapes).size,
   }));
+}
+
+export function getFictionMeSeedBankDiagnostics() {
+  return Object.keys(BASE_SEED_BLUEPRINT_BANKS)
+    .map((linePreset) => {
+      const signalBank = buildFictionMeSeedSignalBank(linePreset);
+      if (!signalBank) return undefined;
+
+      return {
+        linePreset,
+        sourceEntryCount: signalBank.sourceEntryCount,
+        motifFamilyCount: signalBank.motifFamilies.length,
+        socialPainCount: signalBank.socialPains.length,
+        arenaCount: signalBank.arenas.length,
+        hiddenLeverageCount: signalBank.hiddenLeverages.length,
+        evidenceObjectCount: signalBank.evidenceObjects.length,
+        publicRevealVenueCount: signalBank.publicRevealVenues.length,
+        revealMechanismCount: signalBank.revealMechanisms.length,
+        endingShapeCount: signalBank.endingShapes.length,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+function mergeFictionMeSeedSignals(banks: Record<string, SeedBlueprintBank>): Record<string, SeedBlueprintBank> {
+  return Object.fromEntries(
+    Object.entries(banks).map(([linePreset, bank]) => {
+      const signalBank = buildFictionMeSeedSignalBank(linePreset);
+      if (!signalBank) {
+        return [linePreset, cloneBank(bank)];
+      }
+
+      return [
+        linePreset,
+        {
+          topicAnchors: [...bank.topicAnchors],
+          motifFamilies: appendUnique(bank.motifFamilies, signalBank.motifFamilies),
+          socialPains: appendUnique(bank.socialPains, signalBank.socialPains),
+          arenas: appendUnique(bank.arenas, signalBank.arenas),
+          incitingHumiliations: [...bank.incitingHumiliations],
+          hiddenLeverages: appendUnique(bank.hiddenLeverages, signalBank.hiddenLeverages),
+          evidenceObjects: appendUnique(bank.evidenceObjects, signalBank.evidenceObjects),
+          betrayerPressures: appendUnique(bank.betrayerPressures, signalBank.betrayerPressures),
+          statusForces: appendUnique(bank.statusForces, signalBank.statusForces),
+          publicRevealVenues: appendUnique(bank.publicRevealVenues, signalBank.publicRevealVenues),
+          freshnessAngles: appendUnique(bank.freshnessAngles, signalBank.freshnessAngles),
+          relationshipDynamics: appendUnique(bank.relationshipDynamics, signalBank.relationshipDynamics),
+          protagonistAgencies: appendUnique(bank.protagonistAgencies, signalBank.protagonistAgencies),
+          antagonistWebs: appendUnique(bank.antagonistWebs, signalBank.antagonistWebs),
+          revealMechanisms: appendUnique(bank.revealMechanisms, signalBank.revealMechanisms),
+          endingShapes: appendUnique(bank.endingShapes, signalBank.endingShapes),
+        },
+      ];
+    }),
+  );
+}
+
+function cloneBank(bank: SeedBlueprintBank): SeedBlueprintBank {
+  return {
+    topicAnchors: [...bank.topicAnchors],
+    motifFamilies: [...bank.motifFamilies],
+    socialPains: [...bank.socialPains],
+    arenas: [...bank.arenas],
+    incitingHumiliations: [...bank.incitingHumiliations],
+    hiddenLeverages: [...bank.hiddenLeverages],
+    evidenceObjects: [...bank.evidenceObjects],
+    betrayerPressures: [...bank.betrayerPressures],
+    statusForces: [...bank.statusForces],
+    publicRevealVenues: [...bank.publicRevealVenues],
+    freshnessAngles: [...bank.freshnessAngles],
+    relationshipDynamics: [...bank.relationshipDynamics],
+    protagonistAgencies: [...bank.protagonistAgencies],
+    antagonistWebs: [...bank.antagonistWebs],
+    revealMechanisms: [...bank.revealMechanisms],
+    endingShapes: [...bank.endingShapes],
+  };
+}
+
+function appendUnique(base: string[], additions: string[]) {
+  return Array.from(new Set([...base, ...additions]));
 }
 
 function buildBlueprint(

@@ -32,6 +32,7 @@ const { SeedHistoryStore } = await import('../../../src/modules/session/seed-his
 const {
   NormalizedFullGenerateRequestSchema,
   NormalizedOutlineRequestSchema,
+  StoryControlsSchema,
   StoryPayloadSchema,
 } = await import('../../../src/schemas/story.js');
 
@@ -69,6 +70,7 @@ const StoryConfigSchema = z.object({
   dialogueRatio: z.coerce.number().min(0.2).max(0.85).default(0.56),
   hookDensity: z.coerce.number().min(0).max(1).default(0.67),
   stylePreset: z.string().trim().min(1).default(env.defaultStylePreset),
+  storyControls: StoryControlsSchema.optional(),
 });
 
 const RewriteBodySchema = z.object({
@@ -325,7 +327,7 @@ function normalizeOutlineRequest(config: z.infer<typeof StoryConfigSchema>): Nor
       ageBand: '18_34',
       market: 'global',
     },
-    storyControls: {
+    storyControls: config.storyControls ?? {
       betrayalType: 'hidden_relationship_replaced_by_fiancee',
       shameType: 'polite_class_exclusion',
       revengeMode: 'strategic_withdrawal_status_reversal',
