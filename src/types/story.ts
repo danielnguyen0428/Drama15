@@ -20,6 +20,9 @@ import type {
   PreserveConstraintsSchema,
   RegenerateChapterRequestSchema,
   RegenerateModeSchema,
+  RelationshipEdgeSchema,
+  RelationshipGraphSchema,
+  RelationshipNodeSchema,
   StoryBibleSchema,
   StoryControlsSchema,
   StoryPayloadSchema,
@@ -39,6 +42,9 @@ export type StoryBible = z.infer<typeof StoryBibleSchema>;
 export type ChapterPlanItem = z.infer<typeof ChapterPlanItemSchema>;
 export type Chapter = z.infer<typeof ChapterSchema>;
 export type ContinuityLite = z.infer<typeof ContinuityLiteSchema>;
+export type RelationshipNode = z.infer<typeof RelationshipNodeSchema>;
+export type RelationshipEdge = z.infer<typeof RelationshipEdgeSchema>;
+export type RelationshipGraph = z.infer<typeof RelationshipGraphSchema>;
 export type StoryPayload = z.infer<typeof StoryPayloadSchema>;
 export type GenerateChapterRequest = z.infer<typeof GenerateChapterRequestSchema>;
 export type GenerateSettingSeedRequest = z.infer<typeof GenerateSettingSeedRequestSchema>;

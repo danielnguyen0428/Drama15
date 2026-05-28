@@ -181,6 +181,28 @@ export const ContinuityLiteSchema = z.object({
   chapterState: z.array(ChapterStateSchema).default([]),
 });
 
+export const RelationshipNodeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  role: z.string().min(1),
+  description: z.string().min(1),
+});
+
+export const RelationshipEdgeSchema = z.object({
+  source: z.string().min(1),
+  target: z.string().min(1),
+  label: z.string().min(1),
+  type: z.string().min(1),
+  chapterNumber: z.number().int().min(1).max(10).optional(),
+  confidence: z.enum(["explicit", "inferred"]),
+});
+
+export const RelationshipGraphSchema = z.object({
+  nodes: z.array(RelationshipNodeSchema),
+  edges: z.array(RelationshipEdgeSchema),
+  updatedAt: z.string(),
+});
+
 export const StoryPosterSchema = z.object({
   status: z.enum(["completed", "failed", "skipped"]),
   title: z.string().min(1),
@@ -210,6 +232,7 @@ export const StoryPayloadSchema = z.object({
   chapterPlan: z.array(ChapterPlanItemSchema).length(10),
   chapters: z.array(ChapterSchema).default([]),
   continuityLite: ContinuityLiteSchema,
+  relationshipGraph: RelationshipGraphSchema.optional(),
   meta: z.object({
     generatedAt: z.string(),
     modelAliases: z.object({
