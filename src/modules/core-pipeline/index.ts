@@ -140,7 +140,6 @@ export {
   CHAPTER_REPAIR_SYSTEM_PROMPT_SUPPLEMENT,
   REGENERATE_CHAPTER_SYSTEM_PROMPT_SUPPLEMENT,
   composeSystemPrompt,
-  loadGuManStyleGuide,
   buildConceptSystemPrompt,
   buildStoryBibleSystemPrompt,
   buildChapterPlanSystemPrompt,

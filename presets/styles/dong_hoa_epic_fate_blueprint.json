@@ -1,0 +1,20 @@
+{
+  "id": "dong_hoa_epic_fate_blueprint",
+  "displayName": "Đồng Hoa - sử thi định mệnh",
+  "description": "Blueprint craft từ guideline Đồng Hoa: bi tráng, bối cảnh lớn, nữ chính thông tuệ, tình yêu gắn với lựa chọn lịch sử.",
+  "blueprintVersion": 1,
+  "sourceGuide": "04-dong-hoa.md",
+  "emotionalDirectness": "medium",
+  "hookSharpness": "medium-high",
+  "dialogueRatioTarget": 0.42,
+  "melodramaLevel": "epic tragic",
+  "narrativeDistance": ["toàn tri hạn chế", "xa khi dựng bối cảnh", "gần khi nhân vật quyết định"],
+  "sentenceMusic": ["câu dài cho cảnh và số phận", "câu ngắn cho quyết định", "nhịp như trường ca có cao trào"],
+  "dialoguePolicy": ["thoại trang trọng", "ngụ ý hơn nói thẳng", "đối thoại như đấu trí giữa lựa chọn và bổn phận"],
+  "emotionRendering": ["kiềm chế nhưng sâu", "cảnh vật phản chiếu tâm trạng", "tình yêu không tách khỏi vận mệnh"],
+  "imageryPalette": ["gió dài, trăng cô, cung điện lạnh", "cổng thành, bờ sông, đường xa", "áo bào, kiếm, tinh hà"],
+  "punctuationRhythm": ["dấu phẩy kéo nhịp cảnh", "chấm phẩy cho song song", "rất ít chấm than"],
+  "chapterCadence": ["mở bằng bối cảnh có sức nặng", "giữa chương đặt lựa chọn không thể vẹn toàn", "kết bằng dư âm bi tráng"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không triết lý rỗng", "không cổ trang giả nếu bối cảnh hiện đại"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

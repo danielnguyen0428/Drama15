@@ -1,0 +1,20 @@
+{
+  "id": "cuu_nguyet_hi_realist_psychology_blueprint",
+  "displayName": "Cửu Nguyệt Hi - tâm lý hiện thực",
+  "description": "Blueprint craft từ guideline Cửu Nguyệt Hi: đời sống thực, tâm lý phức tạp, hiểu nhau qua thời gian.",
+  "blueprintVersion": 1,
+  "sourceGuide": "15-cuu-nguyet-hi.md",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "medium-high",
+  "dialogueRatioTarget": 0.46,
+  "melodramaLevel": "realist psychological romance",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần như người quan sát tin cậy", "tuyến tính với hồi tưởng ngắn"],
+  "sentenceMusic": ["câu trung bình-dài suy tư", "câu ngắn cho quyết định", "nhịp chậm như đời sống"],
+  "dialoguePolicy": ["thoại đời thường có chiều sâu", "đặt câu hỏi để hiểu", "ít tuyên ngôn, nhiều lắng nghe"],
+  "emotionRendering": ["hiểu quan trọng hơn yêu", "chấp nhận không hoàn hảo", "cảm xúc lớn lên qua thói quen"],
+  "imageryPalette": ["bếp, sofa, bàn làm việc", "siêu thị, quán ăn nhỏ, đường sáng", "cốc cà phê, chìa khóa, tin nhắn"],
+  "punctuationRhythm": ["dấu phẩy suy tư", "chấm phẩy khi phân tích song song", "hiếm chấm than"],
+  "chapterCadence": ["mở bằng đời thường có câu hỏi tâm lý", "giữa chương đối mặt thực tế", "kết bằng một lựa chọn trưởng thành"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không phán xét nhân vật", "không biến đời thường thành nhạt"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

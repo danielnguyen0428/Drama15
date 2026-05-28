@@ -33,7 +33,7 @@ const EnvSchema = z.object({
   ROUTER_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
   ROUTER_FALLBACK_ENABLED: z.string().optional().transform((value) => value !== "false"),
   DEFAULT_LINE_PRESET: z.string().default("billionaire_rich_poor_romance"),
-  DEFAULT_STYLE_PRESET: z.string().default("wharton_class_shame_elegance"),
+  DEFAULT_STYLE_PRESET: z.string().default("co_man_warm_modern_blueprint"),
   DEFAULT_CHAPTER_COUNT: z.coerce.number().int().default(10),
   OUTPUT_DIR: z.string().optional(),
   WRITE_EXPORT_FILES: z.string().optional().transform((value) => value === "true"),

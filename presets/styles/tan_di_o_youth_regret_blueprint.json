@@ -1,0 +1,20 @@
+{
+  "id": "tan_di_o_youth_regret_blueprint",
+  "displayName": "Tân Di Ổ - thanh xuân tiếc nuối",
+  "description": "Blueprint craft từ guideline Tân Di Ổ: hồi ức tuổi trẻ, trưởng thành đau, mất mát chân thực.",
+  "blueprintVersion": 1,
+  "sourceGuide": "05-tan-di-o.md",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "medium",
+  "dialogueRatioTarget": 0.46,
+  "melodramaLevel": "realist nostalgia",
+  "narrativeDistance": ["ngôi nhất hoặc ba hạn chế", "gần ở quá khứ, xa hơn ở hiện tại", "quá khứ-hiện tại soi nhau"],
+  "sentenceMusic": ["câu trung bình như hồi tưởng", "câu ngắn cho nhận ra", "nhịp mềm, không kịch tính hóa"],
+  "dialoguePolicy": ["thoại đời thường", "quá khứ trực tiếp hơn hiện tại", "để lại điều chưa nói"],
+  "emotionRendering": ["hoài niệm không sến", "tự giễu nhẹ", "so sánh thay đổi qua thời gian"],
+  "imageryPalette": ["sân trường, mùa hè, ảnh tốt nghiệp", "tin nhắn cũ, con đường đổi khác", "mưa nhẹ và lớp học chiều"],
+  "punctuationRhythm": ["dấu phẩy kể chuyện", "dấu lửng tiết chế", "ít chấm than"],
+  "chapterCadence": ["mở bằng hiện tại chạm ký ức", "giữa chương lộ vết nứt cũ", "kết bằng hiểu ra muộn"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không tô hồng tuổi trẻ quá mức", "không bi lụy giả"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

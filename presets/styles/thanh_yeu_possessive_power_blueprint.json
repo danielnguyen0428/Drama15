@@ -1,0 +1,20 @@
+{
+  "id": "thanh_yeu_possessive_power_blueprint",
+  "displayName": "Thánh Yêu - quyền lực chiếm hữu",
+  "description": "Blueprint craft từ guideline Thánh Yêu: bá đạo, sủng-ngược mạnh, phô trương quyền lực nhưng giữ nữ chính có agency.",
+  "blueprintVersion": 1,
+  "sourceGuide": "14-thanh-yeu.md",
+  "emotionalDirectness": "very high",
+  "hookSharpness": "very high",
+  "dialogueRatioTarget": 0.58,
+  "melodramaLevel": "possessive high drama",
+  "narrativeDistance": ["ngôi ba đa tuyến", "gần trong cảnh sủng/ghen", "xa khi dựng quyền lực"],
+  "sentenceMusic": ["câu ngắn mạnh ở quyền lực", "câu mềm hơn ở sủng", "nhịp mạnh-mềm-mạnh"],
+  "dialoguePolicy": ["ra lệnh, khẳng định, đáp trả", "ghen nói thẳng", "nữ chính không chịu thua"],
+  "emotionRendering": ["bộc trực", "sủng cực hạn nhưng không biến nữ chính thành đồ vật", "ngoại lệ duy nhất tạo mềm lòng"],
+  "imageryPalette": ["siêu xe, biệt thự, tiệc quyền lực", "áo khoác choàng, dây giày, ly rượu vỡ", "ánh mắt lạnh"],
+  "punctuationRhythm": ["chấm than có kiểm soát", "câu chấm dứt khoát", "dấu lửng ở mềm lòng"],
+  "chapterCadence": ["mở bằng tuyên bố quyền lực", "giữa chương sủng-ngược đảo chiều", "kết bằng bảo vệ công khai hoặc cảnh cáo"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không xóa agency nữ chính", "không lạm dụng chiếm hữu độc hại ngoài ngữ cảnh"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

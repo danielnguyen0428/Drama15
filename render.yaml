@@ -35,7 +35,7 @@ services:
       - key: DEFAULT_LINE_PRESET
         value: billionaire_rich_poor_romance
       - key: DEFAULT_STYLE_PRESET
-        value: wharton_class_shame_elegance
+        value: co_man_warm_modern_blueprint
       - key: DEFAULT_CHAPTER_COUNT
         value: "10"
       - key: WRITE_EXPORT_FILES

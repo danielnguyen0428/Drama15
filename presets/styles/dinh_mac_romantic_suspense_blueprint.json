@@ -1,0 +1,20 @@
+{
+  "id": "dinh_mac_romantic_suspense_blueprint",
+  "displayName": "Đinh Mặc - tình cảm phá án",
+  "description": "Blueprint craft từ guideline Đinh Mặc: huyền nghi tâm lý, chuyên nghiệp, tình cảm sâu trong nguy hiểm.",
+  "blueprintVersion": 1,
+  "sourceGuide": "11-dinh-mac.md",
+  "emotionalDirectness": "medium",
+  "hookSharpness": "very high",
+  "dialogueRatioTarget": 0.52,
+  "melodramaLevel": "romantic suspense",
+  "narrativeDistance": ["ngôi ba đa tuyến", "gần cảm xúc, xa khi phân tích án", "có thể lướt qua góc nhìn phản diện"],
+  "sentenceMusic": ["câu ngắn cho phát hiện", "câu rõ cho suy luận", "nhịp nhanh nhưng chính xác"],
+  "dialoguePolicy": ["thoại chuyên nghiệp trong công việc", "riêng tư mới mềm", "trao đổi thông tin nhanh"],
+  "emotionRendering": ["yêu là bảo vệ và tin phán đoán", "kiềm chế trong nguy hiểm", "hai người cùng thông minh"],
+  "imageryPalette": ["hiện trường, bảng trắng, hồ sơ", "ánh đèn lạnh, ảnh chụp, camera", "khoảng riêng sau nguy hiểm"],
+  "punctuationRhythm": ["dấu chấm cho logic", "chấm than khi nguy hiểm thật", "dấu lửng giữa hai người hiểu nhau"],
+  "chapterCadence": ["mở bằng manh mối hoặc nguy cơ", "giữa chương lật giả thuyết", "kết bằng phát hiện kéo tình cảm gần hơn"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không phá án bằng may mắn", "không để romance làm hỏng logic"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

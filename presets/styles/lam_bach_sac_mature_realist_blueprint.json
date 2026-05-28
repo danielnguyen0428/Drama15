@@ -1,0 +1,20 @@
+{
+  "id": "lam_bach_sac_mature_realist_blueprint",
+  "displayName": "Lam Bạch Sắc - trưởng thành thực tế",
+  "description": "Blueprint craft từ guideline Lam Bạch Sắc: sắc sảo, người lớn, thoại thông minh, tình yêu xây bằng tin tưởng.",
+  "blueprintVersion": 1,
+  "sourceGuide": "10-lam-bach-sac.md",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "medium-high",
+  "dialogueRatioTarget": 0.54,
+  "melodramaLevel": "mature realist restraint",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần trong suy nghĩ", "xa trong đối thoại vì người lớn tự giữ"],
+  "sentenceMusic": ["câu trung bình rõ logic", "câu ngắn cho nhận định sắc", "nhịp thực tế, không hoa mỹ"],
+  "dialoguePolicy": ["thoại thông minh, có ranh giới", "hợp tác và phản biện", "không sến, không áp đặt"],
+  "emotionRendering": ["cảm xúc có lý do", "tôn trọng quyết định", "rung động qua hợp tác và hành động nhỏ"],
+  "imageryPalette": ["văn phòng, quán ăn, thành phố", "email, lịch làm việc, hợp đồng", "đời sống người lớn"],
+  "punctuationRhythm": ["dấu chấm rõ", "dấu phẩy cho phân tích", "ít dấu lửng"],
+  "chapterCadence": ["mở bằng xung đột lợi ích", "giữa chương giải quyết vấn đề", "kết bằng một bước tin tưởng"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không định mệnh hóa tình yêu", "không kiểm soát độc hại"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

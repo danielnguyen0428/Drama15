@@ -528,7 +528,7 @@ export class StoryOrchestrator {
       () =>
         this.loadGenerationContext(
           env.defaultLinePreset,
-          stylePresetName ?? "wharton_class_shame_elegance",
+          stylePresetName ?? env.defaultStylePreset,
         ),
       "Đã nạp xong ngữ cảnh chương.",
     );

@@ -1,0 +1,20 @@
+{
+  "id": "nhat_do_quan_hoa_ornate_tragedy_blueprint",
+  "displayName": "Nhất Độ Quân Hoa - bi thương hoa mỹ",
+  "description": "Blueprint craft từ guideline Nhất Độ Quân Hoa: tiên hiệp/cổ trang, đau kiêu hãnh, hy sinh lặng.",
+  "blueprintVersion": 1,
+  "sourceGuide": "12-nhat-do-quan-hoa.md",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.42,
+  "melodramaLevel": "ornate tragic restraint",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần trong đau", "xa khi dựng cảnh tiên giới"],
+  "sentenceMusic": ["câu dài hoa mỹ cho cảnh", "câu ngắn như nhát dao", "nhịp chậm-nhanh-chậm"],
+  "dialoguePolicy": ["thoại trang trọng", "nói ngược lòng", "ít lời nhưng gây đau"],
+  "emotionRendering": ["đau nhưng kiêu hãnh", "ngoài lạnh trong vỡ", "hy sinh thầm lặng"],
+  "imageryPalette": ["hoa tàn, tuyết, trăng khuyết", "máu trên nền trắng", "kiếm gãy, đàn đứt, tro tàn"],
+  "punctuationRhythm": ["dấu phẩy nhiều nhưng kiểm soát", "dấu lửng cho đau không nói", "hiếm chấm than"],
+  "chapterCadence": ["mở bằng vẻ đẹp có vết nứt", "giữa chương hiểu lầm/phản bội", "kết bằng hy sinh hoặc mất mát"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không khóc lóc van xin", "không mỹ từ rỗng"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

@@ -48,8 +48,6 @@ import {
 } from "./seed-blueprint";
 import { renderFictionMeReferenceForPrompt } from "./fictionme-reference";
 import { loadDrama15SystemPrompt } from "./system-prompt-loader";
-import fs from "node:fs";
-import { resolveAssetPath } from "../../lib/runtime";
 
 type PromptBundle = {
   systemPrompt: string;
@@ -246,31 +244,15 @@ function block(label: string, value: unknown) {
   return `${label}:\n${JSON.stringify(value, null, 2)}`;
 }
 
-// --- Gu Man style guide injection for desktop ---
+function styleBlueprintSystemInstruction(stylePresetId: string): string {
+  if (!stylePresetId.endsWith("_blueprint")) return "";
 
-let cachedGuManGuide: string | null = null;
-
-function loadGuManStyleGuideForDesktop(): string {
-  if (cachedGuManGuide !== null) return cachedGuManGuide;
-  try {
-    const guidePath = resolveAssetPath("presets", "prompts", "gu_man_style_guide.md");
-    const raw = fs.readFileSync(guidePath, "utf8");
-    const headingIdx = raw.indexOf("## STYLE INSTRUCTIONS");
-    cachedGuManGuide = headingIdx !== -1
-      ? raw.slice(headingIdx + "## STYLE INSTRUCTIONS".length).trim()
-      : raw.trim();
-  } catch {
-    cachedGuManGuide = "";
-  }
-  return cachedGuManGuide;
-}
-
-function guManStyleOverlay(stylePresetId: string): string {
-  if (stylePresetId.includes("gu_man") || stylePresetId.includes("co_man")) {
-    const guide = loadGuManStyleGuideForDesktop();
-    return guide ? `--- GU MAN STYLE OVERLAY ---\n\n${guide}` : "";
-  }
-  return "";
+  return [
+    "--- STYLE BLUEPRINT RULES ---",
+    "Treat the selected style preset as craft constraints: rhythm, POV distance, dialogue policy, emotion rendering, imagery palette, and chapter cadence.",
+    "Do not copy, paraphrase, or closely imitate any source author, title, scene sequence, protected phrasing, or recognizable passage.",
+    "Use the blueprint to create original Vietnamese commercial-drama prose that fits the current story, niche, and chapter architecture.",
+  ].join("\n");
 }
 
 function outputLanguageName(outputLanguage: OutputLanguage) {
@@ -479,7 +461,7 @@ export function buildConceptPrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       CONCEPT_SYSTEM_PROMPT_SUPPLEMENT,
-      guManStyleOverlay(stylePreset.id),
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       `Create the concept package for a ${request.chapterCount}-chapter short drama.`,
@@ -514,7 +496,7 @@ export function buildStoryBiblePrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       STORY_BIBLE_SYSTEM_PROMPT_SUPPLEMENT,
-      guManStyleOverlay(stylePreset.id),
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       "Create a story bible for the given short drama concept.",
@@ -550,7 +532,7 @@ export function buildChapterPlanPrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT,
-      guManStyleOverlay(stylePreset.id),
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       `Create a ${request.chapterCount}-chapter plan for this short drama.`,
@@ -590,7 +572,7 @@ export function buildSettingSeedPrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       CONCEPT_SYSTEM_PROMPT_SUPPLEMENT,
-      guManStyleOverlay(stylePreset.id),
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       "Generate a complete story settings package for the desktop form.",
@@ -679,7 +661,7 @@ export function buildChapterDraftPrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT,
-      guManStyleOverlay(stylePreset.id),
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       "Draft one chapter of a commercial short drama.",

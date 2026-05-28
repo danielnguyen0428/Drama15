@@ -56,7 +56,7 @@ const DEFAULT_CONFIG: StoryConfig = {
   intensity: 0.84,
   dialogueRatio: 0.56,
   hookDensity: 0.67,
-  stylePreset: 'wharton_class_shame_elegance',
+  stylePreset: 'co_man_warm_modern_blueprint',
 };
 
 const NICHES = [
@@ -104,7 +104,7 @@ const REWRITE_MODES = [
 
 const FALLBACK_STYLE: StylePreset = {
   id: DEFAULT_CONFIG.stylePreset,
-  displayName: 'Sỉ nhục thượng lưu kiểu Wharton',
+  displayName: 'Cố Mạn - ấm áp hiện đại',
   description: '',
 };
 

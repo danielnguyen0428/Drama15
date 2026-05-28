@@ -1,0 +1,20 @@
+{
+  "id": "phi_nga_tu_ton_silent_heartbreak_blueprint",
+  "displayName": "Phỉ Ngã Tư Tồn - ngược tâm lặng",
+  "description": "Blueprint craft từ guideline Phỉ Ngã Tư Tồn: bi tình, hồi tưởng, đau nhưng viết lặng.",
+  "blueprintVersion": 1,
+  "sourceGuide": "02-phi-nga-tu-ton.md",
+  "emotionalDirectness": "medium-low",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.43,
+  "melodramaLevel": "tragic restrained",
+  "narrativeDistance": ["ngôi ba đa tuyến", "xa gần xen kẽ", "hồi tưởng giữ vai trò mở khóa sự thật"],
+  "sentenceMusic": ["câu dài cho đau tích lũy", "câu ngắn đột ngột ở twist", "nhịp chậm-nhanh-chậm"],
+  "dialoguePolicy": ["ít lời, nhiều ẩn ý", "nhân vật nói ngược lòng", "im lặng quan trọng hơn giải thích"],
+  "emotionRendering": ["đau nhưng không kêu", "cười khi muốn khóc", "gắn cảm xúc với vật kỷ niệm và cảnh lạnh"],
+  "imageryPalette": ["tuyết, hoàng hôn, mùa đông", "tay buông, lưng quay đi", "đồ vật giữ ký ức"],
+  "punctuationRhythm": ["dấu lửng cho khoảng đau", "ít chấm than", "câu hỏi nội tâm không cần trả lời"],
+  "chapterCadence": ["mở bằng dấu hiệu mất mát", "giữa chương tăng hiểu lầm", "kết bằng sự thật muộn hoặc im lặng"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không khóc lóc ồn ào", "không giải thích đạo lý dài"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

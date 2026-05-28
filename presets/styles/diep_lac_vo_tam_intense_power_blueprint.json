@@ -1,0 +1,20 @@
+{
+  "id": "diep_lac_vo_tam_intense_power_blueprint",
+  "displayName": "Diệp Lạc Vô Tâm - cường cường căng mạnh",
+  "description": "Blueprint craft từ guideline Diệp Lạc Vô Tâm: đối đầu, chiếm hữu, nguy hiểm, tình yêu bạo liệt có lực.",
+  "blueprintVersion": 1,
+  "sourceGuide": "03-diep-lac-vo-tam.md",
+  "emotionalDirectness": "high",
+  "hookSharpness": "very high",
+  "dialogueRatioTarget": 0.56,
+  "melodramaLevel": "intense controlled",
+  "narrativeDistance": ["ngôi ba đa tuyến", "gần trong hành động", "xa hơn khi phân thế lực"],
+  "sentenceMusic": ["câu ngắn dứt cho hành động", "câu dài hơn khi cảm xúc va đập", "nhịp nhanh trong nguy hiểm"],
+  "dialoguePolicy": ["thoại ngắn như dao", "hai bên không chịu thua", "lời thoại đi kèm ánh mắt, tư thế, cử động"],
+  "emotionRendering": ["cảm xúc qua hành động mạnh", "bên ngoài lạnh bên trong bão", "yêu là bảo vệ nhưng không làm yếu nữ chính"],
+  "imageryPalette": ["đêm, mưa, neon", "xe, phòng kín, ngõ hẻm", "vết sẹo, ánh mắt sắc"],
+  "punctuationRhythm": ["nhiều câu chấm ngắn", "chấm than chỉ khi bùng nổ", "dấu lửng cho đối đầu nghẹt thở"],
+  "chapterCadence": ["mở bằng xung đột trực diện", "leo thang bằng đấu trí/đấu lực", "kết bằng thế cờ đảo chiều"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không biến chiếm hữu thành mất agency", "không ủy mị"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

@@ -6,8 +6,6 @@
  */
 
 import { loadDrama15SystemPrompt } from "./system-prompt-loader";
-import fs from "node:fs";
-import { resolveAssetPath } from "../../lib/runtime";
 
 export const JSON_OUTPUT_GUARD = [
   "CRITICAL: You MUST return valid, parseable JSON.",
@@ -84,28 +82,6 @@ export function composeSystemPrompt(base: string, ...supplements: string[]): str
   return parts.join("\n");
 }
 
-// ─── Style Guide Loader (shared between desktop and web) ─────────────────────
-
-let cachedGuManStyleGuide: string | null = null;
-
-export function loadGuManStyleGuide(): string {
-  if (cachedGuManStyleGuide) return cachedGuManStyleGuide;
-
-  try {
-    const filePath = resolveAssetPath("presets", "prompts", "gu_man_style_guide.md");
-    const raw = fs.readFileSync(filePath, "utf8");
-
-    const headingIdx = raw.indexOf("## STYLE INSTRUCTIONS");
-    cachedGuManStyleGuide = headingIdx !== -1
-      ? raw.slice(headingIdx + "## STYLE INSTRUCTIONS".length).trim()
-      : raw.trim();
-  } catch {
-    cachedGuManStyleGuide = "";
-  }
-
-  return cachedGuManStyleGuide ?? "";
-}
-
 // ─── Full System Prompt Builders ─────────────────────────────────────────────
 
 export function buildConceptSystemPrompt(): string {
@@ -113,8 +89,6 @@ export function buildConceptSystemPrompt(): string {
     loadDrama15SystemPrompt(),
     JSON_OUTPUT_GUARD,
     CONCEPT_SYSTEM_PROMPT_SUPPLEMENT,
-    "--- GU MAN STYLE OVERLAY ---",
-    loadGuManStyleGuide(),
   );
 }
 
@@ -123,8 +97,6 @@ export function buildStoryBibleSystemPrompt(): string {
     loadDrama15SystemPrompt(),
     JSON_OUTPUT_GUARD,
     STORY_BIBLE_SYSTEM_PROMPT_SUPPLEMENT,
-    "--- GU MAN STYLE OVERLAY ---",
-    loadGuManStyleGuide(),
   );
 }
 
@@ -133,8 +105,6 @@ export function buildChapterPlanSystemPrompt(): string {
     loadDrama15SystemPrompt(),
     JSON_OUTPUT_GUARD,
     CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT,
-    "--- GU MAN STYLE OVERLAY ---",
-    loadGuManStyleGuide(),
   );
 }
 

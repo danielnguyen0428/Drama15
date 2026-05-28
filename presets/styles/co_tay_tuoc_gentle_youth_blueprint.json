@@ -1,0 +1,20 @@
+{
+  "id": "co_tay_tuoc_gentle_youth_blueprint",
+  "displayName": "Cố Tây Tước - thanh xuân dịu ngọt",
+  "description": "Blueprint craft từ guideline Cố Tây Tước: yêu đầu nhẹ, ấm, khoảnh khắc nhỏ nâng cảm xúc.",
+  "blueprintVersion": 1,
+  "sourceGuide": "07-co-tay-tuoc.md",
+  "emotionalDirectness": "low-medium",
+  "hookSharpness": "medium",
+  "dialogueRatioTarget": 0.5,
+  "melodramaLevel": "gentle youth romance",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần và thân mật", "nhìn lại thanh xuân không bi kịch"],
+  "sentenceMusic": ["câu ngắn-trung bình", "nhịp nhẹ như gió", "ưu tiên chi tiết nhỏ"],
+  "dialoguePolicy": ["thoại trong sáng, tự nhiên", "hài hước rất nhẹ", "không tuyên ngôn lớn"],
+  "emotionRendering": ["rung động qua hành động nhỏ", "tích cực, bình yên", "không đẩy đau quá mức"],
+  "imageryPalette": ["nắng, sân trường, gió", "ghế đá, cổng trường, quán nhỏ", "nụ cười và khoảng cách gần"],
+  "punctuationRhythm": ["dấu phẩy mềm", "dấu lửng ít", "gần như không chấm than"],
+  "chapterCadence": ["mở bằng khoảnh khắc gần gũi", "giữa chương có thử thách nhẹ", "kết bằng ấm áp hoặc rung động"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không ngược nặng", "không quyền lực áp chế"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

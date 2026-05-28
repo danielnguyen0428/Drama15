@@ -1,0 +1,20 @@
+{
+  "id": "co_man_warm_modern_blueprint",
+  "displayName": "Cố Mạn - ấm áp hiện đại",
+  "description": "Blueprint craft từ guideline Cố Mạn: hiện đại, nhẹ, ngọt vừa, cảm xúc qua hành động nhỏ.",
+  "blueprintVersion": 1,
+  "sourceGuide": "01-co-man.md",
+  "emotionalDirectness": "low-medium",
+  "hookSharpness": "medium",
+  "dialogueRatioTarget": 0.5,
+  "melodramaLevel": "warm restrained",
+  "narrativeDistance": ["ngôi ba hạn chế sát nữ chính", "giọng kể thân mật như người quen", "tuyến tính, hồi tưởng ngắn nếu cần"],
+  "sentenceMusic": ["câu ngắn-trung bình", "nhịp chậm và đều", "ưu tiên hành động nhỏ trước nhận xét cảm xúc"],
+  "dialoguePolicy": ["thoại tự nhiên, ít hoa mỹ", "nam chính ít lời nhưng chắc", "xen thoại với cúi đầu, nhìn, cười nhẹ"],
+  "emotionRendering": ["ấm áp qua ánh mắt và cử chỉ", "kiềm chế cảm xúc mạnh", "tránh bi kịch hóa"],
+  "imageryPalette": ["nắng qua cửa sổ", "quán cà phê, thư viện, văn phòng", "máy tính, game, đời thường"],
+  "punctuationRhythm": ["dấu phẩy cho nhịp mềm", "dấu lửng rất tiết chế", "hạn chế chấm than"],
+  "chapterCadence": ["mở bằng tình huống đời thường có lệch nhẹ", "cao trào là hiểu lầm hoặc lựa chọn nhỏ", "kết chương bằng dư vị ấm"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không tuyên ngôn tình yêu dài", "không drama cực đoan"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

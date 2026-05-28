@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test:stream-headers": "tsx --test src/streamHeaders.test.ts",
     "test:orchestrator-progress": "tsx --test src/orchestratorProgressEncoding.test.ts",
-    "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts"
+    "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts",
+    "test:style-blueprints": "tsx --test src/styleBlueprintPresets.test.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

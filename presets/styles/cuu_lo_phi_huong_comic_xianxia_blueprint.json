@@ -1,0 +1,20 @@
+{
+  "id": "cuu_lo_phi_huong_comic_xianxia_blueprint",
+  "displayName": "Cửu Lộ Phi Hương - tiên hiệp hài bi",
+  "description": "Blueprint craft từ guideline Cửu Lộ Phi Hương: hài hước dẫn đường, bi thương chuyển mượt, đồng hành chiến đấu.",
+  "blueprintVersion": 1,
+  "sourceGuide": "08-cuu-lo-phi-huong.md",
+  "emotionalDirectness": "medium-high",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.55,
+  "melodramaLevel": "comic xianxia with ache",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần trong hài", "xa hơn khi chiến đấu hoặc hy sinh"],
+  "sentenceMusic": ["câu nhanh cho hài", "câu chậm khi chuyển bi", "nhịp linh hoạt"],
+  "dialoguePolicy": ["thoại dí dỏm che cảm xúc", "cãi nhau để thân hơn", "lời đùa có hậu vị đau"],
+  "emotionRendering": ["hài che nghiêm túc", "yêu là đồng hành", "hy sinh qua hành động"],
+  "imageryPalette": ["tiên giới, pháp khí, quái vật", "đường phiêu lưu", "vết thương và lời đùa"],
+  "punctuationRhythm": ["dấu chấm cho punchline", "dấu lửng khi đổi sang đau", "chấm than vừa phải"],
+  "chapterCadence": ["mở bằng tình huống lệch hài", "giữa chương thành nguy hiểm thật", "kết bằng cười mà đau hoặc bảo vệ nhau"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không hài phá logic", "không bi chuyển gắt vô cớ"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}

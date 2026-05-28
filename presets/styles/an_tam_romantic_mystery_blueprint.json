@@ -1,0 +1,20 @@
+{
+  "id": "an_tam_romantic_mystery_blueprint",
+  "displayName": "Ân Tầm - huyền nghi tình cảm",
+  "description": "Blueprint craft từ guideline Ân Tầm: bí ẩn, giải mã, rung động trong nguy hiểm.",
+  "blueprintVersion": 1,
+  "sourceGuide": "06-an-tam.md",
+  "emotionalDirectness": "medium",
+  "hookSharpness": "high",
+  "dialogueRatioTarget": 0.5,
+  "melodramaLevel": "romantic mystery",
+  "narrativeDistance": ["ngôi ba hạn chế", "gần cảm xúc nhưng giấu thông tin", "reader khám phá cùng nhân vật"],
+  "sentenceMusic": ["câu ngắn khi phát hiện", "câu dài vừa cho suy luận", "nhịp hồi hộp từng lớp"],
+  "dialoguePolicy": ["thoại đặt câu hỏi và kiểm chứng", "nam chính thâm trầm", "nữ chính nghi ngờ rồi tin dần"],
+  "emotionRendering": ["sợ nhưng không chạy", "rung động phát sinh trong nguy hiểm", "phân tích cảm xúc bằng hành vi"],
+  "imageryPalette": ["hành lang tối, hồ sơ, khóa cửa", "ánh đèn lạnh, mùi mưa", "vật chứng nhỏ"],
+  "punctuationRhythm": ["dấu hỏi có chức năng", "câu chấm ngắn ở phát hiện", "dấu lửng cho thông tin bị giấu"],
+  "chapterCadence": ["mở bằng chi tiết bất thường", "giữa chương sai lệch lớn dần", "kết bằng manh mối mới hoặc niềm tin lung lay"],
+  "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không giải thích bí ẩn quá sớm", "không làm tình cảm lấn mất logic"],
+  "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
+}
