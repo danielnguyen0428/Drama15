@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
-import { getAccessToken, supabase } from '../api/supabaseClient';
+import { consumeOAuthHashSession, getAccessToken, supabase } from '../api/supabaseClient';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -202,14 +202,19 @@ export function StoryWorkspace(): JSX.Element {
     if (!supabase) return;
 
     let cancelled = false;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      setSession(data.session);
-      if (data.session) {
+    void (async () => {
+      try {
+        const hashSession = await consumeOAuthHashSession();
+        const { data } = hashSession ? { data: { session: hashSession } } : await supabase.auth.getSession();
+        if (cancelled) return;
+        setSession(data.session);
+        if (!data.session) return;
         void refreshAccount();
         void loadSavedStories();
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Không thể hoàn tất đăng nhập Google.');
       }
-    });
+    })();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
