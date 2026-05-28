@@ -12,27 +12,3 @@ export async function getAccessToken() {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? '';
 }
-
-export async function consumeOAuthHashSession() {
-  if (!supabase || typeof window === 'undefined') return null;
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  const errorDescription = params.get('error_description') || params.get('error');
-
-  if (errorDescription) {
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-    throw new Error(errorDescription);
-  }
-
-  if (!accessToken || !refreshToken) return null;
-
-  const { data, error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
-  if (error) throw error;
-  return data.session;
-}

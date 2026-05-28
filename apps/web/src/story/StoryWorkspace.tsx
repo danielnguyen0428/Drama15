@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
-import { consumeOAuthHashSession, getAccessToken, supabase } from '../api/supabaseClient';
+import { getAccessToken, supabase } from '../api/supabaseClient';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -204,8 +204,7 @@ export function StoryWorkspace(): JSX.Element {
     let cancelled = false;
     void (async () => {
       try {
-        const hashSession = await consumeOAuthHashSession();
-        const { data } = hashSession ? { data: { session: hashSession } } : await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
         if (cancelled) return;
         setSession(data.session);
         if (!data.session) return;
@@ -244,7 +243,10 @@ export function StoryWorkspace(): JSX.Element {
       return;
     }
 
-    await supabase.auth.signInWithOAuth({ provider: 'google' });
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
   }
 
   async function signOut() {
