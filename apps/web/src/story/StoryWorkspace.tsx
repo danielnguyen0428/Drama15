@@ -5,7 +5,7 @@ import lottie from 'lottie-web/build/player/lottie_light';
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
-import { canResumeStory, normalizeRelationshipGraph, type RelationshipGraphView } from './storyViewModel';
+import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, type RelationshipGraphView } from './storyViewModel';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -646,18 +646,19 @@ function TextPanel({ title, content }: { title: string; content: string }) {
 }
 
 function RelationshipGraphPanel({ graph }: { graph?: RelationshipGraphView }) {
-  const normalizedGraph = normalizeRelationshipGraph(graph);
-  if (!normalizedGraph || normalizedGraph.nodes.length === 0) {
+  const graphPreview = createRelationshipGraphPreview(graph);
+  if (!graphPreview || graphPreview.nodes.length === 0) {
     return <article className="text-panel"><h3>Quan hệ nhân vật</h3><div className="empty-state">Chưa có dữ liệu quan hệ nhân vật.</div></article>;
   }
 
-  const positions = normalizedGraph.nodes.map((node, index) => {
-    const angle = (Math.PI * 2 * index) / Math.max(normalizedGraph.nodes.length, 1) - Math.PI / 2;
+  const positions = graphPreview.nodes.map((node, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(graphPreview.nodes.length, 1) - Math.PI / 2;
     return { node, x: 260 + Math.cos(angle) * 190, y: 210 + Math.sin(angle) * 145 };
   });
   const byId = new Map(positions.map((item) => [item.node.id, item]));
+  const hiddenCount = graphPreview.hiddenNodeCount + graphPreview.hiddenEdgeCount;
 
-  return <article className="relationship-panel"><h3>Quan hệ nhân vật</h3><div className="relationship-canvas"><svg viewBox="0 0 520 420" role="img" aria-label="Sơ đồ quan hệ nhân vật">{normalizedGraph.edges.map((edge, index) => { const source = byId.get(edge.source); const target = byId.get(edge.target); if (!source || !target) return null; const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2; return <g key={`${edge.source}-${edge.target}-${index}`}><line x1={source.x} y1={source.y} x2={target.x} y2={target.y} /><text x={midX} y={midY}>{edge.chapterNumber ? `Ch.${edge.chapterNumber}` : edge.type}</text></g>; })}{positions.map(({ node, x, y }) => <g key={node.id} className="relationship-node"><circle cx={x} cy={y} r="46" /><text x={x} y={y - 4}>{node.name}</text><text x={x} y={y + 14}>{node.role}</text></g>)}</svg></div><div className="relationship-list">{normalizedGraph.edges.map((edge, index) => { const source = byId.get(edge.source)?.node.name ?? edge.source; const target = byId.get(edge.target)?.node.name ?? edge.target; return <p key={index}><strong>{source} → {target}</strong><span>{edge.label}</span></p>; })}</div></article>;
+  return <article className="relationship-panel"><h3>Quan hệ nhân vật</h3>{hiddenCount > 0 && <p className="relationship-note">Đang hiển thị {graphPreview.nodes.length} nhân vật chính và {graphPreview.edges.length} quan hệ nổi bật.</p>}<div className="relationship-canvas"><svg viewBox="0 0 520 420" role="img" aria-label="Sơ đồ quan hệ nhân vật">{graphPreview.edges.map((edge, index) => { const source = byId.get(edge.source); const target = byId.get(edge.target); if (!source || !target) return null; const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2; return <g key={`${edge.source}-${edge.target}-${index}`}><line x1={source.x} y1={source.y} x2={target.x} y2={target.y} /><text x={midX} y={midY}>{edge.chapterNumber ? `Ch.${edge.chapterNumber}` : edge.type}</text></g>; })}{positions.map(({ node, x, y }) => <g key={node.id} className="relationship-node"><circle cx={x} cy={y} r="38" /><text x={x} y={y - 4}>{node.name}</text><text x={x} y={y + 14}>{node.role}</text></g>)}</svg></div><div className="relationship-list">{graphPreview.edges.map((edge, index) => { const source = byId.get(edge.source)?.node.name ?? edge.source; const target = byId.get(edge.target)?.node.name ?? edge.target; return <p key={index}><strong>{source} → {target}</strong><span>{edge.label}</span></p>; })}</div></article>;
 }
 
 function PanelHeading({ label, value }: { label: string; value: string }) {

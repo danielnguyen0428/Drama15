@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
   color-scheme: light;
@@ -68,13 +68,13 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
   padding: 5px 9px;
   font-size: 11px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .studio-kicker span { color: var(--amber-dark); background: rgba(255, 177, 79, 0.18); }
 .studio-kicker i { color: var(--teal-dark); background: rgba(0, 196, 204, 0.12); }
-.workspace-header h1 { max-width: 780px; color: var(--ink); font-size: clamp(34px, 4vw, 58px); line-height: 0.96; }
+.workspace-header h1 { max-width: 780px; color: var(--ink); font-size: clamp(34px, 4vw, 58px); font-weight: 700; line-height: 0.96; }
 .workspace-header p { margin: 0; max-width: 64ch; color: var(--muted); font-size: 15px; line-height: 1.62; }
 .studio-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .studio-meta span {
@@ -84,9 +84,9 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
   color: #51606f;
   background: var(--surface-soft);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
 }
-.eyebrow { margin: 0 0 8px; color: var(--amber-dark); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.eyebrow { margin: 0 0 8px; color: var(--amber-dark); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 
 .status-card,
 .setup-panel,
@@ -108,7 +108,7 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
   border-radius: 8px;
   padding: 18px;
 }
-.status-card span { color: var(--teal-dark); text-transform: uppercase; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; }
+.status-card span { color: var(--teal-dark); text-transform: uppercase; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
 .status-card strong { min-width: 72px; color: var(--ink); font-size: 32px; line-height: 1; }
 .status-card small { color: var(--muted); line-height: 1.45; }
 .loading-action { min-height: 40px; }
@@ -233,7 +233,7 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
   background: #f7f9fc;
   color: #4e5d6c;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .panel-heading,
@@ -243,10 +243,10 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
   align-items: center;
   gap: 12px;
 }
-.panel-heading span { color: var(--teal-dark); font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.panel-heading span { color: var(--teal-dark); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .panel-heading strong { color: var(--amber-dark); font-size: 12px; }
 
-label { display: grid; gap: 8px; color: #344354; font-size: 13px; font-weight: 760; }
+label { display: grid; gap: 8px; color: #344354; font-size: 13px; font-weight: 600; }
 input, select, textarea {
   width: 100%;
   border: 1px solid var(--line-strong);
@@ -297,7 +297,7 @@ input::placeholder, textarea::placeholder { color: #9aa5b2; }
   border: 0;
   border-radius: 8px;
   min-height: 42px;
-  font-weight: 850;
+  font-weight: 700;
   outline: 2px solid transparent;
   outline-offset: 2px;
   transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -315,7 +315,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 
 .story-panel { min-height: 720px; }
 .story-toolbar { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
-.story-toolbar h2 { font-size: clamp(22px, 3vw, 34px); }
+.story-toolbar h2 { font-size: clamp(22px, 3vw, 34px); font-weight: 600; }
 .story-toolbar button { padding: 0 16px; }
 
 .panel-tabs { display: flex; gap: 8px; margin: 16px 0; overflow-x: auto; }
@@ -337,7 +337,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   border: 1px solid transparent;
 }
 .chapter-list button.active { background: rgba(0, 196, 204, 0.14); color: var(--ink); outline: 1px solid rgba(0, 196, 204, 0.42); }
-.chapter-list span { color: var(--amber-dark); font-weight: 900; }
+.chapter-list span { color: var(--amber-dark); font-weight: 700; }
 .chapter-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .chapter-reader,
@@ -348,7 +348,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   background: #f8fafc;
 }
 .chapter-reader h3,
-.text-panel h3 { margin-bottom: 16px; font-size: 24px; line-height: 1.25; }
+.text-panel h3 { margin-bottom: 16px; font-size: 24px; font-weight: 600; line-height: 1.25; }
 .prose { color: #273444; font-size: 16px; line-height: 1.85; max-width: 76ch; }
 .prose p { margin: 0 0 18px; }
 .text-panel pre {
@@ -367,7 +367,8 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   padding: 24px;
   background: #f8fafc;
 }
-.relationship-panel h3 { margin: 0 0 16px; font-size: 24px; line-height: 1.25; }
+.relationship-panel h3 { margin: 0 0 10px; font-size: 24px; font-weight: 600; line-height: 1.25; }
+.relationship-note { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .relationship-canvas {
   overflow-x: auto;
   overflow-y: hidden;
@@ -378,9 +379,9 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .relationship-canvas svg { display: block; width: 100%; min-width: 520px; height: auto; min-height: 360px; }
 .relationship-canvas line { stroke: rgba(0, 196, 204, 0.45); stroke-width: 2; }
 .relationship-canvas text { fill: #273444; font-size: 13px; text-anchor: middle; }
-.relationship-canvas g > text:first-of-type { fill: var(--amber-dark); font-size: 11px; font-weight: 900; }
+.relationship-canvas g > text:first-of-type { fill: var(--amber-dark); font-size: 11px; font-weight: 700; }
 .relationship-node circle { fill: #ffffff; stroke: rgba(255, 177, 79, 0.72); stroke-width: 2; }
-.relationship-node text:first-of-type { fill: var(--ink); font-size: 13px; font-weight: 900; }
+.relationship-node text:first-of-type { fill: var(--ink); font-size: 13px; font-weight: 600; }
 .relationship-node text:last-of-type { fill: var(--teal-dark); font-size: 10px; }
 .relationship-list { display: grid; gap: 8px; margin-top: 16px; }
 .relationship-list p {
