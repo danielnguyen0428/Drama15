@@ -369,12 +369,13 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 .relationship-panel h3 { margin: 0 0 16px; font-size: 24px; line-height: 1.25; }
 .relationship-canvas {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
 }
-.relationship-canvas svg { display: block; width: 100%; height: auto; min-height: 360px; }
+.relationship-canvas svg { display: block; width: 100%; min-width: 520px; height: auto; min-height: 360px; }
 .relationship-canvas line { stroke: rgba(0, 196, 204, 0.45); stroke-width: 2; }
 .relationship-canvas text { fill: #273444; font-size: 13px; text-anchor: middle; }
 .relationship-canvas g > text:first-of-type { fill: var(--amber-dark); font-size: 11px; font-weight: 900; }
@@ -430,7 +431,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .setup-panel,
   .saved-panel { position: static; }
   .chapter-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .relationship-canvas { display: none; }
 }
 
 @media (max-width: 560px) {
