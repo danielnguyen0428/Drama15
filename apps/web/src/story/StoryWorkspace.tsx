@@ -543,9 +543,8 @@ export function StoryWorkspace(): JSX.Element {
         <aside className="status-card">
           <span>{PHASE_LABELS[phase]}</span>
           <small className="loading-action">{progressLabel}</small>
-          <strong>{progress}%</strong>
           <LoadingAnimation active={busy} />
-          <div className="progress-track"><i style={{ width: `${progress}%` }} /></div>
+          <div className="progress-row"><strong>{progress}%</strong><div className="progress-track"><i style={{ width: `${progress}%` }} /></div></div>
         </aside>
       </header>
 
