@@ -41,6 +41,7 @@ import {
   renderTrendAwareSeedEngineForPrompt,
 } from "./drama15-seed-engine";
 import {
+  renderRecentCharacterNamesForPrompt,
   renderRecentSeedHistoryForPrompt,
   renderSeedBlueprintForPrompt,
   type SeedBlueprint,
@@ -488,8 +489,10 @@ export function buildStoryBiblePrompt(params: {
   concept: Concept;
   linePreset: LinePreset;
   stylePreset: StylePreset;
+  recentSeedHistory?: SeedHistoryEntry[];
 }): PromptBundle {
-  const { request, concept, linePreset, stylePreset } = params;
+  const { request, concept, linePreset, stylePreset, recentSeedHistory = [] } = params;
+  const recentCharacterNamesBlock = renderRecentCharacterNamesForPrompt(recentSeedHistory);
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -506,6 +509,12 @@ export function buildStoryBiblePrompt(params: {
       "Heroine must include: name, wound, strengths, blindSpots.",
       "Betrayer must include: name, wound, cowardiceVector.",
       "Rival must include: name, socialPower, demeanor.",
+      "CHARACTER NAME DIVERSITY RULE (hard constraint for heroine, betrayer, rival, and every supporting character with a name):",
+      "Use fresh full names. Do not reuse recent full names, given names, or middle-name tokens. Diversify all Vietnamese name positions, not just the final given name.",
+      "Banned overused given names: Linh, Mai, Lan, Hoa, Ngọc, Anh, Hằng, Huyền, Trang, Phương, Thảo, Yến.",
+      "Banned overused middle-name tokens: Minh, Thị, Văn, Hồng, Thanh, Thu, Kim.",
+      "Preferred diverse given-name pool: Tâm, Khuê, Diệp, Trúc, Bích, Tuyền, Diễm, Như, Quỳnh, Hiền, Bảo, Châu, Giang, Hương, Lâm, Mỹ, Ngân, Nhung, Uyên, Vân, Xuân, Chi, Đào, Hà, Huệ, Loan, Ly, Nga, Nhi, Thư, Thúy, Tiên, Trinh, Tuyết, Vy.",
+      recentCharacterNamesBlock,
       "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 8.",
       "Betrayal and class shame engines must support: masked threat in chapter 2, reveal without confrontation in chapter 6, no-rescue nadir in chapter 7, and public truth reveal in chapter 14.",
       customNicheLockInstruction(request),

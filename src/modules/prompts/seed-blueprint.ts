@@ -2852,6 +2852,11 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
   const recentAntagonistWebs = new Set(recentHistory.map((entry) => entry.blueprint?.antagonistWeb).filter(Boolean));
   const recentRevealMechanisms = new Set(recentHistory.map((entry) => entry.blueprint?.revealMechanism).filter(Boolean));
   const recentEndingShapes = new Set(recentHistory.map((entry) => entry.blueprint?.endingShape).filter(Boolean));
+  const recentTopicAnchors = new Set(recentHistory.map((entry) => entry.blueprint?.topicAnchor).filter(Boolean));
+  const recentMotifFamilies = new Set(recentHistory.map((entry) => entry.blueprint?.motifFamily).filter(Boolean));
+  const recentSocialPains = new Set(recentHistory.map((entry) => entry.blueprint?.socialPain).filter(Boolean));
+  const recentArenas = new Set(recentHistory.map((entry) => entry.blueprint?.arena).filter(Boolean));
+  const recentPublicRevealVenues = new Set(recentHistory.map((entry) => entry.blueprint?.publicRevealVenue).filter(Boolean));
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
   let fallback: SeedBlueprint | null = null;
   let bestCandidate: { blueprint: SeedBlueprint; score: number } | null = null;
@@ -2868,6 +2873,11 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
       recentAntagonistWebs,
       recentRevealMechanisms,
       recentEndingShapes,
+      recentTopicAnchors,
+      recentMotifFamilies,
+      recentSocialPains,
+      recentArenas,
+      recentPublicRevealVenues,
     });
     if (!bestCandidate || score > bestCandidate.score) {
       bestCandidate = { blueprint, score };
@@ -2879,7 +2889,12 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
       !recentRelationshipDynamics.has(blueprint.relationshipDynamic) &&
       !recentProtagonistAgencies.has(blueprint.protagonistAgency) &&
       !recentRevealMechanisms.has(blueprint.revealMechanism) &&
-      !recentEndingShapes.has(blueprint.endingShape)
+      !recentEndingShapes.has(blueprint.endingShape) &&
+      !recentTopicAnchors.has(blueprint.topicAnchor) &&
+      !recentMotifFamilies.has(blueprint.motifFamily) &&
+      !recentSocialPains.has(blueprint.socialPain) &&
+      !recentArenas.has(blueprint.arena) &&
+      !recentPublicRevealVenues.has(blueprint.publicRevealVenue)
     ) {
       return blueprint;
     }
@@ -2898,6 +2913,13 @@ export function renderRecentSeedHistoryForPrompt(history: SeedHistoryEntry[], li
     linePreset: entry.linePreset,
     titleHint: entry.titleHint,
     topicAnchor: entry.blueprint?.topicAnchor,
+    motifFamily: entry.blueprint?.motifFamily,
+    socialPain: entry.blueprint?.socialPain,
+    arena: entry.blueprint?.arena,
+    incitingHumiliation: entry.blueprint?.incitingHumiliation,
+    hiddenLeverage: entry.blueprint?.hiddenLeverage,
+    evidenceObject: entry.blueprint?.evidenceObject,
+    publicRevealVenue: entry.blueprint?.publicRevealVenue,
     relationshipDynamic: entry.blueprint?.relationshipDynamic,
     protagonistAgency: entry.blueprint?.protagonistAgency,
     antagonistWeb: entry.blueprint?.antagonistWeb,
@@ -3145,11 +3167,21 @@ function scoreBlueprintNovelty(
     recentAntagonistWebs: Set<string | undefined>;
     recentRevealMechanisms: Set<string | undefined>;
     recentEndingShapes: Set<string | undefined>;
+    recentTopicAnchors: Set<string | undefined>;
+    recentMotifFamilies: Set<string | undefined>;
+    recentSocialPains: Set<string | undefined>;
+    recentArenas: Set<string | undefined>;
+    recentPublicRevealVenues: Set<string | undefined>;
   },
 ) {
   let score = 0;
   if (!hasRecentFingerprintMatch(blueprint.fingerprint, recent.recentFingerprints)) score += 10;
   if (!recent.recentSkeletonFingerprints.has(createSeedSkeletonFingerprint(blueprint))) score += 8;
+  if (!recent.recentTopicAnchors.has(blueprint.topicAnchor)) score += 6;
+  if (!recent.recentMotifFamilies.has(blueprint.motifFamily)) score += 6;
+  if (!recent.recentArenas.has(blueprint.arena)) score += 5;
+  if (!recent.recentPublicRevealVenues.has(blueprint.publicRevealVenue)) score += 4;
+  if (!recent.recentSocialPains.has(blueprint.socialPain)) score += 3;
   if (!recent.recentEndingShapes.has(blueprint.endingShape)) score += 5;
   if (!recent.recentRelationshipDynamics.has(blueprint.relationshipDynamic)) score += 4;
   if (!recent.recentRevealMechanisms.has(blueprint.revealMechanism)) score += 4;

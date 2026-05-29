@@ -156,6 +156,24 @@ export class StoryOrchestrator {
     this.modelAliasOverride = modelAlias.trim() || undefined;
   }
 
+  private async recordStoryBibleCharacterNames(request: NormalizedOutlineRequest, title: string, storyBible: StoryPayload["storyBible"]) {
+    const characterNames = [storyBible.heroine.name, storyBible.betrayer.name, storyBible.rival.name]
+      .map((name) => name.trim())
+      .filter(Boolean);
+
+    if (!this.seedHistoryStore || characterNames.length === 0) {
+      return;
+    }
+
+    await this.seedHistoryStore.append({
+      fingerprint: `character-names:${request.linePreset}:${characterNames.map(normalizeHistoryKeyPart).join('|')}`,
+      linePreset: request.linePreset,
+      titleHint: title,
+      createdAt: new Date().toISOString(),
+      characterNames,
+    });
+  }
+
   async generateOutline(request: NormalizedOutlineRequest, progressOptions?: StoryProgressOptions, options?: { recentStoryTitles?: string[] }) {
     const progress = resolveProgressOptions(progressOptions, "outline", 5);
     const context = await runProgressStage(
@@ -218,6 +236,7 @@ export class StoryOrchestrator {
           concept: concept.concept,
           linePreset: context.linePreset,
           stylePreset: context.stylePreset,
+          recentSeedHistory: (await this.seedHistoryStore?.load()) ?? [],
         });
         const bibleResult = await this.routerClient.generateJson<unknown>({
           model: context.models.bible,
@@ -233,6 +252,8 @@ export class StoryOrchestrator {
       },
       (result) => `Đã dựng story bible bằng ${result.modelUsed}.`,
     );
+
+    await this.recordStoryBibleCharacterNames(request, concept.concept.title, storyBible.storyBible);
 
     const chapterPlan = await runProgressStage(
       progress,
@@ -1194,6 +1215,10 @@ function alignChapterTitleWithPlan(chapter: Chapter, plannedTitle: string): Chap
     ...chapter,
     title: plannedTitle,
   };
+}
+
+function normalizeHistoryKeyPart(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
 function unwrapEnvelope(value: unknown, key: string) {
