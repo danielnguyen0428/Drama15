@@ -96,7 +96,7 @@ const NICHES = [
   ['humiliation_revenge_justice', 'Sỉ nhục / trả đũa / công lý'],
   ['secret_identity_hidden_heiress', 'Thân phận bí mật / thiên kim'],
   ['toxic_family_betrayal', 'Gia đình độc hại / phản bội'],
-  ['cheating_ex_wedding_drama', 'Ngoại tình / drama cưới'],
+  ['cheating_ex_wedding_drama', 'Ngoại tình / cưới hỏi rạn vỡ'],
   ['single_mom_poor_woman_comeback', 'Mẹ đơn thân / lật kèo'],
   ['social_injustice_discrimination_drama', 'Bất công xã hội'],
   ['workplace_ceo_power_struggle', 'Công sở / tổng tài / tranh quyền'],
@@ -109,11 +109,11 @@ const NICHES = [
 
 const PHASE_LABELS: Record<Phase, string> = {
   idle: 'Sẵn sàng',
-  suggesting: 'Đang gợi ý',
-  creating: 'Đang khởi tạo',
-  streaming: 'Đang viết',
+  suggesting: 'Đang ươm ý',
+  creating: 'Đang mở phiên',
+  streaming: 'Đang viết chương',
   completed: 'Hoàn tất',
-  failed: 'Có lỗi',
+  failed: 'Cần thử lại',
 };
 
 const STATUS_LABELS: Record<StoryStatus, string> = {
@@ -158,9 +158,9 @@ export function StoryWorkspace(): JSX.Element {
   const [styles, setStyles] = useState<StylePreset[]>([]);
   const [phase, setPhase] = useState<Phase>('idle');
   const [storyId, setStoryId] = useState<string | null>(null);
-  const [storyTitle, setStoryTitle] = useState('Drama chưa đặt tên');
+  const [storyTitle, setStoryTitle] = useState('Truyện chưa đặt tên');
   const [progress, setProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState('Sẵn sàng bắt đầu');
+  const [progressLabel, setProgressLabel] = useState('Sẵn sàng ươm mầm truyện');
   const [result, setResult] = useState<StoryResult>(EMPTY_RESULT);
   const [activeChapter, setActiveChapter] = useState(1);
   const [panel, setPanel] = useState<Panel>('chapters');
@@ -171,6 +171,7 @@ export function StoryWorkspace(): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [quota, setQuota] = useState<Quota | null>(null);
+  const [setupSuggestionQuota, setSetupSuggestionQuota] = useState<Quota | null>(null);
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [storyListBusy, setStoryListBusy] = useState(false);
   const streamRef = useRef<EventSource | null>(null);
@@ -183,6 +184,7 @@ export function StoryWorkspace(): JSX.Element {
   const busy = phase === 'suggesting' || phase === 'creating' || phase === 'streaming';
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
+  const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -227,6 +229,7 @@ export function StoryWorkspace(): JSX.Element {
       } else {
         setUser(null);
         setQuota(null);
+        setSetupSuggestionQuota(null);
         setSavedStories([]);
       }
     });
@@ -262,9 +265,10 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const response = await httpFetch('/auth/me');
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { user: AppUser; quota: Quota };
+      const data = (await response.json()) as { user: AppUser; quota: Quota; setupSuggestionQuota?: Quota | null };
       setUser(data.user);
       setQuota(data.quota);
+      setSetupSuggestionQuota(data.setupSuggestionQuota ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể nạp tài khoản.');
     }
@@ -296,19 +300,20 @@ export function StoryWorkspace(): JSX.Element {
     if (!requireLogin()) return;
     setPhase('suggesting');
     setError(null);
-    setProgressLabel('Đang gợi ý mầm truyện...');
+    setProgressLabel('Đang tìm mầm truyện phù hợp...');
     try {
       const response = await httpFetch('/story/setup-suggest', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { title?: string; seed?: string; storyControls?: StoryControls };
+      const data = (await response.json()) as { title?: string; seed?: string; storyControls?: StoryControls; setupSuggestionQuota?: Quota };
+      if (data.setupSuggestionQuota) setSetupSuggestionQuota(data.setupSuggestionQuota);
       setConfig((current) => ({
         ...current,
         title: data.title || current.title,
         seed: data.seed || current.seed,
         storyControls: data.storyControls ?? current.storyControls,
       }));
-      setStoryTitle(data.title || config.title || 'Drama chưa đặt tên');
-      setProgressLabel('Đã có mầm truyện');
+      setStoryTitle(data.title || config.title || 'Truyện chưa đặt tên');
+      setProgressLabel('Mầm truyện đã sẵn sàng');
       setPhase('idle');
     } catch (err) {
       fail(err, 'Không thể gợi ý thiết lập truyện.');
@@ -318,7 +323,7 @@ export function StoryWorkspace(): JSX.Element {
   async function createStory() {
     if (!requireLogin()) return;
     if (outOfQuota) {
-      setError('Bạn đã hết số bộ drama có thể sáng tác hôm nay. Nâng cấp Pro hoặc Premium để tạo thêm drama.');
+      setError('Bạn đã hết số bản thảo truyện có thể viết hôm nay. Nâng cấp Pro hoặc Premium để viết thêm bản thảo.');
       return;
     }
 
@@ -326,10 +331,10 @@ export function StoryWorkspace(): JSX.Element {
     setPhase('creating');
     setError(null);
     setProgress(0);
-    setProgressLabel('Đang tạo phiên sáng tác...');
+    setProgressLabel('Đang mở phiên viết...');
     setResult(EMPTY_RESULT);
     setActiveChapter(1);
-    setStoryTitle(config.title || 'Drama chưa đặt tên');
+    setStoryTitle(config.title || 'Truyện chưa đặt tên');
     try {
       const response = await httpFetch('/stories', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
@@ -352,7 +357,7 @@ export function StoryWorkspace(): JSX.Element {
     source.onmessage = (event) => handleStreamEvent(JSON.parse(event.data) as StreamEvent);
     source.onerror = () => {
       source.close();
-      setError('Luồng dữ liệu bị ngắt. Kiểm tra API rồi thử viết lại.');
+      setError('Phiên viết bị ngắt kết nối. Mở truyện trong danh sách rồi bấm “Viết tiếp” để nối lại.');
       setPhase('failed');
     };
   }
@@ -375,7 +380,7 @@ export function StoryWorkspace(): JSX.Element {
     setPanel('chapters');
     setPhase(completed ? 'completed' : story.status === 'failed' ? 'failed' : 'idle');
     setProgress(completed ? 100 : Math.round((chapterCount / 10) * 100));
-    setProgressLabel(label ?? (completed ? 'Đã mở bản thảo đã lưu' : chapterCount > 0 ? `Đã mở bản thảo ${chapterCount}/10 chương` : 'Truyện chưa có bản thảo hoàn tất'));
+    setProgressLabel(label ?? (completed ? 'Đã mở bản thảo đã lưu' : chapterCount > 0 ? `Đã mở bản thảo ${chapterCount}/10 chương` : 'Truyện này chưa có chương hoàn chỉnh'));
   }
 
   function handleStreamEvent(payload: StreamEvent) {
@@ -410,14 +415,14 @@ export function StoryWorkspace(): JSX.Element {
     if (payload.stage === 'done') {
       streamRef.current?.close();
       setProgress(100);
-      setProgressLabel('Truyện đã hoàn tất');
+      setProgressLabel('Bản thảo đã hoàn tất');
       setPhase('completed');
       void loadSavedStories();
       void refreshAccount();
       return;
     }
     if (payload.stage === 'error') {
-      fail(payload.error, 'Quá trình viết truyện thất bại.');
+      fail(payload.error, 'Phiên viết bị gián đoạn. Bạn có thể thử viết tiếp từ bản thảo đã có.');
       streamRef.current?.close();
       void loadSavedStories();
     }
@@ -440,7 +445,7 @@ export function StoryWorkspace(): JSX.Element {
     setProgressLabel('Đang chuẩn bị viết tiếp...');
     try {
       const story = await fetchStory(id);
-      applyStoryDetail(story, 'Đã nạp bản thảo từng phần');
+      applyStoryDetail(story, 'Đã nạp bản thảo dang dở');
       const response = await httpFetch(`/stories/${encodeURIComponent(id)}/resume`, { method: 'POST' });
       if (!response.ok) throw new Error(await readError(response));
       const data = (await response.json()) as { storyId?: string };
@@ -474,7 +479,7 @@ export function StoryWorkspace(): JSX.Element {
       await loadSavedStories();
       if (storyId === id) {
         setStoryId(null);
-        setStoryTitle('Drama chưa đặt tên');
+        setStoryTitle('Truyện chưa đặt tên');
         setResult(EMPTY_RESULT);
         setPhase('idle');
       }
@@ -530,14 +535,14 @@ export function StoryWorkspace(): JSX.Element {
     <main className="workspace-shell">
       <header className="workspace-header">
         <div className="studio-title-block">
-          <div className="studio-kicker"><span>Drama15 Lite Studio</span><i>Không gian sáng tác</i></div>
-          <h1>Studio dựng drama ngắn</h1>
-          <p>Điều phối mầm truyện, hồ sơ nhân vật, dàn ý, quan hệ nhân vật và bản thảo chương trong một luồng sáng tác tập trung.</p>
+          <div className="studio-kicker"><span>NovelKit Studio</span><i>Bản thảo 10 chương</i></div>
+          <h1>Xưởng viết tiểu thuyết ngắn</h1>
+          <p>Ươm ý tưởng, dựng nhân vật, lập dàn ý và viết từng chương trong một không gian gọn gàng cho người viết truyện.</p>
           <div className="studio-meta" aria-label="Quy trình sáng tác">
-            <span>Mầm truyện</span>
-            <span>Hồ sơ truyện</span>
+            <span>Ý tưởng</span>
+            <span>Nhân vật</span>
             <span>Dàn ý</span>
-            <span>Chương hoàn chỉnh</span>
+            <span>Bản thảo chương</span>
           </div>
         </div>
         <aside className="status-card">
@@ -557,8 +562,8 @@ export function StoryWorkspace(): JSX.Element {
               <span>{TIER_LABELS[user.tier]}</span>
             </div>
           </div>
-        ) : <p>Đăng nhập Google để gợi ý mầm truyện, viết bản thảo và quản lý danh sách truyện.</p>}
-        {quota && <div className={outOfQuota ? 'account-quota blocked' : 'account-quota'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bộ drama có thể sáng tác</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để tạo thêm drama.' : 'Mỗi bộ drama gồm mầm truyện, nhan đề, hồ sơ truyện, dàn ý, quan hệ nhân vật và toàn bộ chương.'}</span></div>}
+        ) : <p>Đăng nhập Google để gợi ý mầm truyện, viết bản thảo và giữ lại tủ truyện của bạn.</p>}
+        {quota && <div className={outOfQuota ? 'account-quota blocked' : 'account-quota'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bản thảo truyện có thể viết</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để viết thêm bản thảo.' : 'Mỗi bản thảo gồm ý tưởng, nhân vật, dàn ý, quan hệ và toàn bộ chương.'}</span></div>}
         <div className="account-actions">
           {user ? <button type="button" className="secondary-button" onClick={() => void signOut()}>Đăng xuất</button> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>Đăng nhập bằng Google</button>}
         </div>
@@ -568,36 +573,45 @@ export function StoryWorkspace(): JSX.Element {
 
       <section className="workspace-grid">
         <aside className="setup-panel">
-          <PanelHeading label="Thiết lập" value="Sáng tác" />
-          <label>Chủ đề<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          {config.niche === 'custom' && <label>Nhánh tùy biến<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị coi thường" /></label>}
-          <label>Gợi ý nhan đề<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
-          <label>Mầm truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Cảnh mở đầu, bí mật, vật chứng, mối quan hệ..." rows={6} /></label>
-          <label>Phong cách<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
-          <label>Ngôn ngữ đầu ra<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <Range label="Cường độ" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
-          <Range label="Đối thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
-          <Range label="Móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Sáng tác drama</button></div>
+          <PanelHeading label="Khởi tạo" value="Cốt truyện" />
+          <label>Dòng truyện<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          {config.niche === 'custom' && <label>Nhánh riêng<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị xem thường" /></label>}
+          <label>Nhan đề dự kiến<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
+          <label>Mầm truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Một cảnh mở đầu, bí mật, vật chứng, mối quan hệ hoặc cảm xúc bạn muốn giữ..." rows={6} /></label>
+          <label>Giọng kể<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
+          <label>Ngôn ngữ bản thảo<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <Range label="Cường độ cảm xúc" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
+          <Range label="Tỷ lệ thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
+          <Range label="Mật độ móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
+          {setupSuggestionQuota && <p className={outOfSetupSuggestionQuota ? 'suggestion-quota blocked' : 'suggestion-quota'}>{outOfSetupSuggestionQuota ? `Đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay.` : `Còn ${setupSuggestionQuota.remaining}/${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay.`}</p>}
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
         </aside>
 
         <section className="story-panel">
-          <div className="story-toolbar"><div><p className="eyebrow">Bản thảo</p><h2>{storyTitle}</h2></div><button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải Markdown</button></div>
-          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương truyện</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Tổng quan</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ truyện</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ nhân vật</button></nav>
+          <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div>
+          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
           {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} />}
-          {panel === 'overview' && <TextPanel title="Ý tưởng truyện" content={result.concept} />}
+          {panel === 'overview' && <TextPanel title="Mầm truyện" content={result.concept} />}
           {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} />}
           {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={result.bible ? JSON.stringify(result.bible, null, 2) : ''} />}
           {panel === 'relationships' && <RelationshipGraphPanel graph={result.relationshipGraph} />}
 
-          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Viết lại" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị coi thường." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
+          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Chỉnh chương" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị xem thường ở đoạn cao trào." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
         </section>
 
         <aside className="saved-panel">
           <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onResume={resumeStory} onRename={renameStory} onDelete={deleteStory} />
         </aside>
       </section>
+      <footer className="workspace-footer">
+        <nav aria-label="Liên kết NovelKit">
+          <a href="https://novelkit.cc">novelkit.cc</a>
+          <a href="https://meowsolo.com">meowsolo.com</a>
+          <a href="https://beta.novelkit.cc">beta.novelkit.cc</a>
+        </nav>
+        <span>Made NovelKit.Cc with ❤️ by Dũng Nguyễn</span>
+      </footer>
     </main>
   );
 }
@@ -634,21 +648,21 @@ function LoadingAnimation({ active }: { active: boolean }) {
 }
 
 function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onResume: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {
-  return <section className="saved-stories"><PanelHeading label="Truyện của tôi" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Làm mới danh sách</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem danh sách truyện đã tạo.</div> : stories.length === 0 ? <div className="empty-state compact">Chưa có truyện nào trong tài khoản này.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
+  return <section className="saved-stories"><PanelHeading label="Tủ truyện" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Nạp lại tủ truyện</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem các bản thảo đã lưu.</div> : stories.length === 0 ? <div className="empty-state compact">Tủ truyện đang trống. Viết bản thảo đầu tiên để lưu tại đây.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
 }
 
 function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void }) {
-  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết truyện” để bản thảo hiện ở đây.</div>}</article></div>;
+  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết bản thảo” để bắt đầu.</div>}</article></div>;
 }
 
 function TextPanel({ title, content }: { title: string; content: string }) {
-  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : <div className="empty-state">Đang chờ dữ liệu từ phiên viết truyện.</div>}</article>;
+  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : <div className="empty-state">Nội dung sẽ hiện ở đây khi phiên viết bắt đầu.</div>}</article>;
 }
 
 function RelationshipGraphPanel({ graph }: { graph?: RelationshipGraphView }) {
   const graphPreview = createRelationshipGraphPreview(graph);
   if (!graphPreview || graphPreview.nodes.length === 0) {
-    return <article className="text-panel"><h3>Quan hệ nhân vật</h3><div className="empty-state">Chưa có dữ liệu quan hệ nhân vật.</div></article>;
+    return <article className="text-panel"><h3>Quan hệ nhân vật</h3><div className="empty-state">Quan hệ nhân vật sẽ hiện sau khi hệ thống dựng hồ sơ truyện.</div></article>;
   }
 
   const positions = graphPreview.nodes.map((node, index) => {
@@ -692,7 +706,7 @@ function resultFromPayload(payload: StoryPayload): StoryResult {
 }
 
 function buildMarkdown(title: string, result: StoryResult) {
-  const parts = [`# ${title || 'Truyện Drama15'}`];
+  const parts = [`# ${title || 'Truyện chưa đặt tên'}`];
   if (result.concept) parts.push('## Ý tưởng', result.concept);
   if (result.plan) parts.push('## Dàn ý', result.plan);
   for (const chapter of result.chapters) parts.push(`## Chương ${chapter.index}: ${chapter.title || ''}`.trim(), chapter.content.trim());
@@ -700,7 +714,7 @@ function buildMarkdown(title: string, result: StoryResult) {
 }
 
 function slugify(value: string) {
-  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'drama15-story';
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'novelkit-story';
 }
 
 async function readError(response: Response) {

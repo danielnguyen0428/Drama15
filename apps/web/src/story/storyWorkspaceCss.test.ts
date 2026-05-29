@@ -20,3 +20,8 @@ test('chapter list renders as a horizontal strip above chapter content', () => {
   assert.doesNotMatch(css, /\.chapter-layout\s*\{[^}]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/);
   assert.match(css, /\.chapter-list\s*\{[^}]*display:\s*flex;[^}]*overflow-x:\s*auto;/);
 });
+
+test('workspace footer is separated by a quiet top line', () => {
+  assert.match(css, /\.workspace-footer\s*\{[^}]*border-top:\s*1px\s+solid\s+#f2f2f2;/);
+  assert.doesNotMatch(css, /\.workspace-footer\s*\{[^}]*background\s*:/);
+});

@@ -9,7 +9,15 @@ import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
 import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
-import { consumeStoryQuota, getQuotaSnapshot, getSupabaseAdmin, isAdminRequest, requireUser } from './supabaseServer.js';
+import {
+  consumeSetupSuggestionQuota,
+  consumeStoryQuota,
+  getQuotaSnapshot,
+  getSetupSuggestionQuotaSnapshot,
+  getSupabaseAdmin,
+  isAdminRequest,
+  requireUser,
+} from './supabaseServer.js';
 import { StoryStore } from './storyStore.js';
 import type {
   Chapter,
@@ -152,7 +160,8 @@ app.get('/auth/me', async (request, reply) => {
 
   try {
     const quota = await getQuotaSnapshot(user);
-    return reply.send({ user, quota });
+    const setupSuggestionQuota = await getSetupSuggestionQuotaSnapshot(user);
+    return reply.send({ user, quota, setupSuggestionQuota });
   } catch (error) {
     return sendError(reply, error);
   }
@@ -164,6 +173,17 @@ app.post('/story/setup-suggest', async (request, reply) => {
 
   try {
     const config = StoryConfigSchema.parse(request.body);
+    const setupSuggestionQuota = await consumeSetupSuggestionQuota(user);
+    if (setupSuggestionQuota && !setupSuggestionQuota.allowed) {
+      return reply.code(429).send({
+        error: {
+          code: 'setup_suggestion_quota_exceeded',
+          message: `Bạn đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay. Hãy viết tiếp từ mầm truyện hiện có hoặc quay lại vào ngày mai.`,
+        },
+        setupSuggestionQuota,
+      });
+    }
+
     const suggestionRequest = normalizeOutlineRequest(config);
     const result = await orchestrator.generateSettingSeed(suggestionRequest);
 
@@ -173,6 +193,7 @@ app.post('/story/setup-suggest', async (request, reply) => {
       linePreset: result.seedPackage.linePreset,
       storyControls: result.seedPackage.storyControls,
       draftControls: result.seedPackage.draftControls,
+      ...(setupSuggestionQuota ? { setupSuggestionQuota } : {}),
     });
   } catch (error) {
     return sendError(reply, error);
@@ -203,7 +224,7 @@ app.post('/stories', async (request, reply) => {
       return reply.code(429).send({
         error: {
           code: 'quota_exceeded',
-          message: `Bạn đã dùng hết ${quota.limit} bộ drama hôm nay. Nâng cấp Pro hoặc Premium để có thêm bộ drama có thể sáng tác.`,
+          message: `Bạn đã dùng hết ${quota.limit} bản thảo truyện hôm nay. Nâng cấp Pro hoặc Premium để viết thêm bản thảo.`,
         },
         quota,
       });
@@ -223,7 +244,7 @@ app.post('/stories', async (request, reply) => {
     await getStoryStore().createQueuedStory({
       id,
       user,
-      title: config.title || 'Drama chưa đặt tên',
+      title: config.title || 'Truyện chưa đặt tên',
       config,
       request: storyRequest,
     });

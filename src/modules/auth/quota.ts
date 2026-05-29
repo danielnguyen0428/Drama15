@@ -6,8 +6,14 @@ export const STORY_QUOTA_BY_TIER: Record<UserTier, number> = {
   premium: 5,
 };
 
+export const FREE_SETUP_SUGGESTION_QUOTA = 10;
+
 export function resolveStoryQuotaLimit(tier: string | undefined): number {
   return STORY_QUOTA_BY_TIER[parseUserTier(tier)];
+}
+
+export function resolveSetupSuggestionQuotaLimit(tier: string | undefined): number | null {
+  return parseUserTier(tier) === "free" ? FREE_SETUP_SUGGESTION_QUOTA : null;
 }
 
 export function parseUserTier(value: string | undefined): UserTier {

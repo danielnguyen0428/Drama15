@@ -2,7 +2,13 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { env } from '../../../src/lib/env.js';
-import { getVietnamUsageDate, parseUserTier, resolveStoryQuotaLimit, type UserTier } from '../../../src/modules/auth/quota.js';
+import {
+  getVietnamUsageDate,
+  parseUserTier,
+  resolveSetupSuggestionQuotaLimit,
+  resolveStoryQuotaLimit,
+  type UserTier,
+} from '../../../src/modules/auth/quota.js';
 
 export type AuthenticatedUser = {
   id: string;
@@ -104,6 +110,25 @@ export async function getQuotaSnapshot(user: AuthenticatedUser): Promise<QuotaSn
   return { usageDate, used, limit, remaining: Math.max(limit - used, 0) };
 }
 
+export async function getSetupSuggestionQuotaSnapshot(user: AuthenticatedUser): Promise<QuotaSnapshot | null> {
+  const limit = resolveSetupSuggestionQuotaLimit(user.tier);
+  if (limit === null) return null;
+
+  const supabase = getSupabaseAdmin();
+  const usageDate = getVietnamUsageDate();
+  const { data, error } = await supabase
+    .from('setup_suggestion_usage_days')
+    .select('suggested_count')
+    .eq('user_id', user.id)
+    .eq('usage_date', usageDate)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const used = Number(data?.suggested_count ?? 0);
+  return { usageDate, used, limit, remaining: Math.max(limit - used, 0) };
+}
+
 export async function consumeStoryQuota(user: AuthenticatedUser): Promise<QuotaSnapshot & { allowed: boolean }> {
   const supabase = getSupabaseAdmin();
   const usageDate = getVietnamUsageDate();
@@ -118,6 +143,26 @@ export async function consumeStoryQuota(user: AuthenticatedUser): Promise<QuotaS
 
   const row = Array.isArray(data) ? data[0] : data;
   const used = Number(row?.created_count ?? 0);
+  const allowed = Boolean(row?.allowed);
+  return { usageDate, used, limit, remaining: Math.max(limit - used, 0), allowed };
+}
+
+export async function consumeSetupSuggestionQuota(user: AuthenticatedUser): Promise<(QuotaSnapshot & { allowed: boolean }) | null> {
+  const limit = resolveSetupSuggestionQuotaLimit(user.tier);
+  if (limit === null) return null;
+
+  const supabase = getSupabaseAdmin();
+  const usageDate = getVietnamUsageDate();
+  const { data, error } = await supabase.rpc('consume_setup_suggestion_quota', {
+    p_user_id: user.id,
+    p_usage_date: usageDate,
+    p_quota_limit: limit,
+  });
+
+  if (error) throw error;
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const used = Number(row?.suggested_count ?? 0);
   const allowed = Boolean(row?.allowed);
   return { usageDate, used, limit, remaining: Math.max(limit - used, 0), allowed };
 }

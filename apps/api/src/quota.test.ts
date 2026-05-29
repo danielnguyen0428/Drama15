@@ -1,13 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getVietnamUsageDate, resolveStoryQuotaLimit } from '../../../src/modules/auth/quota.js';
+import { getVietnamUsageDate, resolveSetupSuggestionQuotaLimit, resolveStoryQuotaLimit } from '../../../src/modules/auth/quota.js';
 
 test('story quota limits follow user tier', () => {
   assert.equal(resolveStoryQuotaLimit('free'), 1);
   assert.equal(resolveStoryQuotaLimit('pro'), 3);
   assert.equal(resolveStoryQuotaLimit('premium'), 5);
   assert.equal(resolveStoryQuotaLimit(undefined), 1);
+});
+
+test('setup suggestion quota only limits free users', () => {
+  assert.equal(resolveSetupSuggestionQuotaLimit('free'), 10);
+  assert.equal(resolveSetupSuggestionQuotaLimit(undefined), 10);
+  assert.equal(resolveSetupSuggestionQuotaLimit('pro'), null);
+  assert.equal(resolveSetupSuggestionQuotaLimit('premium'), null);
 });
 
 test('usage date resets by Vietnam calendar day', () => {

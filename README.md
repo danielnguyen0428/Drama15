@@ -24,7 +24,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 The API service must set `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `HOST=0.0.0.0`, `CORS_ORIGINS=https://drama.novelkit.cc`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `ADMIN_API_KEY`.
 
-Run the Supabase migration in `supabase/migrations/202605280001_auth_quota_stories.sql` before enabling production login. The migration creates profile, story, quota tables, RLS policies, and the atomic `consume_story_quota` RPC.
+Run the Supabase migrations in `supabase/migrations/` before enabling production login. They create profile, story, quota tables, RLS policies, and the atomic quota RPCs.
 
 ## Requirements
 

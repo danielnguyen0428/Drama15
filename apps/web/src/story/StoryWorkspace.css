@@ -289,6 +289,13 @@ input::placeholder, textarea::placeholder { color: #9aa5b2; }
 
 .setup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 4px; }
 .setup-actions button { min-height: 48px; padding: 0 14px; }
+.suggestion-quota {
+  margin: -2px 0 0;
+  color: var(--teal-dark);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.suggestion-quota.blocked { color: #9c2f20; }
 .primary-button,
 .secondary-button,
 .story-toolbar button,
@@ -406,6 +413,23 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   padding: 16px;
 }
 
+.workspace-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 20px;
+  max-width: 1600px;
+  margin: 24px auto 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #f2f2f2;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.workspace-footer nav { display: flex; flex-wrap: wrap; gap: 12px; }
+.workspace-footer a { color: inherit; text-decoration: none; }
+.workspace-footer a:hover { color: var(--ink); }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -440,4 +464,5 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .range-row { grid-template-columns: minmax(0, 1fr) auto; }
   .story-toolbar { align-items: flex-start; flex-direction: column; }
   .story-toolbar button { width: 100%; }
+  .workspace-footer { flex-direction: column; }
 }
