@@ -9,7 +9,9 @@ test('quota copy describes daily draft creation and setup suggestions in novel l
   const quotaCopy = `${API_SOURCE}\n${WEB_SOURCE}`;
 
   assert.match(quotaCopy, /bản thảo truyện có thể viết/i);
-  assert.match(quotaCopy, /lượt gợi ý mầm truyện hôm nay/i);
+  assert.match(quotaCopy, /lượt gợi ý kịch bản hôm nay/i);
+  assert.doesNotMatch(quotaCopy, /Gợi ý mầm truyện/i);
+  assert.doesNotMatch(quotaCopy, /lượt gợi ý mầm truyện/i);
   assert.doesNotMatch(quotaCopy, /bộ drama/i);
   assert.doesNotMatch(quotaCopy, /lượt viết truyện/i);
 });

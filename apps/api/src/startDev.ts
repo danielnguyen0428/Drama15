@@ -178,7 +178,7 @@ app.post('/story/setup-suggest', async (request, reply) => {
       return reply.code(429).send({
         error: {
           code: 'setup_suggestion_quota_exceeded',
-          message: `Bạn đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay. Hãy viết tiếp từ mầm truyện hiện có hoặc quay lại vào ngày mai.`,
+          message: `Bạn đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay. Hãy viết tiếp từ ý tưởng hiện có hoặc quay lại vào ngày mai.`,
         },
         setupSuggestionQuota,
       });

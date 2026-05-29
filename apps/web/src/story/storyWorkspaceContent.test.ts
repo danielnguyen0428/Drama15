@@ -13,3 +13,10 @@ test('workspace footer links to NovelKit properties and credits the maker', () =
   assert.match(source, /href="https:\/\/beta\.novelkit\.cc"/);
   assert.match(source, /Made NovelKit\.Cc with ❤️ by Dũng Nguyễn/);
 });
+
+test('setup suggestion CTA uses script wording and shows the free daily quota fallback', () => {
+  assert.match(source, />Gợi ý kịch bản</);
+  assert.match(source, /10 lượt gợi ý kịch bản\/ngày/);
+  assert.doesNotMatch(source, /Gợi ý mầm truyện/);
+  assert.doesNotMatch(source, /lượt gợi ý mầm truyện/);
+});

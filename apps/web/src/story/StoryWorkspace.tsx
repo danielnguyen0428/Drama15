@@ -78,6 +78,7 @@ type StreamEvent = {
 };
 
 const API_BASE = getApiBaseUrl();
+const FREE_SETUP_SUGGESTION_QUOTA_COPY = 'Free: 10 lượt gợi ý kịch bản/ngày.';
 const EMPTY_RESULT: StoryResult = { concept: '', plan: '', chapters: [] };
 const DEFAULT_CONFIG: StoryConfig = {
   niche: 'billionaire_rich_poor_romance',
@@ -185,6 +186,11 @@ export function StoryWorkspace(): JSX.Element {
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
+  const setupSuggestionQuotaCopy = setupSuggestionQuota
+    ? outOfSetupSuggestionQuota
+      ? `Đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay.`
+      : `Còn ${setupSuggestionQuota.remaining}/${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay.`
+    : FREE_SETUP_SUGGESTION_QUOTA_COPY;
 
   useEffect(() => {
     let cancelled = false;
@@ -562,7 +568,7 @@ export function StoryWorkspace(): JSX.Element {
               <span>{TIER_LABELS[user.tier]}</span>
             </div>
           </div>
-        ) : <p>Đăng nhập Google để gợi ý mầm truyện, viết bản thảo và giữ lại tủ truyện của bạn.</p>}
+        ) : <p>Đăng nhập Google để gợi ý kịch bản, viết bản thảo và giữ lại tủ truyện của bạn.</p>}
         {quota && <div className={outOfQuota ? 'account-quota blocked' : 'account-quota'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bản thảo truyện có thể viết</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để viết thêm bản thảo.' : 'Mỗi bản thảo gồm ý tưởng, nhân vật, dàn ý, quan hệ và toàn bộ chương.'}</span></div>}
         <div className="account-actions">
           {user ? <button type="button" className="secondary-button" onClick={() => void signOut()}>Đăng xuất</button> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>Đăng nhập bằng Google</button>}
@@ -583,8 +589,8 @@ export function StoryWorkspace(): JSX.Element {
           <Range label="Cường độ cảm xúc" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
           <Range label="Tỷ lệ thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label="Mật độ móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          {setupSuggestionQuota && <p className={outOfSetupSuggestionQuota ? 'suggestion-quota blocked' : 'suggestion-quota'}>{outOfSetupSuggestionQuota ? `Đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay.` : `Còn ${setupSuggestionQuota.remaining}/${setupSuggestionQuota.limit} lượt gợi ý mầm truyện hôm nay.`}</p>}
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
+          <p className={outOfSetupSuggestionQuota ? 'suggestion-quota blocked' : 'suggestion-quota'}>{setupSuggestionQuotaCopy}</p>
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý kịch bản</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
         </aside>
 
         <section className="story-panel">
