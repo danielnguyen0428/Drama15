@@ -494,10 +494,16 @@ export function StoryWorkspace(): JSX.Element {
   return (
     <main className="workspace-shell">
       <header className="workspace-header">
-        <div>
-          <p className="eyebrow">Drama15 Lite Studio</p>
-          <h1>Không gian sáng tác drama ngắn</h1>
-          <p>Dựng ý tưởng, nhân vật, dàn ý, chương truyện và bản viết lại trong một không gian sáng tác tập trung.</p>
+        <div className="studio-title-block">
+          <div className="studio-kicker"><span>Drama15 Lite Studio</span><i>Không gian sáng tác</i></div>
+          <h1>Studio dựng drama ngắn</h1>
+          <p>Điều phối mầm truyện, hồ sơ nhân vật, dàn ý, quan hệ nhân vật và bản thảo chương trong một luồng sáng tác tập trung.</p>
+          <div className="studio-meta" aria-label="Quy trình sáng tác">
+            <span>Mầm truyện</span>
+            <span>Hồ sơ truyện</span>
+            <span>Dàn ý</span>
+            <span>Chương hoàn chỉnh</span>
+          </div>
         </div>
         <aside className="status-card">
           <span>{PHASE_LABELS[phase]}</span>
@@ -514,10 +520,11 @@ export function StoryWorkspace(): JSX.Element {
             {user.avatarUrl && <img src={user.avatarUrl} alt="Ảnh đại diện" />}
             <div>
               <strong>{user.displayName || user.email}</strong>
-              <span>{TIER_LABELS[user.tier]} · Hôm nay còn {quota?.remaining ?? 0}/{quota?.limit ?? 1} bộ drama có thể sáng tác</span>
+              <span>{TIER_LABELS[user.tier]}</span>
             </div>
           </div>
         ) : <p>Đăng nhập Google để gợi ý mầm truyện, viết bản thảo và quản lý danh sách truyện.</p>}
+        {quota && <div className={outOfQuota ? 'account-quota blocked' : 'account-quota'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bộ drama có thể sáng tác</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để tạo thêm drama.' : 'Mỗi bộ drama gồm mầm truyện, nhan đề, hồ sơ truyện, dàn ý, quan hệ nhân vật và toàn bộ chương.'}</span></div>}
         <div className="account-actions">
           {user ? <button type="button" className="secondary-button" onClick={() => void signOut()}>Đăng xuất</button> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>Đăng nhập bằng Google</button>}
         </div>
@@ -528,7 +535,6 @@ export function StoryWorkspace(): JSX.Element {
       <section className="workspace-grid">
         <aside className="setup-panel">
           <PanelHeading label="Thiết lập" value="Sáng tác" />
-          {quota && <div className={outOfQuota ? 'quota-card blocked' : 'quota-card'}><strong>Hôm nay còn {quota.remaining}/{quota.limit} bộ drama có thể sáng tác</strong><span>{outOfQuota ? 'Nâng cấp Pro hoặc Premium để tạo thêm drama.' : 'Mỗi bộ drama gồm mầm truyện, nhan đề, hồ sơ truyện, dàn ý, quan hệ nhân vật và toàn bộ chương.'}</span></div>}
           <label>Chủ đề<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Nhánh tùy biến<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị coi thường" /></label>}
           <label>Gợi ý nhan đề<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
