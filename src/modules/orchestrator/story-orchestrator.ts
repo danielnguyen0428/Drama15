@@ -532,10 +532,6 @@ export class StoryOrchestrator {
     const storyPayload = validateStoryPayload(storyPayloadInput);
     const remainingChapterPlan = getRemainingChapterPlanItems(storyPayload);
 
-    if (storyPayload.chapters.length === 0) {
-      throw new AppError("VALIDATION_ERROR", "Story payload does not contain any drafted chapters to resume from.", 400);
-    }
-
     if (remainingChapterPlan.length === 0) {
       return storyPayload;
     }

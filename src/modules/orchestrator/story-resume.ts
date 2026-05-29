@@ -8,5 +8,5 @@ export function getRemainingChapterPlanItems(storyPayload: Pick<StoryPayload, "c
 }
 
 export function hasResumableStoryPayload(storyPayload: Pick<StoryPayload, "chapterPlan" | "chapters">) {
-  return storyPayload.chapters.length > 0 && getRemainingChapterPlanItems(storyPayload).length > 0;
+  return getRemainingChapterPlanItems(storyPayload).length > 0;
 }

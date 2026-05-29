@@ -5,6 +5,7 @@ import lottie from 'lottie-web/build/player/lottie_light';
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
+import { canResumeStory, normalizeRelationshipGraph, type RelationshipGraphView } from './storyViewModel';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -34,10 +35,7 @@ type StoryControls = {
 
 type StylePreset = { id: string; displayName: string; description: string };
 type Chapter = { index: number; title?: string; content: string };
-type RelationshipNode = { id: string; name: string; role: string; description: string };
-type RelationshipEdge = { source: string; target: string; label: string; type: string; chapterNumber?: number; confidence: 'explicit' | 'inferred' };
-type RelationshipGraph = { nodes: RelationshipNode[]; edges: RelationshipEdge[]; updatedAt: string };
-type StoryResult = { concept: string; plan: string; bible?: unknown; relationshipGraph?: RelationshipGraph; chapters: Chapter[] };
+type StoryResult = { concept: string; plan: string; bible?: unknown; relationshipGraph?: RelationshipGraphView; chapters: Chapter[] };
 type AppUser = { id: string; email: string; displayName: string; avatarUrl?: string; tier: 'free' | 'pro' | 'premium' };
 type Quota = { usageDate: string; used: number; limit: number; remaining: number };
 type SavedStory = {
@@ -48,11 +46,12 @@ type SavedStory = {
   updatedAt: string;
   completedAt?: string;
   chapterCount: number;
+  canResume?: boolean;
   error?: string;
 };
 type StoryDetail = SavedStory & {
   storyPayload?: StoryPayload;
-  relationshipGraph?: RelationshipGraph;
+  relationshipGraph?: unknown;
 };
 type StoryPayload = {
   title: string;
@@ -60,7 +59,7 @@ type StoryPayload = {
   storyBible: unknown;
   chapterPlan: Array<{ chapterNumber: number; title: string; mainBeat: string; hook: string; endingBeat: string }>;
   chapters: Array<{ chapterNumber: number; title?: string; text: string }>;
-  relationshipGraph?: RelationshipGraph;
+  relationshipGraph?: unknown;
 };
 
 type StreamEvent = {
@@ -68,7 +67,7 @@ type StreamEvent = {
   title?: string;
   concept?: string;
   bible?: unknown;
-  relationshipGraph?: RelationshipGraph;
+  relationshipGraph?: unknown;
   plan?: string;
   chapter?: Chapter;
   label?: string;
@@ -371,7 +370,7 @@ export function StoryWorkspace(): JSX.Element {
 
     setStoryId(story.id);
     setStoryTitle(story.storyPayload?.title || story.title);
-    setResult(story.storyPayload ? resultFromPayload(story.storyPayload) : { ...EMPTY_RESULT, relationshipGraph: story.relationshipGraph });
+    setResult(story.storyPayload ? resultFromPayload(story.storyPayload) : { ...EMPTY_RESULT, relationshipGraph: normalizeRelationshipGraph(story.relationshipGraph) });
     setActiveChapter(story.storyPayload?.chapters[0]?.chapterNumber ?? 1);
     setPanel('chapters');
     setPhase(completed ? 'completed' : story.status === 'failed' ? 'failed' : 'idle');
@@ -396,7 +395,7 @@ export function StoryWorkspace(): JSX.Element {
       return;
     }
     if (payload.stage === 'relationshipGraph') {
-      setResult((current) => ({ ...current, relationshipGraph: payload.relationshipGraph ?? current.relationshipGraph }));
+      setResult((current) => ({ ...current, relationshipGraph: normalizeRelationshipGraph(payload.relationshipGraph) ?? current.relationshipGraph }));
       return;
     }
     if (payload.stage === 'plan') {
@@ -496,11 +495,11 @@ export function StoryWorkspace(): JSX.Element {
         instruction: rewriteInstruction,
       }));
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { chapter: Chapter; storyPayload?: StoryPayload; relationshipGraph?: RelationshipGraph };
+      const data = (await response.json()) as { chapter: Chapter; storyPayload?: StoryPayload; relationshipGraph?: unknown };
       setResult((current) => ({
         ...current,
         chapters: upsertChapter(current.chapters, data.chapter),
-        relationshipGraph: data.relationshipGraph ?? data.storyPayload?.relationshipGraph ?? current.relationshipGraph,
+        relationshipGraph: normalizeRelationshipGraph(data.relationshipGraph ?? data.storyPayload?.relationshipGraph) ?? current.relationshipGraph,
       }));
       setRewriteInstruction('');
       await loadSavedStories();
@@ -637,10 +636,6 @@ function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRen
   return <section className="saved-stories"><PanelHeading label="Truyện của tôi" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Làm mới danh sách</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem danh sách truyện đã tạo.</div> : stories.length === 0 ? <div className="empty-state compact">Chưa có truyện nào trong tài khoản này.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
 }
 
-function canResumeStory(story: SavedStory) {
-  return story.status !== 'completed' && story.chapterCount > 0 && story.chapterCount < 10;
-}
-
 function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void }) {
   return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết truyện” để bản thảo hiện ở đây.</div>}</article></div>;
 }
@@ -649,18 +644,19 @@ function TextPanel({ title, content }: { title: string; content: string }) {
   return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : <div className="empty-state">Đang chờ dữ liệu từ phiên viết truyện.</div>}</article>;
 }
 
-function RelationshipGraphPanel({ graph }: { graph?: RelationshipGraph }) {
-  if (!graph || graph.nodes.length === 0) {
+function RelationshipGraphPanel({ graph }: { graph?: RelationshipGraphView }) {
+  const normalizedGraph = normalizeRelationshipGraph(graph);
+  if (!normalizedGraph || normalizedGraph.nodes.length === 0) {
     return <article className="text-panel"><h3>Quan hệ nhân vật</h3><div className="empty-state">Chưa có dữ liệu quan hệ nhân vật.</div></article>;
   }
 
-  const positions = graph.nodes.map((node, index) => {
-    const angle = (Math.PI * 2 * index) / Math.max(graph.nodes.length, 1) - Math.PI / 2;
+  const positions = normalizedGraph.nodes.map((node, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(normalizedGraph.nodes.length, 1) - Math.PI / 2;
     return { node, x: 260 + Math.cos(angle) * 190, y: 210 + Math.sin(angle) * 145 };
   });
   const byId = new Map(positions.map((item) => [item.node.id, item]));
 
-  return <article className="relationship-panel"><h3>Quan hệ nhân vật</h3><div className="relationship-canvas"><svg viewBox="0 0 520 420" role="img" aria-label="Sơ đồ quan hệ nhân vật">{graph.edges.map((edge, index) => { const source = byId.get(edge.source); const target = byId.get(edge.target); if (!source || !target) return null; const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2; return <g key={`${edge.source}-${edge.target}-${index}`}><line x1={source.x} y1={source.y} x2={target.x} y2={target.y} /><text x={midX} y={midY}>{edge.chapterNumber ? `Ch.${edge.chapterNumber}` : edge.type}</text></g>; })}{positions.map(({ node, x, y }) => <g key={node.id} className="relationship-node"><circle cx={x} cy={y} r="46" /><text x={x} y={y - 4}>{node.name}</text><text x={x} y={y + 14}>{node.role}</text></g>)}</svg></div><div className="relationship-list">{graph.edges.map((edge, index) => { const source = byId.get(edge.source)?.node.name ?? edge.source; const target = byId.get(edge.target)?.node.name ?? edge.target; return <p key={index}><strong>{source} → {target}</strong><span>{edge.label}</span></p>; })}</div></article>;
+  return <article className="relationship-panel"><h3>Quan hệ nhân vật</h3><div className="relationship-canvas"><svg viewBox="0 0 520 420" role="img" aria-label="Sơ đồ quan hệ nhân vật">{normalizedGraph.edges.map((edge, index) => { const source = byId.get(edge.source); const target = byId.get(edge.target); if (!source || !target) return null; const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2; return <g key={`${edge.source}-${edge.target}-${index}`}><line x1={source.x} y1={source.y} x2={target.x} y2={target.y} /><text x={midX} y={midY}>{edge.chapterNumber ? `Ch.${edge.chapterNumber}` : edge.type}</text></g>; })}{positions.map(({ node, x, y }) => <g key={node.id} className="relationship-node"><circle cx={x} cy={y} r="46" /><text x={x} y={y - 4}>{node.name}</text><text x={x} y={y + 14}>{node.role}</text></g>)}</svg></div><div className="relationship-list">{normalizedGraph.edges.map((edge, index) => { const source = byId.get(edge.source)?.node.name ?? edge.source; const target = byId.get(edge.target)?.node.name ?? edge.target; return <p key={index}><strong>{source} → {target}</strong><span>{edge.label}</span></p>; })}</div></article>;
 }
 
 function PanelHeading({ label, value }: { label: string; value: string }) {
@@ -688,7 +684,7 @@ function resultFromPayload(payload: StoryPayload): StoryResult {
     concept: [`Nhan đề: ${payload.title}`, `Tóm tắt một câu: ${payload.concept.logline}`, `Lời hứa thể loại: ${payload.concept.promise}`, `Xung đột: ${payload.concept.conflictEngine}`].join('\n'),
     plan: payload.chapterPlan.map((chapter) => [`${chapter.chapterNumber}. ${chapter.title}`, `Nhịp chính: ${chapter.mainBeat}`, `Móc câu: ${chapter.hook}`, `Kết chương: ${chapter.endingBeat}`].join('\n')).join('\n\n'),
     bible: payload.storyBible,
-    relationshipGraph: payload.relationshipGraph,
+    relationshipGraph: normalizeRelationshipGraph(payload.relationshipGraph),
     chapters: payload.chapters.map((chapter) => ({ index: chapter.chapterNumber, title: chapter.title, content: chapter.text })),
   };
 }

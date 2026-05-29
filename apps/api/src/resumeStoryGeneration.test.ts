@@ -10,6 +10,7 @@ import {
 import type { StoryPayload } from '../../../src/types/story.js';
 
 const apiSourcePath = fileURLToPath(new URL('./startDev.ts', import.meta.url));
+const storyStoreSourcePath = fileURLToPath(new URL('./storyStore.ts', import.meta.url));
 
 function makeStoryPayload(chapterNumbers: number[]): StoryPayload {
   return {
@@ -46,9 +47,9 @@ test('resume has no remaining chapters when all planned chapters are saved', () 
   assert.deepEqual(getRemainingChapterPlanItems(payload), []);
 });
 
-test('partial payloads with saved chapters are resumable', () => {
+test('partial payloads with saved outline or saved chapters are resumable', () => {
   assert.equal(hasResumableStoryPayload(makeStoryPayload([1])), true);
-  assert.equal(hasResumableStoryPayload(makeStoryPayload([])), false);
+  assert.equal(hasResumableStoryPayload(makeStoryPayload([])), true);
   assert.equal(hasResumableStoryPayload(makeStoryPayload([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])), false);
 });
 
@@ -60,4 +61,11 @@ test('resume endpoint uses the orchestrator resume path without consuming quota'
   assert.match(resumeRoute[0], /resumePayload: story\.storyPayload/);
   assert.match(source, /orchestrator\.resumeFull\(job\.resumePayload/);
   assert.doesNotMatch(resumeRoute[0], /consumeStoryQuota\(/);
+});
+
+test('story summaries expose resumable partial payloads to the web client', async () => {
+  const source = await readFile(storyStoreSourcePath, 'utf8');
+
+  assert.match(source, /canResume\??: boolean/);
+  assert.match(source, /canResume:\s*Boolean\(payload\)\s*&&\s*hasResumableStoryPayload\(payload\)/);
 });

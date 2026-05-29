@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { hasResumableStoryPayload } from '../../../src/modules/orchestrator/story-resume.js';
 import type { RelationshipGraph, StoryPayload } from '../../../src/types/story.js';
 import type { AuthenticatedUser } from './supabaseServer.js';
 
@@ -13,6 +14,7 @@ export type StoredStorySummary = {
   updatedAt: string;
   completedAt?: string;
   chapterCount: number;
+  canResume?: boolean;
   error?: string;
 };
 
@@ -155,6 +157,7 @@ function toSummary(row: Record<string, unknown>): StoredStorySummary {
     updatedAt: String(row.updated_at),
     completedAt: typeof row.completed_at === 'string' ? row.completed_at : undefined,
     chapterCount: payload?.chapters?.length ?? 0,
+    canResume: Boolean(payload) && hasResumableStoryPayload(payload),
     error: typeof row.error === 'string' ? row.error : undefined,
   };
 }
