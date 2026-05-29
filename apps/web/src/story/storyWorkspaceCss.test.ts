@@ -15,3 +15,8 @@ test('story workspace avoids ultra-heavy font weights', () => {
   assert.doesNotMatch(css, /font-weight:\s*(?:8\d\d|9\d\d)\b/);
   assert.doesNotMatch(css, /wght@[^";]*(?:800|900)/);
 });
+
+test('chapter list renders as a horizontal strip above chapter content', () => {
+  assert.doesNotMatch(css, /\.chapter-layout\s*\{[^}]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/);
+  assert.match(css, /\.chapter-list\s*\{[^}]*display:\s*flex;[^}]*overflow-x:\s*auto;/);
+});

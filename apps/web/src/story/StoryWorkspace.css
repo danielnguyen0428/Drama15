@@ -322,9 +322,10 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .panel-tabs button { padding: 0 14px; background: #f6f8fb; color: #5d6b7a; border: 1px solid transparent; white-space: nowrap; }
 .panel-tabs button.active { background: var(--teal); color: #052e32; }
 
-.chapter-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
-.chapter-list { display: grid; gap: 8px; align-content: start; }
+.chapter-layout { display: grid; gap: 16px; }
+.chapter-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
 .chapter-list button {
+  flex: 0 0 154px;
   display: grid;
   grid-template-columns: 34px 1fr;
   gap: 10px;
@@ -335,6 +336,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   background: #f7f9fc;
   color: #4e5d6c;
   border: 1px solid transparent;
+  scroll-snap-align: start;
 }
 .chapter-list button.active { background: rgba(0, 196, 204, 0.14); color: var(--ink); outline: 1px solid rgba(0, 196, 204, 0.42); }
 .chapter-list span { color: var(--amber-dark); font-weight: 700; }
@@ -424,19 +426,16 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 @media (max-width: 980px) {
   .workspace-shell { padding: 14px; }
   .workspace-header,
-  .workspace-grid,
-  .chapter-layout { grid-template-columns: 1fr; }
+  .workspace-grid { grid-template-columns: 1fr; }
   .account-bar { grid-template-columns: 1fr; align-items: stretch; }
   .account-quota { padding-left: 0; padding-top: 12px; border-left: 0; border-top: 1px solid rgba(0, 196, 204, 0.28); }
   .account-actions button { width: 100%; }
   .setup-panel,
   .saved-panel { position: static; }
-  .chapter-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
   .setup-actions,
-  .chapter-list,
   .story-list { grid-template-columns: 1fr; }
   .range-row { grid-template-columns: minmax(0, 1fr) auto; }
   .story-toolbar { align-items: flex-start; flex-direction: column; }
