@@ -579,8 +579,6 @@ export function StoryWorkspace(): JSX.Element {
           <Range label="Đối thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label="Móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
           <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Sáng tác drama</button></div>
-
-          <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onResume={resumeStory} onRename={renameStory} onDelete={deleteStory} />
         </aside>
 
         <section className="story-panel">
@@ -595,6 +593,10 @@ export function StoryWorkspace(): JSX.Element {
 
           {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Viết lại" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị coi thường." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
         </section>
+
+        <aside className="saved-panel">
+          <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onResume={resumeStory} onRename={renameStory} onDelete={deleteStory} />
+        </aside>
       </section>
     </main>
   );
