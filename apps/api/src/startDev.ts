@@ -18,6 +18,7 @@ import type {
   RegenerateMode,
   StoryPayload,
 } from '../../../src/types/story.js';
+import { hasResumableStoryPayload } from '../../../src/modules/orchestrator/story-resume.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(dirname, '..', '..', '..');
@@ -52,7 +53,8 @@ type StoryJob = {
   id: string;
   userId: string;
   createdAt: string;
-  request: NormalizedFullGenerateRequest;
+  request?: NormalizedFullGenerateRequest;
+  resumePayload?: StoryPayload;
   events: StreamPayload[];
   clients: Set<(payload: StreamPayload) => void>;
   promise?: Promise<StoryPayload>;
@@ -249,6 +251,55 @@ app.get('/stories/:id', async (request, reply) => {
   }
 });
 
+app.post('/stories/:id/resume', async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return reply;
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const currentJob = jobs.get(id);
+    if (currentJob && currentJob.userId !== user.id) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    if (currentJob?.status === 'running' || currentJob?.status === 'queued') {
+      return reply.send({ storyId: id, status: currentJob.status });
+    }
+
+    const story = await getStoryStore().getStory(user, id);
+    if (!story) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    if (story.status === 'completed') {
+      return reply.code(409).send({ error: { code: 'story_completed', message: 'Truyện này đã hoàn tất.' } });
+    }
+    if (!story.storyPayload || !hasResumableStoryPayload(story.storyPayload)) {
+      return reply.code(409).send({
+        error: {
+          code: 'story_not_resumable',
+          message: 'Truyện này chưa có bản thảo từng phần để viết tiếp.',
+        },
+      });
+    }
+
+    const job: StoryJob = {
+      id,
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      resumePayload: story.storyPayload,
+      events: [],
+      clients: new Set(),
+      status: 'queued',
+    };
+    emitStoryPayload(job, story.storyPayload, { outline: false, chapters: new Set() });
+    jobs.set(id, job);
+    await getStoryStore().updateStatus(user.id, id, 'queued');
+
+    return reply.send({ storyId: id, status: job.status });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
 app.get('/stories/:id/stream', async (request, reply) => {
   const user = await requireUser(request, reply);
   if (!user) return reply;
@@ -385,12 +436,14 @@ async function runStoryJob(job: StoryJob) {
   job.status = 'running';
   await getStoryStore().updateStatus(job.userId, job.id, 'running');
   const sent = {
-    outline: false,
-    chapters: new Set<number>(),
+    outline: job.events.some((event) => event.stage === 'overview'),
+    chapters: new Set<number>(job.events
+      .filter((event) => event.stage === 'chapter' && event.chapter && typeof event.chapter === 'object')
+      .map((event) => (event.chapter as ClientChapter).index)),
   };
 
   try {
-    const storyPayload = await orchestrator.generateFull(job.request, {
+    const storyPayload = await runJobGeneration(job, {
       onProgress: (event) => {
         broadcast(job, {
           stage: 'progress',
@@ -437,6 +490,18 @@ async function runStoryJob(job: StoryJob) {
     broadcast(job, { stage: 'error', error: job.error });
     throw error;
   }
+}
+
+function runJobGeneration(job: StoryJob, progressOptions: Parameters<typeof orchestrator.generateFull>[1]) {
+  if (job.resumePayload) {
+    return orchestrator.resumeFull(job.resumePayload, progressOptions);
+  }
+
+  if (!job.request) {
+    throw new Error('Story job is missing a generation request.');
+  }
+
+  return orchestrator.generateFull(job.request, progressOptions);
 }
 
 function emitStoryPayload(

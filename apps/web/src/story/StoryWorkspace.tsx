@@ -50,6 +50,10 @@ type SavedStory = {
   chapterCount: number;
   error?: string;
 };
+type StoryDetail = SavedStory & {
+  storyPayload?: StoryPayload;
+  relationshipGraph?: RelationshipGraph;
+};
 type StoryPayload = {
   title: string;
   concept: { logline: string; promise: string; conflictEngine: string };
@@ -354,6 +358,27 @@ export function StoryWorkspace(): JSX.Element {
     };
   }
 
+  async function fetchStory(id: string) {
+    const response = await httpFetch(`/stories/${encodeURIComponent(id)}`);
+    if (!response.ok) throw new Error(await readError(response));
+    const data = (await response.json()) as { story: StoryDetail };
+    return data.story;
+  }
+
+  function applyStoryDetail(story: StoryDetail, label?: string) {
+    const chapterCount = story.storyPayload?.chapters.length ?? story.chapterCount;
+    const completed = story.status === 'completed' || chapterCount >= 10;
+
+    setStoryId(story.id);
+    setStoryTitle(story.storyPayload?.title || story.title);
+    setResult(story.storyPayload ? resultFromPayload(story.storyPayload) : { ...EMPTY_RESULT, relationshipGraph: story.relationshipGraph });
+    setActiveChapter(story.storyPayload?.chapters[0]?.chapterNumber ?? 1);
+    setPanel('chapters');
+    setPhase(completed ? 'completed' : story.status === 'failed' ? 'failed' : 'idle');
+    setProgress(completed ? 100 : Math.round((chapterCount / 10) * 100));
+    setProgressLabel(label ?? (completed ? 'Đã mở bản thảo đã lưu' : chapterCount > 0 ? `Đã mở bản thảo ${chapterCount}/10 chương` : 'Truyện chưa có bản thảo hoàn tất'));
+  }
+
   function handleStreamEvent(payload: StreamEvent) {
     if (payload.stage === 'progress') {
       const total = Math.max(payload.total ?? 1, 1);
@@ -402,19 +427,30 @@ export function StoryWorkspace(): JSX.Element {
   async function openStory(id: string) {
     if (!requireLogin()) return;
     try {
-      const response = await httpFetch(`/stories/${encodeURIComponent(id)}`);
-      if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { story: { id: string; title: string; storyPayload?: StoryPayload; relationshipGraph?: RelationshipGraph } };
-      setStoryId(data.story.id);
-      setStoryTitle(data.story.storyPayload?.title || data.story.title);
-      setResult(data.story.storyPayload ? resultFromPayload(data.story.storyPayload) : { ...EMPTY_RESULT, relationshipGraph: data.story.relationshipGraph });
-      setActiveChapter(1);
-      setPanel('chapters');
-      setPhase(data.story.storyPayload ? 'completed' : 'idle');
-      setProgress(data.story.storyPayload ? 100 : 0);
-      setProgressLabel(data.story.storyPayload ? 'Đã mở bản thảo đã lưu' : 'Truyện chưa có bản thảo hoàn tất');
+      applyStoryDetail(await fetchStory(id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể mở truyện.');
+    }
+  }
+
+  async function resumeStory(id: string) {
+    if (!requireLogin()) return;
+    streamRef.current?.close();
+    setError(null);
+    setPhase('creating');
+    setProgressLabel('Đang chuẩn bị viết tiếp...');
+    try {
+      const story = await fetchStory(id);
+      applyStoryDetail(story, 'Đã nạp bản thảo từng phần');
+      const response = await httpFetch(`/stories/${encodeURIComponent(id)}/resume`, { method: 'POST' });
+      if (!response.ok) throw new Error(await readError(response));
+      const data = (await response.json()) as { storyId?: string };
+      const nextStoryId = data.storyId || id;
+      setStoryId(nextStoryId);
+      await loadSavedStories();
+      await connectStream(nextStoryId);
+    } catch (err) {
+      fail(err, 'Không thể viết tiếp truyện.');
     }
   }
 
@@ -546,7 +582,7 @@ export function StoryWorkspace(): JSX.Element {
           <Range label="Móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
           <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn} onClick={() => void suggestSetup()}>Gợi ý mầm truyện</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Sáng tác drama</button></div>
 
-          <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onRename={renameStory} onDelete={deleteStory} />
+          <StoryList stories={savedStories} busy={storyListBusy} signedIn={isSignedIn} onRefresh={loadSavedStories} onOpen={openStory} onResume={resumeStory} onRename={renameStory} onDelete={deleteStory} />
         </aside>
 
         <section className="story-panel">
@@ -597,8 +633,12 @@ function LoadingAnimation({ active }: { active: boolean }) {
   return <div className={active ? 'loading-lottie active' : 'loading-lottie'} ref={containerRef} aria-hidden="true" />;
 }
 
-function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {
-  return <section className="saved-stories"><PanelHeading label="Truyện của tôi" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Làm mới danh sách</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem danh sách truyện đã tạo.</div> : stories.length === 0 ? <div className="empty-state compact">Chưa có truyện nào trong tài khoản này.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div><button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
+function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onResume: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {
+  return <section className="saved-stories"><PanelHeading label="Truyện của tôi" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Làm mới danh sách</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem danh sách truyện đã tạo.</div> : stories.length === 0 ? <div className="empty-state compact">Chưa có truyện nào trong tài khoản này.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
+}
+
+function canResumeStory(story: SavedStory) {
+  return story.status !== 'completed' && story.chapterCount > 0 && story.chapterCount < 10;
 }
 
 function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void }) {

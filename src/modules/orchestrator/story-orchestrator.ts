@@ -66,6 +66,7 @@ import {
   type MinimalChapterRef,
 } from "../core-pipeline/continuity-tracker";
 import { applyCharacterFactsToRelationshipGraph, createInitialRelationshipGraph } from "../relationship/relationship-graph";
+import { getRemainingChapterPlanItems } from "./story-resume";
 import { resolveFinalStoryTitle } from "./story-title";
 
 export type StoryProgressOperation = "outline" | "full" | "chapter" | "regenerate";
@@ -521,6 +522,131 @@ export class StoryOrchestrator {
         id: "finalize-story",
         label: "Hoàn tất truyện",
         detail: "Đang kiểm tra bản thảo đã ghép.",
+      },
+      async () => assembledStoryPayload,
+      `Đã ghép ${chapters.length} chương.`,
+    );
+  }
+
+  async resumeFull(storyPayloadInput: StoryPayload, progressOptions?: StoryProgressOptions) {
+    const storyPayload = validateStoryPayload(storyPayloadInput);
+    const remainingChapterPlan = getRemainingChapterPlanItems(storyPayload);
+
+    if (storyPayload.chapters.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "Story payload does not contain any drafted chapters to resume from.", 400);
+    }
+
+    if (remainingChapterPlan.length === 0) {
+      return storyPayload;
+    }
+
+    const totalStages = remainingChapterPlan.length + 1;
+    const progress = resolveProgressOptions(progressOptions, "full", totalStages);
+    const chapters: Chapter[] = [...storyPayload.chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
+    let relationshipGraph = storyPayload.relationshipGraph ?? createInitialRelationshipGraph(storyPayload.storyBible);
+    const memoryStore: CharacterMemoryStore = createEmptyMemoryStore();
+
+    resetPhraseReuseIndex();
+    for (const chapter of chapters) {
+      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+    }
+
+    for (const [index, chapterPlanItem] of remainingChapterPlan.entries()) {
+      const stageIndex = index + 1;
+      const chapterStage = {
+        id: `resume-chapter-${chapterPlanItem.chapterNumber}`,
+        label: `Viết tiếp chương ${chapterPlanItem.chapterNumber}/${storyPayload.chapterPlan.length}`,
+        detail: `Đang viết tiếp "${chapterPlanItem.title}".`,
+      };
+      const chapter = await runProgressStage(
+        progress,
+        stageIndex,
+        chapterStage,
+        () =>
+          this.generateChapter(
+            {
+              storyBible: storyPayload.storyBible,
+              chapterPlan: storyPayload.chapterPlan,
+              chapterNumber: chapterPlanItem.chapterNumber,
+              previousChapterSummaries: chapters
+                .filter((item) => item.chapterNumber < chapterPlanItem.chapterNumber)
+                .map(summarizeChapter),
+              draftControls: storyPayload.request.draftControls,
+              outputLanguage: storyPayload.request.outputLanguage,
+              storyTitle: storyPayload.title,
+              memoryStore,
+            },
+            storyPayload.request.stylePreset,
+            undefined,
+            storyPayload.continuityLite,
+            {
+              onProgress: (event) => {
+                if (event.stageId !== "repair-chapter") {
+                  return;
+                }
+
+                emitProgress(
+                  progress,
+                  stageIndex,
+                  chapterStage,
+                  event.status,
+                  event.status === "started"
+                    ? `Đang sửa "${chapterPlanItem.title}" sau khi kiểm tra chất lượng.`
+                    : `Đã sửa xong "${chapterPlanItem.title}".`,
+                );
+              },
+            },
+          ),
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
+      );
+
+      chapters.push(chapter);
+      chapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
+      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+
+      const factSheet = memoryStore.chapters.get(chapter.chapterNumber);
+      if (factSheet) {
+        relationshipGraph = applyCharacterFactsToRelationshipGraph(relationshipGraph, factSheet);
+      }
+
+      const partialStoryPayload = StoryPayloadSchema.parse({
+        ...storyPayload,
+        chapters: [...chapters],
+        relationshipGraph,
+        meta: {
+          ...storyPayload.meta,
+          generatedAt: new Date().toISOString(),
+        },
+      });
+      emitProgress(
+        progress,
+        stageIndex,
+        chapterStage,
+        "completed",
+        `Chương ${chapterPlanItem.chapterNumber} đã sẵn sàng.`,
+        {
+          chapter,
+          storyPayload: partialStoryPayload,
+        },
+      );
+    }
+
+    const assembledStoryPayload = StoryPayloadSchema.parse({
+      ...storyPayload,
+      chapters,
+      relationshipGraph,
+      meta: {
+        ...storyPayload.meta,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+    return runProgressStage(
+      progress,
+      totalStages,
+      {
+        id: "finalize-resumed-story",
+        label: "Hoàn tất truyện",
+        detail: "Đang kiểm tra bản thảo viết tiếp đã ghép.",
       },
       async () => assembledStoryPayload,
       `Đã ghép ${chapters.length} chương.`,
