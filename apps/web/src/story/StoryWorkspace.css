@@ -46,9 +46,12 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   min-height: 100vh;
   padding: 28px clamp(16px, 4vw, 56px) 40px;
   background:
-    repeating-linear-gradient(90deg, transparent 0, transparent 119px, var(--line-faint) 119px, var(--line-faint) 120px),
-    radial-gradient(circle at 0% -4%, rgba(215, 99, 78, 0.07), transparent 38rem),
-    linear-gradient(180deg, #f7f0e1 0%, var(--page-bg) 60%, #ece2cd 100%);
+    radial-gradient(rgba(26, 22, 17, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 12% -6%, rgba(215, 99, 78, 0.08), transparent 42rem),
+    radial-gradient(circle at 92% 0%, rgba(184, 138, 92, 0.08), transparent 46rem),
+    linear-gradient(180deg, #f7f0e1 0%, var(--page-bg) 55%, #ece2cd 100%);
+  background-size: 22px 22px, auto, auto, auto;
+  background-attachment: fixed;
   color: var(--ink);
 }
 
@@ -61,7 +64,6 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   margin: 0 auto 22px;
   max-width: 1600px;
   padding: 6px 0 22px;
-  border-bottom: 1px solid var(--line-strong);
 }
 
 .workspace-header h1,
@@ -390,7 +392,7 @@ input, select, textarea {
   outline-offset: 2px;
   transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-textarea { resize: vertical; line-height: 1.6; font-family: var(--read); }
+textarea { resize: vertical; line-height: 1.6; }
 input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--coral); box-shadow: 0 0 0 3px var(--coral-soft); }
 input::placeholder, textarea::placeholder { color: var(--soft-muted); }
 

@@ -161,7 +161,7 @@ export function StoryWorkspace(): JSX.Element {
   const [storyId, setStoryId] = useState<string | null>(null);
   const [storyTitle, setStoryTitle] = useState('Truyện chưa đặt tên');
   const [progress, setProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState('Sẵn sàng ươm mầm truyện');
+  const [progressLabel, setProgressLabel] = useState('Sẵn sàng gợi ý kịch bản');
   const [result, setResult] = useState<StoryResult>(EMPTY_RESULT);
   const [activeChapter, setActiveChapter] = useState(1);
   const [panel, setPanel] = useState<Panel>('chapters');
@@ -322,7 +322,7 @@ export function StoryWorkspace(): JSX.Element {
     if (!requireLogin()) return;
     setPhase('suggesting');
     setError(null);
-    setProgressLabel('Đang tìm mầm truyện phù hợp...');
+    setProgressLabel('Đang tìm kịch bản phù hợp...');
     try {
       const response = await httpFetch('/story/setup-suggest', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
@@ -335,7 +335,7 @@ export function StoryWorkspace(): JSX.Element {
         storyControls: data.storyControls ?? current.storyControls,
       }));
       setStoryTitle(data.title || config.title || 'Truyện chưa đặt tên');
-      setProgressLabel('Mầm truyện đã sẵn sàng');
+      setProgressLabel('Kịch bản đã sẵn sàng');
       setPhase('idle');
     } catch (err) {
       fail(err, 'Không thể gợi ý thiết lập truyện.');
@@ -604,7 +604,7 @@ export function StoryWorkspace(): JSX.Element {
           <label>Dòng truyện<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Nhánh riêng<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị xem thường" /></label>}
           <label>Nhan đề dự kiến<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
-          <label>Mầm truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Một cảnh mở đầu, bí mật, vật chứng, mối quan hệ hoặc cảm xúc bạn muốn giữ..." rows={6} /></label>
+          <label>Kịch bản / cốt truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Một cảnh mở đầu, bí mật, vật chứng, mối quan hệ hoặc cảm xúc bạn muốn giữ..." rows={6} /></label>
           <label>Giọng kể<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
           <label>Ngôn ngữ bản thảo<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <Range label="Cường độ cảm xúc" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
@@ -618,7 +618,7 @@ export function StoryWorkspace(): JSX.Element {
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
           {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} />}
-          {panel === 'overview' && <TextPanel title="Mầm truyện" content={result.concept} />}
+          {panel === 'overview' && <TextPanel title="Kịch bản / cốt truyện" content={result.concept} />}
           {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} />}
           {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={result.bible ? JSON.stringify(result.bible, null, 2) : ''} />}
           {panel === 'relationships' && <RelationshipGraphPanel graph={result.relationshipGraph} />}
