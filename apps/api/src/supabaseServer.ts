@@ -123,7 +123,10 @@ export async function getSetupSuggestionQuotaSnapshot(user: AuthenticatedUser): 
     .eq('usage_date', usageDate)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingSetupSuggestionQuotaSchemaError(error)) return null;
+    throw error;
+  }
 
   const used = Number(data?.suggested_count ?? 0);
   return { usageDate, used, limit, remaining: Math.max(limit - used, 0) };
@@ -159,12 +162,26 @@ export async function consumeSetupSuggestionQuota(user: AuthenticatedUser): Prom
     p_quota_limit: limit,
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingSetupSuggestionQuotaSchemaError(error)) return null;
+    throw error;
+  }
 
   const row = Array.isArray(data) ? data[0] : data;
   const used = Number(row?.suggested_count ?? 0);
   const allowed = Boolean(row?.allowed);
   return { usageDate, used, limit, remaining: Math.max(limit - used, 0), allowed };
+}
+
+export function isMissingSetupSuggestionQuotaSchemaError(error: unknown) {
+  const message = readErrorText(error);
+  const code = typeof error === 'object' && error && typeof (error as { code?: unknown }).code === 'string'
+    ? (error as { code: string }).code
+    : '';
+
+  if (code === 'PGRST205' || code === '42P01') return true;
+  if ((code === 'PGRST202' || code === '42883') && /consume_setup_suggestion_quota/i.test(message)) return true;
+  return /setup_suggestion_usage_days|consume_setup_suggestion_quota/i.test(message);
 }
 
 export function isAdminRequest(request: FastifyRequest) {
@@ -186,4 +203,14 @@ function readQueryAccessToken(query: unknown) {
 function readMetadataString(user: User, key: string) {
   const value = user.user_metadata?.[key];
   return typeof value === 'string' ? value : '';
+}
+
+function readErrorText(error: unknown) {
+  if (typeof error === 'string') return error;
+  if (!(typeof error === 'object' && error)) return '';
+
+  const record = error as Record<string, unknown>;
+  return [record.message, record.details, record.hint]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
 }
