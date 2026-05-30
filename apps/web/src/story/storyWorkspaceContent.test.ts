@@ -55,3 +55,16 @@ test('failed current draft exposes a direct continue-story button', () => {
   assert.match(source, />Viết tiếp truyện</);
   assert.match(source, /resumeStory\(storyId\)/);
 });
+
+test('account block exposes resume when a saved story can continue', () => {
+  const accountStart = source.indexOf('<section className="account-bar">');
+  const workspaceStart = source.indexOf('<section className="workspace-grid">');
+
+  assert.ok(accountStart >= 0, 'account block must exist');
+  assert.ok(workspaceStart > accountStart, 'workspace grid must appear after account block');
+
+  const accountBlock = source.slice(accountStart, workspaceStart);
+  assert.match(source, /resumableStory/);
+  assert.match(accountBlock, /Viết tiếp truyện/);
+  assert.match(accountBlock, /resumeStory\(resumableStory\.id\)/);
+});

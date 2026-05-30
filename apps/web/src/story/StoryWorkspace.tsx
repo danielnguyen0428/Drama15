@@ -185,13 +185,14 @@ export function StoryWorkspace(): JSX.Element {
     () => storyId ? savedStories.find((story) => story.id === storyId) : undefined,
     [savedStories, storyId],
   );
+  const resumableStory = useMemo(() => savedStories.find(canResumeStory), [savedStories]);
   const markdown = useMemo(() => buildMarkdown(storyTitle, result), [result, storyTitle]);
   const busy = phase === 'suggesting' || phase === 'creating' || phase === 'streaming';
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
   const canResumeCurrentStory = Boolean(
-    storyId && phase === 'failed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < 10),
+    storyId && phase !== 'completed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < 10),
   );
   const setupSuggestionQuotaCopy = setupSuggestionQuota
     ? outOfSetupSuggestionQuota
@@ -582,7 +583,7 @@ export function StoryWorkspace(): JSX.Element {
           <div className={outOfSetupSuggestionQuota ? 'account-quota blocked' : 'account-quota'}><strong>{setupSuggestionQuotaCopy}</strong></div>
         </div>
         <div className="account-actions">
-          {user ? <button type="button" className="secondary-button" onClick={() => void signOut()}>Đăng xuất</button> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>Đăng nhập bằng Google</button>}
+          {user ? <>{resumableStory && <button type="button" className="primary-button" disabled={busy} onClick={() => void resumeStory(resumableStory.id)}>Viết tiếp truyện</button>}<button type="button" className="secondary-button" onClick={() => void signOut()}>Đăng xuất</button></> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>Đăng nhập bằng Google</button>}
         </div>
       </section>
 
