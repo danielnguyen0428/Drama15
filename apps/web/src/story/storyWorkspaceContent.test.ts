@@ -20,3 +20,21 @@ test('setup suggestion CTA uses script wording and shows the free daily quota fa
   assert.doesNotMatch(source, /Gợi ý mầm truyện/);
   assert.doesNotMatch(source, /lượt gợi ý mầm truyện/);
 });
+
+test('setup suggestion quota appears in the user account block', () => {
+  const accountStart = source.indexOf('<section className="account-bar">');
+  const workspaceStart = source.indexOf('<section className="workspace-grid">');
+  const setupStart = source.indexOf('<aside className="setup-panel">');
+  const storyPanelStart = source.indexOf('<section className="story-panel">');
+
+  assert.ok(accountStart >= 0, 'account block must exist');
+  assert.ok(workspaceStart > accountStart, 'workspace grid must appear after account block');
+  assert.ok(setupStart >= 0, 'setup panel must exist');
+  assert.ok(storyPanelStart > setupStart, 'story panel must appear after setup panel');
+
+  const accountBlock = source.slice(accountStart, workspaceStart);
+  const setupPanel = source.slice(setupStart, storyPanelStart);
+
+  assert.match(accountBlock, /setupSuggestionQuotaCopy/);
+  assert.doesNotMatch(setupPanel, /setupSuggestionQuotaCopy/);
+});

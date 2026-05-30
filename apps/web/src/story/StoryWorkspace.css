@@ -160,6 +160,7 @@ button:disabled { cursor: not-allowed; opacity: 0.48; }
 .account-summary div { display: grid; gap: 3px; min-width: 0; }
 .account-summary strong { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
 .account-summary span { color: var(--muted); font-size: 13px; }
+.account-usage { display: grid; gap: 8px; min-width: 0; }
 .account-quota {
   display: grid;
   gap: 4px;
@@ -289,13 +290,6 @@ input::placeholder, textarea::placeholder { color: #9aa5b2; }
 
 .setup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 4px; }
 .setup-actions button { min-height: 48px; padding: 0 14px; }
-.suggestion-quota {
-  margin: -2px 0 0;
-  color: var(--teal-dark);
-  font-size: 12px;
-  line-height: 1.45;
-}
-.suggestion-quota.blocked { color: #9c2f20; }
 .primary-button,
 .secondary-button,
 .story-toolbar button,
