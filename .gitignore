@@ -1,6 +1,7 @@
 node_modules/
 dist/
 local-output/
+output/
 .DS_Store
 .env
 .env.*
