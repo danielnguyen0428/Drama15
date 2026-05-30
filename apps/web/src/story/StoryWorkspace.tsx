@@ -109,7 +109,7 @@ const NICHES = [
 ] as const;
 
 const PHASE_LABELS: Record<Phase, string> = {
-  idle: 'Sẵn sàng',
+  idle: 'Sẵn sàng gợi ý kịch bản',
   suggesting: 'Đang ươm ý',
   creating: 'Đang mở phiên',
   streaming: 'Đang viết chương',
@@ -161,7 +161,7 @@ export function StoryWorkspace(): JSX.Element {
   const [storyId, setStoryId] = useState<string | null>(null);
   const [storyTitle, setStoryTitle] = useState('Truyện chưa đặt tên');
   const [progress, setProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState('Sẵn sàng gợi ý kịch bản');
+  const [progressLabel, setProgressLabel] = useState('');
   const [result, setResult] = useState<StoryResult>(EMPTY_RESULT);
   const [activeChapter, setActiveChapter] = useState(1);
   const [panel, setPanel] = useState<Panel>('chapters');
