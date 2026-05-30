@@ -181,11 +181,18 @@ export function StoryWorkspace(): JSX.Element {
     () => result.chapters.find((chapter) => chapter.index === activeChapter) ?? result.chapters[0],
     [activeChapter, result.chapters],
   );
+  const currentSavedStory = useMemo(
+    () => storyId ? savedStories.find((story) => story.id === storyId) : undefined,
+    [savedStories, storyId],
+  );
   const markdown = useMemo(() => buildMarkdown(storyTitle, result), [result, storyTitle]);
   const busy = phase === 'suggesting' || phase === 'creating' || phase === 'streaming';
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
+  const canResumeCurrentStory = Boolean(
+    storyId && phase === 'failed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < 10),
+  );
   const setupSuggestionQuotaCopy = setupSuggestionQuota
     ? outOfSetupSuggestionQuota
       ? `Đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay.`
@@ -363,8 +370,9 @@ export function StoryWorkspace(): JSX.Element {
     source.onmessage = (event) => handleStreamEvent(JSON.parse(event.data) as StreamEvent);
     source.onerror = () => {
       source.close();
-      setError('Phiên viết bị ngắt kết nối. Mở truyện trong danh sách rồi bấm “Viết tiếp” để nối lại.');
+      setError('Phiên viết bị ngắt kết nối. Bấm “Viết tiếp truyện” để nối lại các chương còn thiếu.');
       setPhase('failed');
+      void loadSavedStories();
     };
   }
 
@@ -596,7 +604,7 @@ export function StoryWorkspace(): JSX.Element {
         </aside>
 
         <section className="story-panel">
-          <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div>
+          <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>Viết tiếp truyện</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div></div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
           {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} />}

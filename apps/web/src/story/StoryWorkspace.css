@@ -440,7 +440,10 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .story-panel { min-height: 720px; }
 .story-toolbar { border-bottom: 1px solid var(--line); padding-bottom: 18px; }
 .story-toolbar h2 { font-size: clamp(24px, 3vw, 38px); font-weight: 600; line-height: 1.05; }
+.story-toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .story-toolbar button { padding: 0 18px; }
+.story-toolbar .primary-button { background: var(--accent-ink); color: #f7efdd; border-color: transparent; }
+.story-toolbar .primary-button:not(:disabled):hover { background: #2f281d; color: #f7efdd; }
 
 .panel-tabs { display: flex; gap: 4px; margin: 18px 0; overflow-x: auto; border-bottom: 1px solid var(--line); }
 .panel-tabs button {
@@ -614,6 +617,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .story-list { grid-template-columns: 1fr; }
   .range-row { grid-template-columns: minmax(0, 1fr) auto; }
   .story-toolbar { align-items: flex-start; flex-direction: column; }
+  .story-toolbar-actions,
   .story-toolbar button { width: 100%; }
   .workspace-footer { flex-direction: column; align-items: flex-start; }
   .prose { font-size: 17px; }

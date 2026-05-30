@@ -38,3 +38,20 @@ test('setup suggestion quota appears in the user account block', () => {
   assert.match(accountBlock, /setupSuggestionQuotaCopy/);
   assert.doesNotMatch(setupPanel, /setupSuggestionQuotaCopy/);
 });
+
+test('stream disconnect refreshes saved stories so resume controls can appear', () => {
+  const onErrorStart = source.indexOf('source.onerror = () => {');
+  const onErrorEnd = source.indexOf('};', onErrorStart);
+
+  assert.ok(onErrorStart >= 0, 'stream disconnect handler must exist');
+  assert.ok(onErrorEnd > onErrorStart, 'stream disconnect handler must close');
+
+  const onErrorBlock = source.slice(onErrorStart, onErrorEnd);
+  assert.match(onErrorBlock, /void loadSavedStories\(\);/);
+});
+
+test('failed current draft exposes a direct continue-story button', () => {
+  assert.match(source, /canResumeCurrentStory/);
+  assert.match(source, />Viết tiếp truyện</);
+  assert.match(source, /resumeStory\(storyId\)/);
+});
