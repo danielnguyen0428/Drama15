@@ -74,8 +74,8 @@
   "chapterArcDefaults": {
     "hookStyle": "alien captive auction, command-deck claim, or treaty-marriage demand met with immediate adult consent pushback and visible agency",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "the heroine is marked as property by alien law but refuses the role internally",
@@ -101,7 +101,7 @@
   ],
   "dignityRecoveryTiming": "late second half with consent restoration, legal freedom, and on-paper agency restored across empire and rival-court records before any romantic payoff",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

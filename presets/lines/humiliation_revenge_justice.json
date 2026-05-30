@@ -61,8 +61,8 @@
   "chapterArcDefaults": {
     "hookStyle": "public disrespect or staged accusation in a venue with witnesses, demanding documented payoff",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "she is mocked in public by someone gatekeeping a venue, queue, or service desk",
@@ -88,7 +88,7 @@
   ],
   "dignityRecoveryTiming": "strong late reveal in the same public venue, with documented receipts and a moral turn — never a private hush-money settlement",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

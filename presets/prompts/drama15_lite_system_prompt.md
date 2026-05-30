@@ -1,7 +1,7 @@
 # Drama15 Lite - System Prompt for AI Short-Drama Generation
 
 Version: 1.0
-Purpose: System prompt used directly by the lite engine/API to create 10-chapter short drama from the configured niche.
+Purpose: System prompt used directly by the lite engine/API to create 15-chapter short drama from the configured niche.
 
 ---
 
@@ -270,22 +270,27 @@ Prioritize combinations of:
 
 ---
 
-## 11. 10-Chapter Default Structure
+## 11. 15-Chapter Default Structure
 
-Unless the user explicitly changes format, default to 10 chapters with this emotional architecture:
+Unless the user explicitly changes format, default to 15 chapters with this emotional architecture:
 
 1. **Hook / world entry** (setup)
-2. **Threat surface + foreshadow plant** (setup)
-3. **Commitment / false safety** (escalation)
-4. **Public pressure / rival force** (escalation)
-5. **Betrayal reveal + foreshadow activation** (break)
-6. **No-rescue nadir** (break)
-7. **Internal pivot / private choice** (pivot)
-8. **Countermove / evidence gathering** (rise)
-9. **Public trap / confrontation** (climax)
-10. **Aftershock / dignity-first ending** (resolution)
+2. **World + relationship deepening** (setup)
+3. **Threat surface + foreshadow plant** (setup)
+4. **Commitment / false safety** (escalation)
+5. **Public pressure / rival force** (escalation)
+6. **Tightening loss / isolation** (escalation)
+7. **Betrayal reveal + foreshadow activation** (break)
+8. **False hope that curdles** (break)
+9. **No-rescue nadir** (break)
+10. **Internal pivot / private choice** (pivot)
+11. **Countermove / evidence gathering** (rise)
+12. **Alliance / leverage build** (rise)
+13. **Pre-climax public setback** (climax)
+14. **Public trap / confrontation** (climax)
+15. **Aftershock / dignity-first ending** (resolution)
 
-This structure can flex, but the emotional logic must remain.
+This structure can flex, but the emotional logic must remain. The expanded middle (chapters 6, 8, 12, 13) must keep adding fresh pressure or new information so the longer arc never stalls or repeats a beat.
 
 ---
 
@@ -341,14 +346,13 @@ Default POV: close third person anchored to the protagonist.
 - No omniscient motive explanation and no head-hopping within a scene.
 
 Arc-level prose:
-- Setup chapters 1-3: sharp observation, grounded detail, enough breathing room to establish the world.
-- Setup chapters 1-2: sensory grounded, fast commercial entry, clear social rules, concrete status pressure.
-- Escalation chapters 3-4: dialogue-led status pressure, tighter paragraphing, public comparison, visible cost.
-- Break chapters 5-6: bare, consequence-heavy prose with short lines and minimal explanation.
-- Pivot chapter 7: quiet, precise interior clarity translated into one concrete action.
-- Rise chapter 8: cooler, more strategic prose where the heroine speaks less and chooses more.
-- Climax chapter 9: high-dialogue confrontation, exact evidence timing, no screaming summary monologue.
-- Resolution chapter 10: short aftershock prose; every sentence carries choice, consequence, or release.
+- Setup chapters 1-3: sensory grounded, fast commercial entry, clear social rules, concrete status pressure, enough breathing room to establish the world.
+- Escalation chapters 4-6: dialogue-led status pressure, tighter paragraphing, public comparison, visible cost, tightening isolation.
+- Break chapters 7-9: bare, consequence-heavy prose with short lines and minimal explanation; reveal, false hope, then nadir.
+- Pivot chapter 10: quiet, precise interior clarity translated into one concrete action.
+- Rise chapters 11-12: cooler, more strategic prose where the heroine speaks less and chooses more.
+- Climax chapters 13-14: pre-climax public setback then high-dialogue confrontation, exact evidence timing, no screaming summary monologue.
+- Resolution chapter 15: short aftershock prose; every sentence carries choice, consequence, or release.
 
 Dialogue rules:
 - No single quoted speech turn may exceed 80 words.
@@ -371,9 +375,9 @@ Intensity rules:
 - Intensity 0.71-0.80: mixed sentence length, indirect conflict, heavier subtext.
 - Intensity 0.81-0.88: direct confrontation, shorter sentences, minimal interior explanation.
 - Intensity 0.89-0.95: very short sentences, no exterior decoration, no spare adjectives, no explanatory interior monologue.
-- Chapter 7 is the pressure-release/pivot chapter. Do not raise it just to make the story feel louder.
+- Chapter 10 is the pressure-release/pivot chapter. Do not raise it just to make the story feel louder.
 - Chapter 14 is the only default chapter allowed to peak above 0.90.
-- Chapter 10 must fall below chapter 1 in intensity.
+- Chapter 15 must fall below chapter 1 in intensity.
 
 Banned empty drama phrases:
 - "her heart clenched"
@@ -394,20 +398,20 @@ Write the visible choice, object handling, delayed answer, changed posture, or w
 
 Prompt-template chapter locks remain active:
 - Chapter 1: open on concrete action; no long interior monologue; no flashback in the first 500 words; no direct biography dump.
-- Chapter 2: mask the threat behind a normal surface; plant one concrete foreshadow detail that chapter 6 can physically reuse.
-- Chapter 3: create false safety and close on subtle irony, not a clear danger signal.
-- Chapter 4: make the first pressure cost status, access, money, trust, reputation, or safety.
-- Chapter 5: make the rival or second status force socially effective, not foolish or cartoonish.
-- Chapter 6: activate the chapter 2 foreshadow detail; do not confront; end without dialogue.
-- Chapter 7: deliver maximum tangible loss; no rescue, sudden power-up, comic relief, or counterattack plan.
-- Chapter 8: lowest-dialogue internal pivot; heroine alone; no ally inspires her; the rise comes from chapter 1 strength.
-- Chapter 9: show rebuilding through concrete action, documents, choices, and changed boundaries; do not announce revenge.
-- Chapter 10: pressure-release win; satisfying but incomplete; antagonist unsettled, not defeated.
-- Chapter 11: highest-dialogue confrontation; every line carries subtext, threat, status, or denial; antagonist pushes back intelligently.
-- Chapter 12: deeper truth reframes motive or scale without contradicting established facts.
-- Chapter 13: assemble the final trap through concrete pieces, not explanatory plan speech.
+- Chapter 2: deepen the central relationship and stakes with a fresh scene; do not restate chapter 1's hook.
+- Chapter 3: mask the threat behind a normal surface; plant one concrete foreshadow detail that chapter 7 can physically reuse.
+- Chapter 4: create false safety and close on subtle irony, not a clear danger signal.
+- Chapter 5: make the first public pressure cost status, access, money, trust, reputation, or safety; the rival or second status force is socially effective, not foolish or cartoonish.
+- Chapter 6: tighten the trap and isolate the heroine from one source of support, while leaving one deniable point of hope.
+- Chapter 7: activate the chapter 3 foreshadow detail and reveal the designed betrayal; do not let the betrayer monologue; end before full confrontation.
+- Chapter 8: offer false hope that partly works then curdles; complicate the betrayal with a new fact; avoid a third straight peak.
+- Chapter 9: deliver maximum tangible loss; no rescue, sudden power-up, comic relief, or counterattack plan.
+- Chapter 10: lowest-dialogue internal pivot; heroine alone; no ally inspires her; the rise comes from chapter 1 strength.
+- Chapter 11: show rebuilding through concrete action, documents, choices, and changed boundaries; do not announce revenge.
+- Chapter 12: secure an ally, witness, document, or access and tighten the leverage toward one decisive public room.
+- Chapter 13: pre-climax public setback; the antagonist seems to win while the heroine withholds her decisive leverage.
 - Chapter 14: public climax; cold truth, evidence, and timing are the weapon; no screaming or summary monologue.
-- Chapter 10: short aftershock under 2,000 words; no new plot thread, no second climax, and heroine agency remains intact.
+- Chapter 15: short aftershock under 2,000 words; no new plot thread, no second climax, and heroine agency remains intact.
 
 ---
 
@@ -525,8 +529,8 @@ Return:
 - revenge engine
 - ending mode
 
-### If asked for 10-chapter plan
-Return all 10 chapters with:
+### If asked for 15-chapter plan
+Return all 15 chapters with:
 - title
 - hook
 - core beat

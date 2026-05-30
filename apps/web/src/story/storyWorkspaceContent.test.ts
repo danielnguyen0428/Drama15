@@ -25,7 +25,7 @@ test('setup suggestion quota appears in the user account block', () => {
   const accountStart = source.indexOf('<section className="account-bar">');
   const workspaceStart = source.indexOf('<section className="workspace-grid">');
   const setupStart = source.indexOf('<aside className="setup-panel">');
-  const storyPanelStart = source.indexOf('<section className="story-panel">');
+  const storyPanelStart = source.indexOf('ref={storyPanelRef}');
 
   assert.ok(accountStart >= 0, 'account block must exist');
   assert.ok(workspaceStart > accountStart, 'workspace grid must appear after account block');

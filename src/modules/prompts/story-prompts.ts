@@ -48,6 +48,7 @@ import {
   type SeedHistoryEntry,
 } from "./seed-blueprint";
 import { renderFictionMeReferenceForPrompt } from "./fictionme-reference";
+import { renderCharacterNamingPolicyForPrompt } from "./character-naming";
 import { loadDrama15SystemPrompt } from "./system-prompt-loader";
 
 type PromptBundle = {
@@ -123,6 +124,9 @@ const AUTO_GENERATE_TOPIC_CATALOG = [
   "Mistress Took The Bride's Name",
   "Dark Romance Divorce Papers Saved Her",
   "Ex-Wife Returned At The Wedding Reveal",
+  "He Called Surveillance Love Until I Read The Vows Aloud",
+  "My Possessive Husband Lost The Day I Filed Quietly",
+  "He Married Me For Revenge, Then Fell Too Late",
   "Humiliation / Justice / Karma:",
   "Racist Manager Insults A Waitress, Then Finds Out She Owns The Place",
   "Disabled Woman Was Rejected At A Restaurant, Then The Staff Regretted It",
@@ -431,7 +435,7 @@ function buildDialogueRepairInstruction(currentWordCount: number, currentDialogu
 }
 
 function architectureBlock() {
-  return block("Drama 10-chapter architecture", renderDrama15ArchitectureOverview());
+  return block("Drama 15-chapter architecture", renderDrama15ArchitectureOverview());
 }
 
 function chapterArchitectureBlock(chapterNumber: number) {
@@ -470,9 +474,9 @@ export function buildConceptPrompt(params: {
       "Return JSON with exactly these keys: title, titleCandidates, logline, promise, conflictEngine.",
       renderConceptTitleGrammarForPrompt(),
       customNicheLockInstruction(request),
-      "Design the concept so it can sustain the fixed 10-chapter architecture: fast setup, escalation, break, pivot, public reveal, and short new equilibrium.",
-      "The concept must support a concrete foreshadow detail in chapter 2 that can return naturally in chapter 6.",
-      "The heroine's core strength must be visible enough to power the chapter 8 internal pivot.",
+      "Design the concept so it can sustain the fixed 15-chapter architecture: fast setup, escalation, break, pivot, rise, public reveal, and short new equilibrium.",
+      "The concept must support a concrete foreshadow detail in chapter 3 that can return naturally in chapter 7.",
+      "The heroine's core strength must be visible enough to power the chapter 10 internal pivot.",
       "Do not repeat any title, premise shape, or conflict engine from recent stories. Each new concept must use a different pressure engine, arena, and humiliation method.",
       recentStoryTitles.length ? block("Recent story titles — generate something completely different", recentStoryTitles.slice(0, 20)) : "",
       prosePolishBlock(params.prosePolishConfig, "concept", request.outputLanguage),
@@ -509,14 +513,9 @@ export function buildStoryBiblePrompt(params: {
       "Heroine must include: name, wound, strengths, blindSpots.",
       "Betrayer must include: name, wound, cowardiceVector.",
       "Rival must include: name, socialPower, demeanor.",
-      "CHARACTER NAME DIVERSITY RULE (hard constraint for heroine, betrayer, rival, and every supporting character with a name):",
-      "Use fresh full names. Do not reuse recent full names, given names, or middle-name tokens. Diversify all Vietnamese name positions, not just the final given name.",
-      "Banned overused given names: Linh, Mai, Lan, Hoa, Ngọc, Anh, Hằng, Huyền, Trang, Phương, Thảo, Yến.",
-      "Banned overused middle-name tokens: Minh, Thị, Văn, Hồng, Thanh, Thu, Kim.",
-      "Preferred diverse given-name pool: Tâm, Khuê, Diệp, Trúc, Bích, Tuyền, Diễm, Như, Quỳnh, Hiền, Bảo, Châu, Giang, Hương, Lâm, Mỹ, Ngân, Nhung, Uyên, Vân, Xuân, Chi, Đào, Hà, Huệ, Loan, Ly, Nga, Nhi, Thư, Thúy, Tiên, Trinh, Tuyết, Vy.",
-      recentCharacterNamesBlock,
-      "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 8.",
-      "Betrayal and class shame engines must support: masked threat in chapter 2, reveal without confrontation in chapter 6, no-rescue nadir in chapter 7, and public truth reveal in chapter 14.",
+      renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock),
+      "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 11.",
+      "Betrayal and class shame engines must support: masked threat in chapter 3, reveal without confrontation in chapter 7, no-rescue nadir in chapter 9, and public truth reveal in chapter 14.",
       customNicheLockInstruction(request),
       block("Request", request),
       block("Concept", concept),
@@ -551,8 +550,9 @@ export function buildChapterPlanPrompt(params: {
       "Keep the output compact. Each field value must be one sentence or shorter, preferably under 18 words.",
       "Do not write explanatory paragraphs. Use clean, high-signal beats only.",
       "Revenge activation should not happen too early. Keep class shame legible and cumulative.",
-      "Follow the supplied 10-chapter architecture exactly. Keep the old JSON keys, but make each chapter perform its architecture function.",
-      "Chapter 2 must plant a concrete foreshadow detail. Chapter 5 must activate it. Chapter 6 must be maximum loss with no rescue. Chapter 7 must be an earned internal pivot. Chapter 9 must be a public reveal. Chapter 10 must be a short new equilibrium.",
+      "Follow the supplied 15-chapter architecture exactly. Keep the old JSON keys, but make each chapter perform its architecture function.",
+      "Chapter 3 must plant a concrete foreshadow detail. Chapter 7 must activate it. Chapter 9 must be maximum loss with no rescue. Chapter 10 must be an earned internal pivot. Chapter 14 must be a public reveal. Chapter 15 must be a short new equilibrium.",
+      "Sustain the middle: chapters 6, 8, 12, and 13 must each add fresh pressure or new information so the 15-chapter arc never stalls or repeats a beat.",
       customNicheLockInstruction(request),
       block("Request", request),
       block("Concept", concept),
@@ -619,7 +619,7 @@ export function buildSettingSeedPrompt(params: {
       "The seed must fit the generated niche and content angle, while staying original.",
       "Do not copy, rename, or closely imitate any recognizable existing internet novel, short drama, film, or viral plot.",
     "Use realistic social conflicts and genre systems: family status pressure, workplace power, money, reputation, public shame, private dependence, social media, contracts, care labor, class-coded manners, pack law, mate-bond politics, alien captivity law, consent restoration, or empire contracts.",
-      "Make the situation emotionally specific, socially plausible, deep enough for sympathy, and strong enough to pull readers into a 10-chapter revenge or dignity arc.",
+      "Make the situation emotionally specific, socially plausible, deep enough for sympathy, and strong enough to pull readers into a 15-chapter revenge or dignity arc.",
       "The settingSeed should be 120-260 words and include the world, heroine pressure, betrayer motive, rival/status force, public humiliation engine, and comeback possibility.",
       "Keep titleHint short enough for a form field.",
       prosePolishBlock(params.prosePolishConfig, "settingSeed", request.outputLanguage),
@@ -681,6 +681,8 @@ export function buildChapterDraftPrompt(params: {
       "Write in dramatized scenes, not retrospective summary.",
       "Show class shame through introductions, seating, titles, money, etiquette, and witness reactions.",
       "Keep continuity exact: names, status positions, emotional facts, and chapter logic cannot drift.",
+      "Keep the established naming register: every character name must match the register and spellings already used in the story bible and prior chapters. Do not introduce a name from a different register, and do not rename anyone.",
+      "Add depth and avoid repetition: introduce at least one fresh concrete detail, motive shade, or escalation this chapter; do not recycle a scene, beat, line of dialogue, or humiliation already used in earlier chapters.",
       ...(targetChapterArchitecture ? [targetChapterArchitecture] : []),
       `Target length: ${wordCountRange(targetWords, chapterPlanItem.chapterNumber)}.`,
       `Operational target: ${operatingWordCountRange(targetWords, chapterPlanItem.chapterNumber)} so the draft lands safely inside the allowed range.`,
@@ -809,7 +811,7 @@ export function buildRegenerateChapterPrompt(params: {
       "Revise the target chapter while preserving continuity.",
       buildNarrativeLanguageInstruction(outputLanguage),
       "Return JSON with exactly these keys: chapterNumber, title, summary, text.",
-      "Preserve the target chapter's 10-chapter architecture function while applying the user's rewrite instruction.",
+      "Preserve the target chapter's 15-chapter architecture function while applying the user's rewrite instruction.",
       `Revision mode: ${mode}.`,
       `Instruction: ${instruction}.`,
       prosePolishBlock(params.prosePolishConfig, "regenerate", outputLanguage),

@@ -17,7 +17,7 @@ export const JSON_OUTPUT_GUARD = [
 export const CONCEPT_SYSTEM_PROMPT_SUPPLEMENT = [
   "You are designing a commercial short drama concept.",
   "Focus on: emotional hook within first 500 words, clear protagonist desire, escalating conflict engine.",
-  "The concept must support a 10-chapter arc with a concrete foreshadow detail planted in chapter 2.",
+  "The concept must support a 15-chapter arc with a concrete foreshadow detail planted in chapter 3.",
   "Avoid literary prose — this is commercial entertainment, not literary fiction.",
   "The heroine must have visible agency that can be demonstrated through behavior, not exposition.",
 ].join("\n");
@@ -32,13 +32,13 @@ export const STORY_BIBLE_SYSTEM_PROMPT_SUPPLEMENT = [
 ].join("\n");
 
 export const CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT = [
-  "You are planning a 10-chapter short drama with fixed architecture.",
+  "You are planning a 15-chapter short drama with fixed architecture.",
   "Each chapter must have: a hook, a main beat, humiliation progression, revenge progression, and an ending beat.",
-  "Chapter 2 MUST plant a concrete foreshadow detail that Chapter 5 will reuse.",
-  "Chapter 6 is the nadir — maximum loss, no rescue.",
-  "Chapter 7 is the internal pivot — the heroine shifts from reactive to active.",
-  "Chapter 9 is the public reveal — truth comes out in a concrete, dramatic way.",
-  "Chapter 10 is the short climax-and-aftershock — resolve with dignity, not revenge.",
+  "Chapter 3 MUST plant a concrete foreshadow detail that Chapter 7 will reuse.",
+  "Chapter 9 is the nadir — maximum loss, no rescue.",
+  "Chapter 10 is the internal pivot — the heroine shifts from reactive to active.",
+  "Chapter 14 is the public reveal — truth comes out in a concrete, dramatic way.",
+  "Chapter 15 is the short climax-and-aftershock — resolve with dignity, not revenge.",
 ].join("\n");
 
 export const CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT = [

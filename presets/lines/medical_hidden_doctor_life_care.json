@@ -72,8 +72,8 @@
   "chapterArcDefaults": {
     "hookStyle": "urgent care denial, medical blame, or ethics breach with concrete human stakes (a patient on the table, a family in the hallway)",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "triage desk shame: she is dismissed as a complainer, addict, or 'low-priority'",
@@ -99,7 +99,7 @@
   ],
   "dignityRecoveryTiming": "late ethics review, medical-board reveal, or patient-rights public correction with chart evidence — never a private hush from the VIP family",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

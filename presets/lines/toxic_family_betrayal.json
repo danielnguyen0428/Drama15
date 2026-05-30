@@ -66,8 +66,8 @@
   "chapterArcDefaults": {
     "hookStyle": "the family closes ranks against the heroine and uses paperwork (eviction, custody, will, deed) to erase her",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 9,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 12,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "she is kicked out, disinherited, or erased from the family record",
@@ -91,7 +91,7 @@
   ],
   "dignityRecoveryTiming": "late, after the family is forced to admit dependence on the daughter they erased, and after the legal record is corrected on paper",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

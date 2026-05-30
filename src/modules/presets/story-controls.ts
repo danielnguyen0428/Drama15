@@ -95,18 +95,22 @@ export const NICHE_STORY_CONTROLS = {
     betrayalType: [
       storyOption("wedding_day_betrayal", "Wedding day betrayal", "betrayal erupts at a wedding, engagement, plane ride, or public romantic ritual."),
       storyOption("mistress_took_place", "Mistress took my place", "a mistress, sister, or fake bride tries to take the heroine's place."),
+      storyOption("obsessive_possessive_partner", "Obsessive possessive partner", "a dark-romance partner's jealousy, surveillance, or isolation is reframed as love until it is named aloud as coercive control."),
     ],
     shameType: [
       storyOption("backup_bride_shame", "Backup bride shame", "she discovers she was treated as a backup bride in her own love story."),
       storyOption("ex_too_late_public", "Ex too late", "the ex returns publicly only after she is no longer available."),
+      storyOption("control_disguised_as_love", "Control disguised as love", "a possessive vow, prenup clause, joint account, or shared phone is used to limit her autonomy in public before she reclaims it."),
     ],
     revengeMode: [
       storyOption("leave_with_assets_truth", "Leave with assets/truth", "she leaves with the truth, assets, or legal leverage they assumed she would not use."),
       storyOption("wedding_truth_reveal", "Wedding truth reveal", "the wedding becomes the place where the truth is revealed."),
+      storyOption("name_the_control_and_exit", "Name the control and exit", "she names the coercive control aloud and turns a possessive clause or record into the evidence that frees her."),
     ],
     endingMode: [
       storyOption("marriage_ends_before_landing", "Ends before landing", "she ends the marriage before he can control the story."),
       storyOption("best_man_knows_secret", "Best man knows secret", "an unexpected witness knows the secret and helps expose the lie."),
+      storyOption("consent_restored_before_reconciliation", "Consent restored first", "any second-chance or morally-grey romance is earned only after consent, distance, and autonomy are fully restored."),
     ],
   },
   single_mom_poor_woman_comeback: {

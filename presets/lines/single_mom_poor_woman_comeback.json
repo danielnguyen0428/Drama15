@@ -64,8 +64,8 @@
   "chapterArcDefaults": {
     "hookStyle": "vulnerable woman is mocked while quietly protecting someone (child, sibling, elderly parent), with hidden skill and dignity already in place",
     "shameEscalationStart": 2,
-    "revengeActivationChapter": 9,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 12,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "she is mocked as poor or single in front of the child or in front of the child's school",
@@ -91,7 +91,7 @@
   ],
   "dignityRecoveryTiming": "warm but firm late comeback — she rebuilds career, custody, and chosen community first, and only then accepts romance or family healing on her own terms",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

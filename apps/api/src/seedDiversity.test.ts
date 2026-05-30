@@ -23,7 +23,7 @@ const stylePreset = {
 const request = {
   linePreset: 'workplace_ceo_power_struggle',
   outputLanguage: 'vietnamese',
-  chapterCount: 10,
+  chapterCount: 15,
   targetWordsPerChapter: 900,
   stylePreset: 'co_man_warm_modern_blueprint',
 };

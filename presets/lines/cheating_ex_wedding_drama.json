@@ -1,11 +1,19 @@
 {
   "id": "cheating_ex_wedding_drama",
-  "displayName": "Niche 5: Ngoại tình / Người yêu cũ / Drama cưới",
-  "description": "Romance and dark romance betrayal drama centered on cheating partners, mistress conflict, ex-lover return, divorce papers, runaway wedding, replacement bride, revenge marriage, public wedding-day reveal, and dignified exit from a romantic lie. The engine is intimate betrayal and ceremonial public space, not corporate paperwork (-> Niche 8) and not family inheritance (-> Niche 4).",
-  "emotionalAxis": "intimate betrayal wound, dark romance pressure, wedding-day exposure, ex-lover regret, mistress confrontation, divorce leverage, public romantic replacement, dignified exit before begging",
+  "displayName": "Niche 5: Ngoại tình / Người yêu cũ / Drama cưới / Dark romance",
+  "description": "Romance and dark romance betrayal drama centered on cheating partners, mistress conflict, ex-lover return, divorce papers, runaway wedding, replacement bride, revenge marriage, public wedding-day reveal, dignified exit from a romantic lie, and the dark-romance branch of an obsessive, possessive, or coercive intimate partner whose control is named aloud and reversed. The engine is intimate betrayal and ceremonial public space, not corporate paperwork (-> Niche 8) and not family inheritance (-> Niche 4). Dark romance here stays human and marital: keep alien/captive empire dark romance in Niche 12 and pack/mate-bond dark romance in Niche 11.",
+  "emotionalAxis": "intimate betrayal wound, dark romance pressure, obsessive possessive partner, coercive control reframed as love, wedding-day exposure, ex-lover regret, mistress confrontation, divorce leverage, public romantic replacement, consent and autonomy restored before any reconciliation, dignified exit before begging",
   "coreKeywords": [
     "romance betrayal drama",
     "dark romance",
+    "obsessive possessive husband",
+    "coercive control reframed as love",
+    "toxic marriage escape",
+    "morally grey love interest",
+    "dangerous ex who refuses to let go",
+    "marriage of revenge",
+    "forced proximity marriage",
+    "consent restoration before reconciliation",
     "cheating husband",
     "cheating wife",
     "ex-wife regret",
@@ -33,6 +41,10 @@
     "Dark Romance Divorce Papers Saved Her",
     "Ex-Wife Returned At The Wedding Reveal",
     "Wedding Day Betrayal",
+    "He Called Surveillance Love Until She Read The Vows Aloud",
+    "Possessive Husband Lost The Day She Filed Quietly",
+    "He Married Her For Revenge And Fell Too Late",
+    "Obsessive Ex Reframed Control As Devotion",
     "She Read The Vows And Then The Hotel Receipts",
     "Twin Sister Walked Down The Aisle Wearing Her Dress",
     "The Mistress Was Already Pregnant At The Engagement",
@@ -57,13 +69,17 @@
     "dignified_exit_before_begging": 0.92,
     "second_wedding_to_the_right_person": 0.84,
     "dark_romance_tone": 0.86,
+    "obsessive_possessive_partner": 0.84,
+    "coercive_control_named_and_reversed": 0.86,
+    "morally_grey_love_interest": 0.8,
+    "consent_and_autonomy_restored": 0.9,
     "female_agency": 0.92
   },
   "chapterArcDefaults": {
     "hookStyle": "intimate betrayal exposed in or near a high-stakes ceremonial moment (engagement, vow rehearsal, vow exchange, anniversary, honeymoon)",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "the cheating is discovered in a public romantic ritual (engagement, rehearsal, vows, honeymoon, anniversary)",
@@ -73,7 +89,9 @@
     "the betrayer asks for forgiveness only after losing leverage (assets, image, family approval)",
     "she is asked to keep silent for the family photo / brand / parents in attendance",
     "she is told the affair was already known by everyone except her",
-    "the betrayer's parents or in-laws side with him in front of the guests"
+    "the betrayer's parents or in-laws side with him in front of the guests",
+    "dark-romance branch: the partner's jealousy, surveillance, or isolation is reframed as devotion until a witness or her own words name it as control",
+    "dark-romance branch: a possessive vow, prenup clause, joint account, or shared phone is used to limit her autonomy before she reclaims it"
   ],
   "revengeActivation": [
     "she exits the room before the betrayer can write the narrative",
@@ -83,11 +101,13 @@
     "the public wedding space becomes the reveal room with the truth on screen",
     "the mistress is exposed by her own message or recording in front of the guests",
     "she signs the divorce / annulment papers in front of the wedding photographer",
-    "the second wedding to the right person uses the same venue, redefining the room"
+    "the second wedding to the right person uses the same venue, redefining the room",
+    "dark-romance branch: she names the coercive control aloud and converts a possessive clause or record into the evidence that frees her",
+    "dark-romance branch: any second-chance or morally-grey romance is earned only after consent, distance, and autonomy are fully restored"
   ],
   "dignityRecoveryTiming": "mid-late, with clear romantic non-dependence — she leaves the betrayer before any reconciliation talk, and any second love story comes after dignity is restored",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },
@@ -97,14 +117,17 @@
       "wedding / engagement / honeymoon / anniversary as the public reveal venue",
       "divorce / annulment / prenup paperwork tied to the romantic lie",
       "dignified exit before begging, with optional second wedding to the right person",
-      "twin or lookalike replacement, best-friend betrayal, family complicity in the affair"
+      "twin or lookalike replacement, best-friend betrayal, family complicity in the affair",
+      "dark romance inside a human marriage or engagement: obsessive, possessive, or coercive partner, morally-grey love interest, marriage of revenge, dangerous ex who refuses to let go, with consent and autonomy restored before any reconciliation"
     ],
     "doesNotBelongHere": [
       "corporate contract wife / hostile takeover engine (-> Niche 8)",
       "rich-poor courtship without intimate betrayal (-> Niche 1)",
       "family inheritance / custody / will fraud as the spine (-> Niche 4)",
       "single-mom workplace comeback (-> Niche 6)",
-      "campus or scholarship bullying (-> Niche 10)"
+      "campus or scholarship bullying (-> Niche 10)",
+      "alien / captive / empire dark romance (-> Niche 12)",
+      "werewolf / pack / mate-bond dark romance (-> Niche 11)"
     ]
   }
 }

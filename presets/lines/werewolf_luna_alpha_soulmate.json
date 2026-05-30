@@ -73,8 +73,8 @@
   "chapterArcDefaults": {
     "hookStyle": "public mate rejection, false-bond announcement, or Luna-status humiliation under pack law in front of the assembled pack",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "the mate bond is denied or hidden in front of the entire pack at a ritual",
@@ -100,7 +100,7 @@
   ],
   "dignityRecoveryTiming": "late second half with public pack correction (council, ritual, blood-moon trial) and heroine agency restored before any mate-bond romantic payoff",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

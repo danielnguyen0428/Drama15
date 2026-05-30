@@ -64,8 +64,8 @@
   "chapterArcDefaults": {
     "hookStyle": "unfair public refusal, profiling, or accusation grounded in a protected attribute, with witnesses present",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "she is refused service or accessible entrance because of a protected attribute",
@@ -90,7 +90,7 @@
   ],
   "dignityRecoveryTiming": "clear justice payoff, careful and non-exploitative, with institutional repair and policy precedent rather than only a personal apology",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

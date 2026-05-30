@@ -4,6 +4,9 @@ export type StoryListItem = {
   canResume?: boolean;
 };
 
+/** Fixed number of chapters in a full Drama15 draft. */
+export const TOTAL_CHAPTERS = 15;
+
 export type RelationshipNodeView = { id: string; name: string; role: string; description: string };
 export type RelationshipEdgeView = { source: string; target: string; label: string; type: string; chapterNumber?: number; confidence?: 'explicit' | 'inferred' };
 export type RelationshipGraphView = { nodes: RelationshipNodeView[]; edges: RelationshipEdgeView[]; updatedAt?: string };
@@ -13,7 +16,7 @@ const MAX_RELATIONSHIP_PREVIEW_NODES = 8;
 const MAX_RELATIONSHIP_PREVIEW_EDGES = 12;
 
 export function canResumeStory(story: StoryListItem) {
-  return story.status !== 'completed' && (story.canResume === true || (story.chapterCount > 0 && story.chapterCount < 10));
+  return story.status !== 'completed' && (story.canResume === true || (story.chapterCount > 0 && story.chapterCount < TOTAL_CHAPTERS));
 }
 
 export function normalizeRelationshipGraph(value: unknown): RelationshipGraphView | undefined {

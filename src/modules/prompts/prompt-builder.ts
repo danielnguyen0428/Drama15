@@ -32,6 +32,7 @@ import {
   renderSeedBlueprintForPrompt,
 } from "./seed-blueprint";
 import { renderFictionMeReferenceForPrompt } from "./fictionme-reference";
+import { renderCharacterNamingPolicyForPrompt } from "./character-naming";
 import {
   buildConceptSystemPrompt,
   buildStoryBibleSystemPrompt,
@@ -73,7 +74,7 @@ export function buildSettingSeedPrompt(params: {
   const systemPrompt = [
     "You are a Setting Seed Generator for commercial short drama.",
     "Create a unique seed blueprint that captures the plot DNA for a new story.",
-    "The seed must be specific enough to generate a compelling 10-chapter arc.",
+    "The seed must be specific enough to generate a compelling 15-chapter arc.",
     JSON_OUTPUT_GUARD,
   ].join("\n");
 
@@ -107,13 +108,13 @@ export function buildConceptPrompt(params: {
   const systemPrompt = buildConceptSystemPrompt();
 
   const userPrompt = [
-    "Create the concept package for a 10-chapter short drama.",
+    "Create the concept package for a 15-chapter short drama.",
     `Output language: ${OUTPUT_LANGUAGE_NAMES[params.request.outputLanguage]}.`,
     "Return JSON with exactly these keys: title, titleCandidates, logline, promise, conflictEngine.",
     renderNicheAwareTitleGrammarForPrompt(params.request.linePreset),
-    "Design the concept so it can sustain the fixed 10-chapter architecture.",
-    "The concept must support a concrete foreshadow detail in chapter 2 that can return naturally in chapter 5.",
-    "The heroine's core strength must be visible enough to power the chapter 7 internal pivot.",
+    "Design the concept so it can sustain the fixed 15-chapter architecture.",
+    "The concept must support a concrete foreshadow detail in chapter 3 that can return naturally in chapter 7.",
+    "The heroine's core strength must be visible enough to power the chapter 10 internal pivot.",
     "Do not repeat any title, premise shape, or conflict engine from recent stories.",
     "Do NOT name any characters in this stage. Refer to roles only.",
     params.recentStoryTitles && params.recentStoryTitles.length > 0
@@ -129,7 +130,7 @@ export function buildConceptPrompt(params: {
     "",
     `Seed blueprint (plot DNA): ${renderSeedBlueprintForPrompt(params.seedBlueprint)}`,
     "",
-    `Drama 10-chapter architecture: ${renderDrama15ArchitectureOverview()}`,
+    `Drama 15-chapter architecture: ${renderDrama15ArchitectureOverview()}`,
     params.linePreset
       ? `Line preset (genre-specific rules): ${JSON.stringify(params.linePreset)}`
       : "",
@@ -160,16 +161,12 @@ export function buildStoryBiblePrompt(params: {
     "Betrayer must include: name, wound, cowardiceVector.",
     "Rival must include: name, socialPower, demeanor.",
     "",
-    // Character name diversity rules (shared with desktop)
-    "CHARACTER NAME DIVERSITY RULE (hard constraint, applies to heroine, betrayer, rival, AND every supporting character with a name):",
-    "1. Use a fresh full name for EVERY named character.",
-    "2. Vietnamese full names are 2 or 3 syllables. You MUST diversify ALL positions, not just the given (last) name.",
-    "3. BANNED overused given names: Linh, Mai, Lan, Hoa, Ngọc, Anh, Hằng, Huyền, Trang, Phương, Thảo, Yến.",
-    "4. BANNED overused middle-name tokens: Minh, Thị, Văn, Hồng, Thanh, Thu, Kim.",
-    "5. PREFERRED diverse given-name pool: Tâm, Khuê, Diệp, Trúc, Quyên, Bích, Tuyền, Diễm, Như, Quỳnh, Hiền, Bảo, Châu, Giang, Hương, Lâm, Mỹ, Ngân, Nhung, Phan, Uyên, Vân, Xuân, Chi, Đào, Hà, Huệ, Loan, Ly, Nga, Nhi, Nụ, Quyên, Tâm, Thư, Thúy, Tiên, Trinh, Tươi, Tuyết, Vy.",
-    params.recentCharacterNames && params.recentCharacterNames.length > 0
-      ? `Recent character names to avoid: ${params.recentCharacterNames.join(", ")}`
-      : "",
+    // Character naming policy (shared with desktop story-prompts)
+    renderCharacterNamingPolicyForPrompt(
+      params.recentCharacterNames && params.recentCharacterNames.length > 0
+        ? `Recent character names to avoid: ${params.recentCharacterNames.join(", ")}`
+        : undefined,
+    ),
     "",
     // Speech pattern requirement (Wave 6 idiolect)
     "SPEECH PATTERN RULE (hard constraint for heroine, betrayer, rival):",
@@ -179,8 +176,8 @@ export function buildStoryBiblePrompt(params: {
     "- `vocabularyBand`: one of 'formal' | 'neutral' | 'casual' | 'crude'",
     "- `avoidedPhrases`: 1-3 phrases this character would NEVER say",
     "",
-    "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 7.",
-    "Betrayal and class shame engines must support: masked threat in chapter 2, reveal without confrontation in chapter 5, no-rescue nadir in chapter 6, and public truth reveal in chapter 9.",
+    "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 11.",
+    "Betrayal and class shame engines must support: masked threat in chapter 3, reveal without confrontation in chapter 7, no-rescue nadir in chapter 9, and public truth reveal in chapter 14.",
     "",
     `Request: ${JSON.stringify({ niche: params.request.linePreset, outputLanguage: params.request.outputLanguage })}`,
     `Concept: ${JSON.stringify(params.concept)}`,
@@ -208,21 +205,24 @@ export function buildChapterPlanPrompt(params: {
   const systemPrompt = buildChapterPlanSystemPrompt();
 
   const userPrompt = [
-    "Create a 10-chapter plan for the given short drama concept and story bible.",
+    "Create a 15-chapter plan for the given short drama concept and story bible.",
     `Output language: ${OUTPUT_LANGUAGE_NAMES[params.request.outputLanguage]}.`,
-    "Return JSON with a single key 'chapterPlan' containing an array of 10 objects.",
+    "Return JSON with a single key 'chapterPlan' containing an array of 15 objects.",
     "Each object must have: chapterNumber, title, hook, mainBeat, humiliationProgression, revengeProgression, endingBeat.",
     "",
     "Architecture requirements:",
     "- Chapter 1: Setup with commercial hook, establish heroine's strength through behavior",
-    "- Chapter 2: Foreshadow — plant one concrete detail for chapter 5",
-    "- Chapter 3-4: Escalation — deepen conflict, false safety",
-    "- Chapter 5: Foreshadow activation — the planted detail returns with new meaning",
-    "- Chapter 6: No-rescue nadir — maximum loss, no outside rescue",
-    "- Chapter 7: Internal pivot — heroine shifts from reactive to active",
-    "- Chapter 8: Strategic buildup — heroines's agency grows",
-    "- Chapter 9: Public reveal — truth comes out in concrete, dramatic way",
-    "- Chapter 10: Short climax and aftershock — resolve with dignity",
+    "- Chapter 2: World and relationship deepening — raise stakes with a fresh scene",
+    "- Chapter 3: Foreshadow — plant one concrete detail for chapter 7",
+    "- Chapter 4-6: Escalation — false safety, public pressure, tightening loss and isolation",
+    "- Chapter 7: Foreshadow activation and betrayal reveal — the planted detail returns with new meaning",
+    "- Chapter 8: False hope that curdles and complicates the betrayal",
+    "- Chapter 9: No-rescue nadir — maximum loss, no outside rescue",
+    "- Chapter 10: Internal pivot — heroine shifts from reactive to active",
+    "- Chapter 11-12: Strategic rise — countermove, evidence, alliance and leverage build",
+    "- Chapter 13: Pre-climax public setback — the antagonist seems to win",
+    "- Chapter 14: Public reveal — truth comes out in concrete, dramatic way",
+    "- Chapter 15: Short climax and aftershock — resolve with dignity",
     "",
     `Concept: ${JSON.stringify(params.concept)}`,
     `Story Bible: ${JSON.stringify(params.storyBible)}`,

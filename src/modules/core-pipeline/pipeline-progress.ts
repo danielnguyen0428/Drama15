@@ -114,7 +114,7 @@ export function createDesktopProgressReporter(
   return {
     callback: onProgress ?? null,
     operation: "full",
-    totalStages: 16, // seed + concept + bible + plan + 10 chapters + finalize
+    totalStages: 21, // seed + concept + bible + plan + 15 chapters + finalize
     stageOffset: 0,
   };
 }
@@ -142,7 +142,7 @@ export function createSseProgressReporter(
   return {
     callback,
     operation: "full",
-    totalStages: 16,
+    totalStages: 21,
     stageOffset: 0,
   };
 }

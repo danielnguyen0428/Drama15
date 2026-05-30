@@ -5,7 +5,7 @@ import lottie from 'lottie-web/build/player/lottie_light';
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
-import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, type RelationshipGraphView } from './storyViewModel';
+import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, TOTAL_CHAPTERS, type RelationshipGraphView } from './storyViewModel';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -97,7 +97,7 @@ const NICHES = [
   ['humiliation_revenge_justice', 'Sỉ nhục / trả đũa / công lý'],
   ['secret_identity_hidden_heiress', 'Thân phận bí mật / thiên kim'],
   ['toxic_family_betrayal', 'Gia đình độc hại / phản bội'],
-  ['cheating_ex_wedding_drama', 'Ngoại tình / cưới hỏi rạn vỡ'],
+  ['cheating_ex_wedding_drama', 'Ngoại tình / cưới hỏi rạn vỡ / Dark romance'],
   ['single_mom_poor_woman_comeback', 'Mẹ đơn thân / lật kèo'],
   ['social_injustice_discrimination_drama', 'Bất công xã hội'],
   ['workplace_ceo_power_struggle', 'Công sở / tổng tài / tranh quyền'],
@@ -176,6 +176,14 @@ export function StoryWorkspace(): JSX.Element {
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [storyListBusy, setStoryListBusy] = useState(false);
   const streamRef = useRef<EventSource | null>(null);
+  const storyPanelRef = useRef<HTMLElement | null>(null);
+  const [storyPanelFocused, setStoryPanelFocused] = useState(false);
+
+  function focusStoryPanel() {
+    setStoryPanelFocused(true);
+    storyPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => setStoryPanelFocused(false), 1600);
+  }
 
   const activeChapterData = useMemo(
     () => result.chapters.find((chapter) => chapter.index === activeChapter) ?? result.chapters[0],
@@ -192,7 +200,7 @@ export function StoryWorkspace(): JSX.Element {
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
   const canResumeCurrentStory = Boolean(
-    storyId && phase !== 'completed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < 10),
+    storyId && phase !== 'completed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < TOTAL_CHAPTERS),
   );
   const setupSuggestionQuotaCopy = setupSuggestionQuota
     ? outOfSetupSuggestionQuota
@@ -341,6 +349,7 @@ export function StoryWorkspace(): JSX.Element {
       return;
     }
 
+    focusStoryPanel();
     streamRef.current?.close();
     setPhase('creating');
     setError(null);
@@ -386,7 +395,7 @@ export function StoryWorkspace(): JSX.Element {
 
   function applyStoryDetail(story: StoryDetail, label?: string) {
     const chapterCount = story.storyPayload?.chapters.length ?? story.chapterCount;
-    const completed = story.status === 'completed' || chapterCount >= 10;
+    const completed = story.status === 'completed' || chapterCount >= TOTAL_CHAPTERS;
 
     setStoryId(story.id);
     setStoryTitle(story.storyPayload?.title || story.title);
@@ -394,8 +403,8 @@ export function StoryWorkspace(): JSX.Element {
     setActiveChapter(story.storyPayload?.chapters[0]?.chapterNumber ?? 1);
     setPanel('chapters');
     setPhase(completed ? 'completed' : story.status === 'failed' ? 'failed' : 'idle');
-    setProgress(completed ? 100 : Math.round((chapterCount / 10) * 100));
-    setProgressLabel(label ?? (completed ? 'Đã mở bản thảo đã lưu' : chapterCount > 0 ? `Đã mở bản thảo ${chapterCount}/10 chương` : 'Truyện này chưa có chương hoàn chỉnh'));
+    setProgress(completed ? 100 : Math.round((chapterCount / TOTAL_CHAPTERS) * 100));
+    setProgressLabel(label ?? (completed ? 'Đã mở bản thảo đã lưu' : chapterCount > 0 ? `Đã mở bản thảo ${chapterCount}/${TOTAL_CHAPTERS} chương` : 'Truyện này chưa có chương hoàn chỉnh'));
   }
 
   function handleStreamEvent(payload: StreamEvent) {
@@ -550,8 +559,8 @@ export function StoryWorkspace(): JSX.Element {
     <main className="workspace-shell">
       <header className="workspace-header">
         <div className="studio-title-block">
-          <div className="studio-kicker"><span>NovelKit Studio</span><i>Bản thảo 10 chương</i></div>
-          <h1>Xưởng viết tiểu thuyết ngắn</h1>
+          <div className="studio-kicker"><span>NovelKit Studio</span><i>Bản thảo 15 chương</i></div>
+          <h1>Drama 15: Xưởng viết tiểu thuyết ngắn</h1>
           <p>Ươm ý tưởng, dựng nhân vật, lập dàn ý và viết từng chương trong một không gian gọn gàng cho người viết truyện.</p>
           <div className="studio-meta" aria-label="Quy trình sáng tác">
             <span>Ý tưởng</span>
@@ -604,7 +613,7 @@ export function StoryWorkspace(): JSX.Element {
           <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý kịch bản</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
         </aside>
 
-        <section className="story-panel">
+        <section className={storyPanelFocused ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
           <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>Viết tiếp truyện</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div></div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
@@ -665,11 +674,11 @@ function LoadingAnimation({ active }: { active: boolean }) {
 }
 
 function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onResume: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {
-  return <section className="saved-stories"><PanelHeading label="Tủ truyện" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Nạp lại tủ truyện</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem các bản thảo đã lưu.</div> : stories.length === 0 ? <div className="empty-state compact">Tủ truyện đang trống. Viết bản thảo đầu tiên để lưu tại đây.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/10 chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
+  return <section className="saved-stories"><PanelHeading label="Tủ truyện" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Nạp lại tủ truyện</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem các bản thảo đã lưu.</div> : stories.length === 0 ? <div className="empty-state compact">Tủ truyện đang trống. Viết bản thảo đầu tiên để lưu tại đây.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/{TOTAL_CHAPTERS} chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
 }
 
 function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void }) {
-  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: 10 }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết bản thảo” để bắt đầu.</div>}</article></div>;
+  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: TOTAL_CHAPTERS }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : <div className="empty-state">Chưa có chương nào. Bấm “Viết bản thảo” để bắt đầu.</div>}</article></div>;
 }
 
 function TextPanel({ title, content }: { title: string; content: string }) {

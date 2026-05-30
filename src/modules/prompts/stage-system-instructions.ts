@@ -13,7 +13,7 @@ export const STORY_BIBLE_SYSTEM_PROMPT_SUPPLEMENT = [
 export const CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT = [
   "Generate only the chapter plan requested by the user prompt.",
   "Keep progression compact, cumulative, and faithful to the default delayed-payoff architecture unless the user prompt overrides it.",
-  "Honor the 10-chapter architecture locks: ch2 foreshadow, ch5 reveal without full revenge, ch6 no-rescue nadir, ch7 internal pivot, ch9 public reveal, ch10 short equilibrium.",
+  "Honor the 15-chapter architecture locks: ch3 foreshadow, ch7 reveal without full revenge, ch9 no-rescue nadir, ch10 internal pivot, ch14 public reveal, ch15 short equilibrium.",
 ].join(" ");
 
 export const CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT = [

@@ -34,7 +34,7 @@ const EnvSchema = z.object({
   ROUTER_FALLBACK_ENABLED: z.string().optional().transform((value) => value !== "false"),
   DEFAULT_LINE_PRESET: z.string().default("billionaire_rich_poor_romance"),
   DEFAULT_STYLE_PRESET: z.string().default("co_man_warm_modern_blueprint"),
-  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().default(10),
+  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().default(15),
   OUTPUT_DIR: z.string().optional(),
   WRITE_EXPORT_FILES: z.string().optional().transform((value) => value === "true"),
   MODEL_PRESET: z.string().default("default"),

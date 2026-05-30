@@ -8,6 +8,7 @@ import {
 } from "../../schemas/story";
 import type {
   Chapter,
+  ChapterPlanItem,
   GenerateChapterRequest,
   NormalizedFullGenerateRequest,
   NormalizedOutlineRequest,
@@ -261,7 +262,7 @@ export class StoryOrchestrator {
       4,
       {
         id: "chapter-plan",
-        label: "Lập 10 chương",
+        label: "Lập 15 chương",
         detail: "Đang dựng outline từng chương.",
       },
       async () => {
@@ -659,7 +660,7 @@ export class StoryOrchestrator {
     const parsed = GenerateChapterRequestSchema.parse(request);
     ensureChapterPlanIntegrity(parsed.chapterPlan);
 
-    const chapterPlanItem = parsed.chapterPlan.find((chapter) => chapter.chapterNumber === parsed.chapterNumber);
+    const chapterPlanItem = parsed.chapterPlan.find((chapter: ChapterPlanItem) => chapter.chapterNumber === parsed.chapterNumber);
     if (!chapterPlanItem) {
       throw new AppError("VALIDATION_ERROR", `Chapter ${parsed.chapterNumber} does not exist in chapterPlan.`, 400);
     }
@@ -950,8 +951,8 @@ export class StoryOrchestrator {
     const parsed = RegenerateChapterRequestSchema.parse(request);
     const storyPayload = validateStoryPayload(parsed.storyPayload);
 
-    const targetChapterPlan = storyPayload.chapterPlan.find((chapter) => chapter.chapterNumber === parsed.targetChapter);
-    const currentChapter = storyPayload.chapters.find((chapter) => chapter.chapterNumber === parsed.targetChapter);
+    const targetChapterPlan = storyPayload.chapterPlan.find((chapter: ChapterPlanItem) => chapter.chapterNumber === parsed.targetChapter);
+    const currentChapter = storyPayload.chapters.find((chapter: Chapter) => chapter.chapterNumber === parsed.targetChapter);
 
     if (!targetChapterPlan) {
       throw new AppError("VALIDATION_ERROR", `Story payload does not define chapter ${parsed.targetChapter} in the chapter plan.`, 400);
@@ -1044,7 +1045,7 @@ export class StoryOrchestrator {
         detail: "Đang cập nhật story payload bằng bản thảo mới.",
       },
       async () => {
-        const chapters = storyPayload.chapters.map((chapter) =>
+        const chapters = storyPayload.chapters.map((chapter: Chapter) =>
           chapter.chapterNumber === parsed.targetChapter ? rewrittenChapter.chapter : chapter,
         );
 
@@ -1229,7 +1230,7 @@ function resolveSeedBlueprintLinePreset(request: NormalizedOutlineRequest) {
     },
     {
       linePreset: "steamy_alien_captive_romance",
-      pattern: /\b(steamy|alien|alien master|alien masters|captive|captivity|dominant|possessive|dark romance|opposites attract|warship|alien king|alien commander|collar|consent)\b/i,
+      pattern: /\b(steamy|alien|alien master|alien masters|captive|captivity|dominant|warship|alien king|alien commander|collar)\b/i,
     },
     {
       linePreset: "workplace_ceo_power_struggle",
@@ -1257,7 +1258,7 @@ function resolveSeedBlueprintLinePreset(request: NormalizedOutlineRequest) {
     },
     {
       linePreset: "cheating_ex_wedding_drama",
-      pattern: /\b(cheat|cheating|ex|wedding|mistress|husband|wife|fiance|bride|groom|affair|divorce)\b/i,
+      pattern: /\b(cheat|cheating|ex|wedding|mistress|husband|wife|fiance|bride|groom|affair|divorce|dark romance|possessive|obsessive|coercive|toxic marriage|morally grey)\b/i,
     },
     {
       linePreset: "single_mom_poor_woman_comeback",

@@ -113,8 +113,8 @@
   "chapterArcDefaults": {
     "hookStyle": "first meeting across class lines, misunderstanding, or family opposition that ignites attraction",
     "shameEscalationStart": 2,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "the rich family ranks the poor lover beneath them at the first meeting",
@@ -158,7 +158,7 @@
   ],
   "dignityRecoveryTiming": "late-arc public reveal where the rich-side lover defends the poor-side lover in front of the disapproving family, sealing the romance with chosen legitimacy rather than money or contracts",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

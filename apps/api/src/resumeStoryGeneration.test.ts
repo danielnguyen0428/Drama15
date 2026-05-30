@@ -14,7 +14,7 @@ const storyStoreSourcePath = fileURLToPath(new URL('./storyStore.ts', import.met
 
 function makeStoryPayload(chapterNumbers: number[]): StoryPayload {
   return {
-    chapterPlan: Array.from({ length: 10 }, (_, index) => ({
+    chapterPlan: Array.from({ length: 15 }, (_, index) => ({
       chapterNumber: index + 1,
       title: `Chương ${index + 1}`,
       hook: 'Một móc câu hợp lệ.',
@@ -37,12 +37,12 @@ test('resume selects only missing chapter plan items after saved chapters', () =
 
   assert.deepEqual(
     getRemainingChapterPlanItems(payload).map((chapter) => chapter.chapterNumber),
-    [4, 5, 6, 7, 8, 9, 10],
+    [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   );
 });
 
 test('resume has no remaining chapters when all planned chapters are saved', () => {
-  const payload = makeStoryPayload([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const payload = makeStoryPayload([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 
   assert.deepEqual(getRemainingChapterPlanItems(payload), []);
 });
@@ -50,7 +50,7 @@ test('resume has no remaining chapters when all planned chapters are saved', () 
 test('partial payloads with saved outline or saved chapters are resumable', () => {
   assert.equal(hasResumableStoryPayload(makeStoryPayload([1])), true);
   assert.equal(hasResumableStoryPayload(makeStoryPayload([])), true);
-  assert.equal(hasResumableStoryPayload(makeStoryPayload([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])), false);
+  assert.equal(hasResumableStoryPayload(makeStoryPayload([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])), false);
 });
 
 test('resume endpoint uses the orchestrator resume path without consuming quota', async () => {

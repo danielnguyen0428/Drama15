@@ -67,8 +67,8 @@
   "chapterArcDefaults": {
     "hookStyle": "public career humiliation, contract-marriage trap, divorce-regret signal, or pregnant-secretary buyout with documented stakes",
     "shameEscalationStart": 1,
-    "revengeActivationChapter": 8,
-    "dignityRecoveryChapter": 10
+    "revengeActivationChapter": 11,
+    "dignityRecoveryChapter": 15
   },
   "humiliationPacing": [
     "public HR shame",
@@ -94,7 +94,7 @@
   ],
   "dignityRecoveryTiming": "late board, all-hands, shareholder, or divorce-asset reveal where contract, custody, or company control returns to her name before any romantic payoff",
   "constraints": {
-    "fixedChapterCount": 10,
+    "fixedChapterCount": 15,
     "minWordsPerChapter": 800,
     "maxWordsPerChapter": 3000
   },

@@ -2,7 +2,7 @@
  * Continuity Tracker — enhanced version of createContinuityLite().
  *
  * Tracks character state progression, foreshadow items, plot beats, and
- * established facts across all 10 chapters. Renders to prompt-friendly context
+ * established facts across all 15 chapters. Renders to prompt-friendly context
  * for LLM chapter drafting.
  *
  * Shared module used by both desktop orchestrator and web API engine.
@@ -10,6 +10,7 @@
 
 import type { StoryBible, ChapterPlanItem, ContinuityLite } from "./pipeline-types";
 import type { CharacterFactSheet } from "./character-memory-store";
+import { DRAMA15_KEY_CHAPTERS } from "../prompts/drama15-chapter-architecture";
 
 export interface ForeshadowItem {
   plantedInChapter: number;
@@ -65,16 +66,15 @@ export class ContinuityTracker {
       });
     }
 
-    // Identify foreshadow: Ch2 plants, Ch5 activates
-    if (options.chapterPlan.length >= 5) {
-      const ch2 = options.chapterPlan[1]; // chapter 2
-      if (ch2) {
-        this.foreshadowItems.push({
-          plantedInChapter: 2,
-          detail: ch2.hook, // The foreshadow detail should be in the hook
-          status: "planted",
-        });
-      }
+    // Identify foreshadow: the plant chapter sets it up, the activation chapter pays it off.
+    const plantChapterNumber = DRAMA15_KEY_CHAPTERS.foreshadowPlant;
+    const plantChapter = options.chapterPlan.find((chapter) => chapter.chapterNumber === plantChapterNumber);
+    if (plantChapter) {
+      this.foreshadowItems.push({
+        plantedInChapter: plantChapterNumber,
+        detail: plantChapter.hook, // The foreshadow detail should be in the hook
+        status: "planted",
+      });
     }
   }
 
@@ -93,11 +93,11 @@ export class ContinuityTracker {
       beat.summary = chapter.summary;
     }
 
-    // Check foreshadow activation (Ch5 should activate Ch2's plant)
-    if (chapter.chapterNumber === 5 && this.foreshadowItems.length > 0) {
+    // Check foreshadow activation (the activation chapter pays off the plant)
+    if (chapter.chapterNumber === DRAMA15_KEY_CHAPTERS.foreshadowActivate && this.foreshadowItems.length > 0) {
       for (const item of this.foreshadowItems) {
         if (item.status === "planted") {
-          item.activatedInChapter = 5;
+          item.activatedInChapter = DRAMA15_KEY_CHAPTERS.foreshadowActivate;
           item.status = "activated";
         }
       }

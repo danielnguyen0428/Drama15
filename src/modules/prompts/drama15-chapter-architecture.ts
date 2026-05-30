@@ -13,18 +13,45 @@
   summaryMemoryTags: string[];
 };
 
-export const DRAMA15_TOTAL_TARGET_WORDS = 25_000;
-export const DRAMA15_FIXED_CHAPTER_COUNT = 10;
+export const DRAMA15_TOTAL_TARGET_WORDS = 37_500;
+export const DRAMA15_FIXED_CHAPTER_COUNT = 15;
 export const DRAMA15_EXACT_WORD_COUNT_OPERATIONAL_TOLERANCE = 100;
+
+/**
+ * Named structural positions for the fixed 15-chapter architecture.
+ *
+ * These are the single source of truth for the dramatic locks. Every prompt,
+ * invariant rule, and overview string derives its chapter numbers from here so
+ * that the architecture and the instructions can never drift apart.
+ */
+export const DRAMA15_KEY_CHAPTERS = {
+  /** Chapter that plants the concrete foreshadow detail. */
+  foreshadowPlant: 3,
+  /** Chapter that activates the planted foreshadow detail with new meaning. */
+  foreshadowActivate: 7,
+  /** Chapter where the designed betrayal is revealed (same beat as activation). */
+  reveal: 7,
+  /** No-rescue nadir: maximum loss with no outside rescue. */
+  nadir: 9,
+  /** Quiet internal pivot / pressure-release chapter. */
+  pivot: 10,
+  /** Public confrontation where the decisive truth is exposed. */
+  publicReveal: 14,
+  /** Short aftershock resolution and new equilibrium. */
+  resolution: 15,
+} as const;
+
+const K = DRAMA15_KEY_CHAPTERS;
 
 export const DRAMA15_INVARIANT_RULES = [
   "No direct cloning from outside novels: borrow only commercial setup patterns, premise energy, social pressure, and pacing logic; all names, scenes, twists, evidence, and outcomes must be original.",
   "FictionMe-style niche pressure: every story should lean into fast hooks, high-status romance tension, betrayal, public humiliation, hidden power, second-chance pressure, and a heroine-led reversal appropriate to its niche.",
-  "No deus ex machina: chapters 6 and 7 cannot be rescued by an outside character, sudden money, secret inheritance, or lucky coincidence.",
-  "Foreshadow must activate: chapter 2 plants one concrete detail that chapter 5 reuses with a new meaning.",
-  "Chapter 10 is a short climax-and-aftershock resolution with a hard cap near 2,000 words.",
-  "No three consecutive high-intensity chapters. Chapter 7 acts as the pressure-release/internal-pivot chapter.",
-  "Protagonist agency: chapters 7, 8, 9, and 10 must prove the heroine stands up through her own action.",
+  `No deus ex machina: the nadir (chapter ${K.nadir}) and the pivot (chapter ${K.pivot}) cannot be rescued by an outside character, sudden money, secret inheritance, or lucky coincidence.`,
+  `Foreshadow must activate: chapter ${K.foreshadowPlant} plants one concrete detail that chapter ${K.foreshadowActivate} reuses with a new meaning.`,
+  `Chapter ${K.resolution} is a short climax-and-aftershock resolution with a hard cap near 2,000 words.`,
+  `No three consecutive high-intensity chapters. Chapter ${K.pivot} acts as the pressure-release/internal-pivot chapter.`,
+  `Protagonist agency: chapters ${K.pivot}, ${K.pivot + 1}, through ${K.resolution} must prove the heroine stands up through her own action.`,
+  "Sustained mid-arc: across 15 chapters the escalation, break, and rise arcs must keep introducing fresh pressure and new information so the middle never stalls or repeats a beat.",
 ];
 
 export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
@@ -34,7 +61,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     functionName: "commercial_hook_world_entry",
     wordCountTarget: 2400,
     wordCountRange: [2300, 2600],
-    intensity: 0.68,
+    intensity: 0.66,
     dialogueRatio: 0.48,
     hookType: "curiosity",
     mandatoryElements: [
@@ -58,6 +85,32 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
   {
     chapterNumber: 2,
     arc: "setup",
+    functionName: "world_deepening_relationship_pressure",
+    wordCountTarget: 2400,
+    wordCountRange: [2300, 2600],
+    intensity: 0.7,
+    dialogueRatio: 0.5,
+    hookType: "tension",
+    mandatoryElements: [
+      "deepen the central relationship pressure with a second concrete scene, not a recap",
+      "expand the niche world by one new rule, room, or social rite the heroine must navigate",
+      "show what the heroine stands to lose so later pressure has weight",
+      "introduce a supporting ally or witness who will matter in the rise or climax",
+    ],
+    forbiddenElements: [
+      "repeating chapter 1's hook beat with new wording",
+      "static description with no scene movement",
+      "revealing the antagonist's true plan",
+    ],
+    craftInstructions: [
+      "Treat this as the second setup beat: raise stakes and intimacy without resolving anything.",
+      "Keep one thread deliberately unfinished so the foreshadow chapter has room to plant its detail.",
+    ],
+    summaryMemoryTags: ["CH2_STAKES", "CH2_ALLY"],
+  },
+  {
+    chapterNumber: 3,
+    arc: "setup",
     functionName: "threat_surface_and_foreshadow",
     wordCountTarget: 2500,
     wordCountRange: [2400, 2700],
@@ -66,7 +119,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     hookType: "tension",
     mandatoryElements: [
       "introduce the betrayer, rival, council, family, institution, captor, or status gatekeeper with a positive or neutral surface",
-      "plant one concrete foreshadow detail for chapter 5",
+      `plant one concrete foreshadow detail for chapter ${K.foreshadowActivate}`,
       "make the detail ordinary enough that first-time readers do not notice it",
       "deepen attraction, dependence, or public expectation so rejection will hurt more later",
     ],
@@ -76,13 +129,13 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
       "using a vague feeling as the foreshadow detail",
     ],
     craftInstructions: [
-      "The foreshadow must be an action, sentence, object, mismatch, record, scent, document, scar, mark, message, or reaction that can physically reappear in chapter 5.",
+      `The foreshadow must be an action, sentence, object, mismatch, record, scent, document, scar, mark, message, or reaction that can physically reappear in chapter ${K.foreshadowActivate}.`,
       "The chapter surface should still read as normal social, romantic, institutional, or family drama.",
     ],
-    summaryMemoryTags: ["FORESHADOW_CH2", "PUBLIC_EXPECTATION"],
+    summaryMemoryTags: ["FORESHADOW_CH3", "PUBLIC_EXPECTATION"],
   },
   {
-    chapterNumber: 3,
+    chapterNumber: 4,
     arc: "escalation",
     functionName: "commitment_false_safety",
     wordCountTarget: 2500,
@@ -108,7 +161,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["COMMITMENT_EVENT", "OMINOUS_CLOSING"],
   },
   {
-    chapterNumber: 4,
+    chapterNumber: 5,
     arc: "escalation",
     functionName: "public_pressure_rival_force",
     wordCountTarget: 2600,
@@ -134,7 +187,33 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["FIRST_REAL_PRESSURE", "RIVAL_FORCE"],
   },
   {
-    chapterNumber: 5,
+    chapterNumber: 6,
+    arc: "escalation",
+    functionName: "tightening_loss_and_isolation",
+    wordCountTarget: 2600,
+    wordCountRange: [2500, 2800],
+    intensity: 0.8,
+    dialogueRatio: 0.54,
+    hookType: "tension",
+    mandatoryElements: [
+      "the rival or status force tightens the trap with a second, concrete move",
+      "isolate the heroine from one source of support, information, or protection",
+      "raise the personal cost so the coming reveal will land harder",
+      "let the heroine win one small, deniable point so hope is not fully gone yet",
+    ],
+    forbiddenElements: [
+      "premature betrayal reveal",
+      "the heroine giving up",
+      "an outside rescuer solving the pressure",
+    ],
+    craftInstructions: [
+      "This is the bridge into the break arc: keep escalation moving with new information, not repeated humiliation.",
+      "Plant the practical reason the heroine cannot simply walk away before the betrayal lands.",
+    ],
+    summaryMemoryTags: ["TRAP_TIGHTENS", "SUPPORT_LOST"],
+  },
+  {
+    chapterNumber: 7,
     arc: "break",
     functionName: "betrayal_reveal_foreshadow_activation",
     wordCountTarget: 2700,
@@ -143,7 +222,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     dialogueRatio: 0.58,
     hookType: "revelation",
     mandatoryElements: [
-      "activate the chapter 2 foreshadow detail with a new meaning",
+      `activate the chapter ${K.foreshadowPlant} foreshadow detail with a new meaning`,
       "reveal the betrayal, replacement, rejection, frame-up, false diagnosis, stolen identity, forged document, or institutional trap",
       "force the heroine to understand that the harm was designed, not accidental",
       "end before full confrontation or revenge begins",
@@ -160,7 +239,33 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["FORESHADOW_ACTIVATED", "BETRAYAL_REVEAL"],
   },
   {
-    chapterNumber: 6,
+    chapterNumber: 8,
+    arc: "break",
+    functionName: "false_hope_and_complication",
+    wordCountTarget: 2500,
+    wordCountRange: [2400, 2700],
+    intensity: 0.74,
+    dialogueRatio: 0.52,
+    hookType: "irony",
+    mandatoryElements: [
+      "the heroine reaches for one obvious fix and it partly works, then curdles",
+      "complicate the betrayal with a new fact that raises the cost of fighting back",
+      "let a moment of false hope make the coming nadir hurt more",
+      "keep the heroine acting, even if her move is incomplete or misread",
+    ],
+    forbiddenElements: [
+      "a clean win that defuses the betrayal",
+      "the heroine becoming passive or only grieving",
+      "an outside party fixing the problem",
+    ],
+    craftInstructions: [
+      "This is the controlled breath between the reveal and the nadir; it must add information, not stall.",
+      "Avoid a third straight maximum-intensity chapter; let the dread build through quiet wrongness.",
+    ],
+    summaryMemoryTags: ["FALSE_HOPE", "COST_RAISED"],
+  },
+  {
+    chapterNumber: 9,
     arc: "break",
     functionName: "no_rescue_nadir",
     wordCountTarget: 2700,
@@ -186,12 +291,12 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["NO_RESCUE_NADIR", "OLD_STRATEGY_FAILS"],
   },
   {
-    chapterNumber: 7,
+    chapterNumber: 10,
     arc: "pivot",
     functionName: "internal_pivot_private_choice",
     wordCountTarget: 2400,
     wordCountRange: [2300, 2600],
-    intensity: 0.68,
+    intensity: 0.66,
     dialogueRatio: 0.42,
     hookType: "curiosity",
     mandatoryElements: [
@@ -213,12 +318,12 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["INTERNAL_PIVOT", "PRIVATE_CHOICE"],
   },
   {
-    chapterNumber: 8,
+    chapterNumber: 11,
     arc: "rise",
     functionName: "countermove_evidence_gathering",
     wordCountTarget: 2600,
     wordCountRange: [2500, 2800],
-    intensity: 0.82,
+    intensity: 0.8,
     dialogueRatio: 0.55,
     hookType: "tension",
     mandatoryElements: [
@@ -239,7 +344,59 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["COUNTERMOVE", "EVIDENCE_GATHERED"],
   },
   {
-    chapterNumber: 9,
+    chapterNumber: 12,
+    arc: "rise",
+    functionName: "alliance_and_leverage_build",
+    wordCountTarget: 2600,
+    wordCountRange: [2500, 2800],
+    intensity: 0.78,
+    dialogueRatio: 0.56,
+    hookType: "tension",
+    mandatoryElements: [
+      "the heroine secures one ally, witness, document, or access she could not reach before",
+      "the leverage from chapter 11 is tested and tightened, not just stored",
+      "the antagonist makes a confident move that will become their exposure",
+      "raise the risk of the heroine's plan so the public confrontation feels earned",
+    ],
+    forbiddenElements: [
+      "the plan succeeding without resistance",
+      "a new unrelated subplot that delays the climax",
+      "the ally taking over the heroine's agency",
+    ],
+    craftInstructions: [
+      "Keep the rise cumulative: every gain should cost something and narrow the path to one decisive room.",
+      "End pointing toward the public arena where the reveal will land.",
+    ],
+    summaryMemoryTags: ["ALLIANCE_SECURED", "LEVERAGE_TIGHTENED"],
+  },
+  {
+    chapterNumber: 13,
+    arc: "climax",
+    functionName: "pre_climax_public_setback",
+    wordCountTarget: 2700,
+    wordCountRange: [2600, 2900],
+    intensity: 0.86,
+    dialogueRatio: 0.6,
+    hookType: "tension",
+    mandatoryElements: [
+      "the heroine's plan meets a real, public setback that looks like defeat",
+      "the antagonist appears to win in front of witnesses",
+      "the heroine holds one piece of leverage back instead of spending it early",
+      "end on the threshold of the decisive confrontation",
+    ],
+    forbiddenElements: [
+      "the public reveal happening here",
+      "the setback being a cheap fake-out with no cost",
+      "the heroine losing agency to despair",
+    ],
+    craftInstructions: [
+      "This is the last pressure spike before the reveal; the apparent loss must be plausible and costly.",
+      "Withhold the decisive evidence so chapter 14 lands as a designed trap, not a coincidence.",
+    ],
+    summaryMemoryTags: ["PUBLIC_SETBACK", "LEVERAGE_WITHHELD"],
+  },
+  {
+    chapterNumber: 14,
     arc: "climax",
     functionName: "public_trap_confrontation",
     wordCountTarget: 2800,
@@ -265,12 +422,12 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
     summaryMemoryTags: ["PUBLIC_TRAP", "DECISIVE_TRUTH"],
   },
   {
-    chapterNumber: 10,
+    chapterNumber: 15,
     arc: "resolution",
     functionName: "climax_aftershock_new_equilibrium",
     wordCountTarget: 1900,
     wordCountRange: [1700, 2000],
-    intensity: 0.58,
+    intensity: 0.56,
     dialogueRatio: 0.4,
     hookType: "irony",
     mandatoryElements: [
@@ -306,15 +463,20 @@ const ARC_PROSE_PROFILES: Record<string, string> = {
 
 const PROMPT_TEMPLATE_STYLE_LOCKS: Record<number, string> = {
   1: "chapter 1 opens in-scene with niche pressure already active; no character biography, no encyclopedic worldbuilding.",
-  2: "chapter 2 plants one concrete detail for chapter 5 while deepening public expectation or romantic/status dependence.",
-  3: "chapter 3 gives false safety through an active choice and ends with an ominous detail that only later becomes clear.",
-  4: "chapter 4 makes pressure public and costly; the rival or status force wins by plausible rules, not cartoon villainy.",
-  5: "chapter 5 activates the chapter 2 detail and reveals designed betrayal without full revenge or a villain monologue.",
-  6: "chapter 6 is the no-rescue nadir; survival is allowed, victory is not.",
-  7: "chapter 7 is quiet pivot; the heroine makes a private irreversible choice and recovers one usable truth or tool.",
-  8: "chapter 8 builds the countermove through concrete evidence gathering and visible cost, not plan explanation.",
-  9: "chapter 9 is the public trap; evidence, timing, and rules expose the decisive truth while emotional outcome stays unfinished.",
-  10: "chapter 10 is a short aftershock under 2,000 words; no new plot thread, no second climax, and agency stays with the heroine.",
+  2: "chapter 2 deepens the central relationship and stakes with a fresh scene; it must not restate chapter 1's hook.",
+  3: `chapter ${K.foreshadowPlant} plants one concrete detail for chapter ${K.foreshadowActivate} while deepening public expectation or romantic/status dependence.`,
+  4: "chapter 4 gives false safety through an active choice and ends with an ominous detail that only later becomes clear.",
+  5: "chapter 5 makes pressure public and costly; the rival or status force wins by plausible rules, not cartoon villainy.",
+  6: "chapter 6 tightens the trap and isolates the heroine while leaving one deniable point of hope before the reveal.",
+  7: `chapter ${K.foreshadowActivate} activates the chapter ${K.foreshadowPlant} detail and reveals designed betrayal without full revenge or a villain monologue.`,
+  8: "chapter 8 offers false hope that curdles and complicates the betrayal; it adds information and avoids a third straight peak.",
+  9: `chapter ${K.nadir} is the no-rescue nadir; survival is allowed, victory is not.`,
+  10: `chapter ${K.pivot} is the quiet pivot; the heroine makes a private irreversible choice and recovers one usable truth or tool.`,
+  11: "chapter 11 builds the countermove through concrete evidence gathering and visible cost, not plan explanation.",
+  12: "chapter 12 secures an ally or leverage and tightens the plan toward one decisive public room.",
+  13: "chapter 13 is the pre-climax public setback; the antagonist seems to win while the heroine withholds her decisive leverage.",
+  14: `chapter ${K.publicReveal} is the public trap; evidence, timing, and rules expose the decisive truth while emotional outcome stays unfinished.`,
+  15: `chapter ${K.resolution} is a short aftershock under 2,000 words; no new plot thread, no second climax, and agency stays with the heroine.`,
 };
 
 function renderIntensityInstruction(intensity: number) {
@@ -377,8 +539,9 @@ export function getDrama15ChapterOperationalWordCountRange(chapterNumber: number
 export function renderDrama15ArchitectureOverview() {
   return [
     `Total architecture: ${DRAMA15_FIXED_CHAPTER_COUNT} chapters, about ${DRAMA15_TOTAL_TARGET_WORDS.toLocaleString("en-US")} words overall.`,
-    "Seven arcs: setup ch1-2, escalation ch3-4, break ch5-6, pivot ch7, rise ch8, public climax ch9, short resolution ch10.",
-    "Critical locks: ch2 plants a concrete foreshadow detail; ch5 activates it; ch6 is maximum loss with no rescue; ch7 is earned internal pivot; ch9 is public reveal; ch10 is short new equilibrium.",
+    "Seven arcs: setup ch1-3, escalation ch4-6, break ch7-9, pivot ch10, rise ch11-12, public climax ch13-14, short resolution ch15.",
+    `Critical locks: ch${K.foreshadowPlant} plants a concrete foreshadow detail; ch${K.foreshadowActivate} activates it; ch${K.nadir} is maximum loss with no rescue; ch${K.pivot} is earned internal pivot; ch${K.publicReveal} is public reveal; ch${K.resolution} is short new equilibrium.`,
+    "Mid-arc durability: chapters 6, 8, 12, and 13 must keep adding fresh pressure or information so the 15-chapter middle never stalls or repeats.",
     "Market inspiration policy: study FictionMe-style niche setup, pacing, stakes, and reader promises; never copy names, chapter events, scene sequence, proprietary twists, or exact plot.",
     `Invariant rules: ${DRAMA15_INVARIANT_RULES.join(" ")}`,
   ].join("\n");

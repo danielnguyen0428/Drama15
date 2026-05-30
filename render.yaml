@@ -37,7 +37,7 @@ services:
       - key: DEFAULT_STYLE_PRESET
         value: co_man_warm_modern_blueprint
       - key: DEFAULT_CHAPTER_COUNT
-        value: "10"
+        value: "15"
       - key: WRITE_EXPORT_FILES
         value: "false"
       - key: SUPABASE_URL

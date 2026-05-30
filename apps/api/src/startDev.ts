@@ -584,7 +584,7 @@ function normalizeOutlineRequest(config: z.infer<typeof StoryConfigSchema>): Nor
       ? { dramaBranch, stylePreset: config.stylePreset }
       : { stylePreset: config.stylePreset },
     settingSeed: config.seed || undefined,
-    chapterCount: 10,
+    chapterCount: 15,
   });
 }
 

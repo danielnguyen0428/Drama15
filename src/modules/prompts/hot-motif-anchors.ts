@@ -292,6 +292,12 @@ export const HOT_MOTIF_ANCHORS = {
     "Runaway Bride Bought The Chapel Back",
     "Her Revenge Marriage Exposed The Affair",
     "The Mistress Lost The Prenup War",
+    "He Called Surveillance Love Until She Read The Vows Aloud",
+    "Possessive Husband Lost The Day She Filed Quietly",
+    "He Married Her For Revenge And Fell Too Late",
+    "Obsessive Ex Reframed Control As Devotion",
+    "The Prenup Clause He Used To Cage Her Set Her Free",
+    "She Named The Control Out Loud At The Altar",
   ],
   single_mom_poor_woman_comeback: [
     "Single Mom Mocked At The School Fee Office",
