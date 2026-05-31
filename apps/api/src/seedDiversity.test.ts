@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+// Resolve preset assets from the repo root regardless of the test runner's cwd,
+// mirroring how the API process sets these roots in startDev.ts.
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+process.env.DRAMA15_APP_ROOT ??= repoRoot;
+process.env.DRAMA15_ASSET_ROOT ??= repoRoot;
 
 import { buildStoryBiblePrompt } from '../../../src/modules/prompts/story-prompts.js';
 import { createSeedBlueprint, type SeedHistoryEntry } from '../../../src/modules/prompts/seed-blueprint.js';

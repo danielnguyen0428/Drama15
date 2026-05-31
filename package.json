@@ -9,7 +9,13 @@
     "dev:web": "npm --prefix apps/web run dev",
     "build:api": "npm --prefix apps/api run build",
     "build:web": "npm --prefix apps/web run build",
-    "build": "npm run build:api && npm run build:web"
+    "build": "npm run build:api && npm run build:web",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
+    "pm2:status": "pm2 status",
+    "pm2:logs": "pm2 logs",
+    "pm2:save": "pm2 save"
   },
   "engines": {
     "node": ">=20.10.0"

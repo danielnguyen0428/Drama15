@@ -48,3 +48,13 @@ services:
         sync: false
       - key: ADMIN_API_KEY
         sync: false
+      - key: WEB_PUBLIC_URL
+        value: https://drama.novelkit.cc
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: TELEGRAM_ENABLE_POLLING
+        value: "true"
+      - key: TELEGRAM_STATUS_INTERVAL_MS
+        value: "0"

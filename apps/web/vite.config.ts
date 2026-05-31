@@ -10,6 +10,9 @@ export default defineConfig({
     strictPort: false,
     proxy: {
       '/healthz': { target: API_TARGET, changeOrigin: true },
+      '/auth': { target: API_TARGET, changeOrigin: true },
+      '/admin': { target: API_TARGET, changeOrigin: true },
+      '/status': { target: API_TARGET, changeOrigin: true },
       '/story': { target: API_TARGET, changeOrigin: true },
       '/stories': { target: API_TARGET, changeOrigin: true },
     },

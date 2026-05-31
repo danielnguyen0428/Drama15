@@ -9,6 +9,7 @@ import {
   resolveStoryQuotaLimit,
   type UserTier,
 } from '../../../src/modules/auth/quota.js';
+import { notifyNewUser } from './telegramBot.js';
 
 export type AuthenticatedUser = {
   id: string;
@@ -68,6 +69,22 @@ export async function syncUserProfile(user: User): Promise<AuthenticatedUser> {
   const displayName = readMetadataString(user, 'full_name') || readMetadataString(user, 'name') || email;
   const avatarUrl = readMetadataString(user, 'avatar_url') || readMetadataString(user, 'picture') || undefined;
 
+  // Detect whether this profile already exists so we only notify on genuinely
+  // new registrations (the upsert below can't distinguish insert vs update).
+  let isNewUser = false;
+  try {
+    const { data: existing } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+    isNewUser = !existing;
+  } catch {
+    // If the existence check fails, fall back to not notifying rather than
+    // risking a false "new user" alert.
+    isNewUser = false;
+  }
+
   const { data, error } = await supabase
     .from('user_profiles')
     .upsert({
@@ -84,13 +101,25 @@ export async function syncUserProfile(user: User): Promise<AuthenticatedUser> {
     throw error ?? new Error('Profile sync failed.');
   }
 
-  return {
+  const profile: AuthenticatedUser = {
     id: String(data.id),
     email: String(data.email ?? email),
     displayName: String(data.display_name ?? displayName),
     avatarUrl: typeof data.avatar_url === 'string' ? data.avatar_url : undefined,
     tier: parseUserTier(String(data.tier ?? 'free')),
   };
+
+  if (isNewUser) {
+    // Fire-and-forget: a Telegram outage must not break login.
+    void notifyNewUser({
+      id: profile.id,
+      email: profile.email,
+      displayName: profile.displayName,
+      tier: profile.tier,
+    });
+  }
+
+  return profile;
 }
 
 export async function getQuotaSnapshot(user: AuthenticatedUser): Promise<QuotaSnapshot> {
