@@ -65,7 +65,22 @@ export const LOCAL_PROSE_POLISH_CONFIG: LocalProsePolishConfig = {
 };
 
 export function getLocalProsePolishConfig(): LocalProsePolishConfig {
-  return JSON.parse(JSON.stringify(LOCAL_PROSE_POLISH_CONFIG)) as LocalProsePolishConfig;
+  const config = JSON.parse(JSON.stringify(LOCAL_PROSE_POLISH_CONFIG)) as LocalProsePolishConfig;
+  // A1: the chapter post-process humanizer is a second full-length model pass
+  // per chapter that roughly doubles chapter latency. Keep it off unless
+  // CHAPTER_POST_PROCESS_ENABLED=true. Inline-prompt prose polish (applyTo) and
+  // post-process for shorter targets (settingSeed) are unaffected.
+  if (!chapterPostProcessEnabledFromEnv()) {
+    config.postProcess.applyTo.chapter = false;
+    config.postProcess.applyTo.regenerate = false;
+  }
+  return config;
+}
+
+function chapterPostProcessEnabledFromEnv(): boolean {
+  // Read directly from process.env to avoid coupling this preset module to the
+  // server env loader (and to stay usable in tests/tools without env setup).
+  return process.env.CHAPTER_POST_PROCESS_ENABLED === "true";
 }
 
 export function renderProsePolishInstructions(
