@@ -12,6 +12,7 @@
 import type { RouterClient } from "../router/router-client";
 import type { StoryBible } from "./pipeline-types";
 import type { CharacterMemoryStore } from "./character-memory-store";
+import { AUXILIARY_ANALYSIS_MODEL } from "./character-fact-extractor";
 
 export const TEMPERATURE_VALIDATION = 0.1;
 
@@ -142,7 +143,7 @@ export async function validateConsistency(
 
   try {
     const result = await routerClient.generateJson<unknown>({
-      model: "gpt-4o-mini",
+      model: AUXILIARY_ANALYSIS_MODEL,
       systemPrompt,
       userPrompt,
       temperature: TEMPERATURE_VALIDATION,
