@@ -627,7 +627,7 @@ export function StoryWorkspace(): JSX.Element {
           <label>Giọng kể<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
           <label>Ngôn ngữ bản thảo<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <Range label="Cường độ cảm xúc" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
-          <Range label="Tỷ lệ thoại" value={config.dialogueRatio} onChange={(value) => updateConfig('dialogueRatio', value)} />
+          <Range label="Tỷ lệ thoại" value={config.dialogueRatio} min={0.2} max={0.85} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label="Mật độ móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
           <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý kịch bản</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
         </aside>
@@ -724,8 +724,8 @@ function PanelHeading({ label, value }: { label: string; value: string }) {
   return <div className="panel-heading"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function Range({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return <label className="range-row"><span>{label}</span><input type="range" min="0" max="1" step="0.01" value={value} onChange={(event) => onChange(Number(event.target.value))} /><strong>{Math.round(value * 100)}</strong></label>;
+function Range({ label, value, onChange, min = 0, max = 1, step = 0.01 }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number }) {
+  return <label className="range-row"><span>{label}</span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /><strong>{Math.round(value * 100)}</strong></label>;
 }
 
 function postJson(value: unknown): RequestInit {
