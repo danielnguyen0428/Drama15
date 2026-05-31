@@ -15,6 +15,12 @@ import type { CharacterFactSheet } from "./character-memory-store";
 export const TEMPERATURE_FACT_EXTRACTION = 0.2;
 export const TEMPERATURE_FACT_EXTRACTION_RETRY = 0.1;
 
+// Fast, cheap model for auxiliary analysis (fact extraction / consistency).
+// Must be a model the configured router actually serves. The previous value
+// "gpt-4o-mini" does not exist on the 9router and always 404'd, silently
+// disabling LLM fact extraction (it fell back to regex).
+export const AUXILIARY_ANALYSIS_MODEL = "cx/gpt-5.4-mini";
+
 const COMMON_NON_NAME_WORDS = new Set([
   "The", "When", "Chapter", "And", "But", "Then", "Now", "Not",
   "She", "He", "It", "They", "His", "Her", "Their", "This", "That",
@@ -100,7 +106,7 @@ export async function extractCharacterFacts(
 
   try {
     const result = await routerClient.generateJson<unknown>({
-      model: storyBible.heroine.name ? "gpt-4o-mini" : "gpt-4o-mini",
+      model: AUXILIARY_ANALYSIS_MODEL,
       systemPrompt,
       userPrompt,
       temperature: TEMPERATURE_FACT_EXTRACTION,
