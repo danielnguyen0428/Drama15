@@ -22,7 +22,7 @@ test('relationship graph normalization tolerates missing edges from stored rows'
   });
 
   assert.deepEqual(graph?.edges, []);
-  assert.equal(graph?.nodes[0].name, 'Lan Anh');
+  assert.equal(graph?.nodes[0]?.name, 'Lan Anh');
 });
 
 test('relationship graph normalization returns undefined for invalid graph payloads', () => {
