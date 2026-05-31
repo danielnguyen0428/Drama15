@@ -144,7 +144,7 @@ export const StoryBibleSchema = z.object({
 });
 
 export const ChapterPlanItemSchema = z.object({
-  chapterNumber: z.number().int().min(1).max(10),
+  chapterNumber: z.number().int().min(1).max(15),
   title: z.string().min(1),
   hook: z.string().min(1),
   mainBeat: z.string().min(1),
@@ -155,7 +155,7 @@ export const ChapterPlanItemSchema = z.object({
 
 export const ChapterSchema = z
   .object({
-    chapterNumber: z.number().int().min(1).max(10),
+    chapterNumber: z.number().int().min(1).max(15),
     title: z.string().min(1),
     summary: z.string().min(1).optional(),
     text: z.string().min(1),
@@ -166,7 +166,7 @@ export const ChapterSchema = z
   }));
 
 export const ChapterStateSchema = z.object({
-  chapter: z.number().int().min(1).max(10),
+  chapter: z.number().int().min(1).max(15),
   heroineAgency: z.number().int().min(0).max(100),
   emotionalTemperature: z.string().optional(),
 });
@@ -193,7 +193,7 @@ export const RelationshipEdgeSchema = z.object({
   target: z.string().min(1),
   label: z.string().min(1),
   type: z.string().min(1),
-  chapterNumber: z.number().int().min(1).max(10).optional(),
+  chapterNumber: z.number().int().min(1).max(15).optional(),
   confidence: z.enum(["explicit", "inferred"]),
 });
 
@@ -229,7 +229,7 @@ export const StoryPayloadSchema = z.object({
   }),
   concept: ConceptSchema,
   storyBible: StoryBibleSchema,
-  chapterPlan: z.array(ChapterPlanItemSchema).length(10),
+  chapterPlan: z.array(ChapterPlanItemSchema).length(15),
   chapters: z.array(ChapterSchema).default([]),
   continuityLite: ContinuityLiteSchema,
   relationshipGraph: RelationshipGraphSchema.optional(),
@@ -252,8 +252,8 @@ export const GenerateChapterRequestSchema = z
     title: z.string().min(1).optional(),
     outputLanguage: OutputLanguageSchema.optional(),
     storyBible: StoryBibleSchema,
-    chapterPlan: z.array(ChapterPlanItemSchema).length(10),
-    chapterNumber: z.number().int().min(1).max(10),
+    chapterPlan: z.array(ChapterPlanItemSchema).length(15),
+    chapterNumber: z.number().int().min(1).max(15),
     previousChapterSummaries: z.array(z.string().min(1)).default([]),
     draftControls: DraftControlsSchema.optional(),
     stylePreset: z.string().trim().min(1).optional(),
@@ -293,7 +293,7 @@ export const PreserveConstraintsSchema = z.object({
 
 export const RegenerateChapterRequestSchema = z.object({
   storyPayload: StoryPayloadSchema,
-  targetChapter: z.number().int().min(1).max(10),
+  targetChapter: z.number().int().min(1).max(15),
   mode: RegenerateModeSchema,
   instruction: z.string().trim().min(1),
   preserveConstraints: PreserveConstraintsSchema.default({
