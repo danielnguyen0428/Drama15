@@ -162,6 +162,8 @@ export function StoryWorkspace(): JSX.Element {
   const [storyTitle, setStoryTitle] = useState('Truyện chưa đặt tên');
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState('');
+  const [stageStartedAt, setStageStartedAt] = useState<number | null>(null);
+  const [stageElapsed, setStageElapsed] = useState(0);
   const [result, setResult] = useState<StoryResult>(EMPTY_RESULT);
   const [activeChapter, setActiveChapter] = useState(1);
   const [panel, setPanel] = useState<Panel>('chapters');
@@ -207,6 +209,18 @@ export function StoryWorkspace(): JSX.Element {
       ? `Đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay.`
       : `Còn ${setupSuggestionQuota.remaining}/${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay.`
     : FREE_SETUP_SUGGESTION_QUOTA_COPY;
+
+  useEffect(() => {
+    if (!busy) {
+      setStageElapsed(0);
+      return;
+    }
+    const startedAt = stageStartedAt ?? Date.now();
+    const tick = () => setStageElapsed(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [busy, stageStartedAt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -354,6 +368,7 @@ export function StoryWorkspace(): JSX.Element {
     setPhase('creating');
     setError(null);
     setProgress(0);
+    setStageStartedAt(Date.now());
     setProgressLabel('Đang mở phiên viết...');
     setResult(EMPTY_RESULT);
     setActiveChapter(1);
@@ -411,7 +426,11 @@ export function StoryWorkspace(): JSX.Element {
     if (payload.stage === 'progress') {
       const total = Math.max(payload.total ?? 1, 1);
       setProgress(Math.round(((payload.current ?? 0) / total) * 100));
-      setProgressLabel(payload.detail || payload.label || 'Đang xử lý...');
+      const nextLabel = payload.detail || payload.label || 'Đang xử lý...';
+      setProgressLabel((current) => {
+        if (current !== nextLabel) setStageStartedAt(Date.now());
+        return nextLabel;
+      });
       return;
     }
     if (payload.stage === 'overview') {
@@ -571,7 +590,7 @@ export function StoryWorkspace(): JSX.Element {
         </div>
         <aside className="status-card">
           <span>{PHASE_LABELS[phase]}</span>
-          <small className="loading-action">{progressLabel}</small>
+          <small className="loading-action">{progressLabel}{busy && stageElapsed >= 3 ? ` · ${formatElapsed(stageElapsed)}` : ''}</small>
           <LoadingAnimation active={busy} />
           <div className="progress-row"><strong>{progress}%</strong><div className="progress-track"><i style={{ width: `${progress}%` }} /></div></div>
         </aside>
@@ -741,6 +760,12 @@ function buildMarkdown(title: string, result: StoryResult) {
 
 function slugify(value: string) {
   return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'novelkit-story';
+}
+
+function formatElapsed(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}p${s.toString().padStart(2, '0')}` : `${s}s`;
 }
 
 async function readError(response: Response) {

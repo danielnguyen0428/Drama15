@@ -342,8 +342,18 @@ app.get('/stories/:id/stream', async (request, reply) => {
     write(payload);
   }
 
+  // SSE heartbeat: chapter drafting can take minutes with no events, and idle
+  // connections get dropped by Cloudflare/Render proxies (seen as "stream
+  // disconnected"). A periodic comment line keeps the socket warm. EventSource
+  // ignores comment lines (those starting with ":"), so this is invisible to
+  // the client's onmessage handler.
+  const heartbeat = setInterval(() => {
+    reply.raw.write(`: ping ${Date.now()}\n\n`);
+  }, 15_000);
+
   job.clients.add(write);
   request.raw.on('close', () => {
+    clearInterval(heartbeat);
     job.clients.delete(write);
   });
 
