@@ -62,3 +62,36 @@ Open the Vite URL, usually `http://localhost:5174`.
 ```bash
 npm run build
 ```
+
+## Telegram Status Bot
+
+The API can push system status and new-user alerts to Telegram (bot `@meowzerobot`).
+
+Configure these env vars on the API service:
+
+```bash
+TELEGRAM_BOT_TOKEN=8317007470:...        # from @BotFather
+TELEGRAM_CHAT_ID=                         # target chat/group id
+TELEGRAM_ENABLE_POLLING=true              # answer /status, /ping, /chatid commands
+TELEGRAM_STATUS_INTERVAL_MS=0             # >0 to broadcast status on a schedule (ms)
+WEB_PUBLIC_URL=https://drama.novelkit.cc  # URL pinged for the "Web" check
+```
+
+First-time setup: leave `TELEGRAM_CHAT_ID` empty, start the API, then send any
+message to the bot. It replies with your chat ID — paste that into
+`TELEGRAM_CHAT_ID` and restart to enable notifications.
+
+What it reports:
+
+- Connection status for API, Web, 9Router, and Supabase (`/status` command, or
+  admin-guarded `GET /status` endpoint).
+- A `🎉` alert whenever a new user registers (hooked into profile creation).
+- A status message on API startup.
+
+Admin endpoints (require the `x-admin-api-key` header):
+
+- `GET /status` — returns the status report as JSON.
+- `POST /admin/telegram/status` — pushes the status report to Telegram now.
+
+Bot commands (only answered in the configured chat): `/status`, `/ping`,
+`/chatid`, `/help`.

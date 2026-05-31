@@ -19,6 +19,12 @@ import {
   requireUser,
 } from './supabaseServer.js';
 import { StoryStore } from './storyStore.js';
+import {
+  buildStatusReport,
+  sendStatusReport,
+  startTelegramBot,
+  stopTelegramBot,
+} from './telegramBot.js';
 import type {
   Chapter,
   NormalizedFullGenerateRequest,
@@ -88,15 +94,15 @@ const StoryConfigSchema = z.object({
   outputLanguage: z
     .enum(['english', 'vietnamese', 'japanese', 'korean', 'portuguese', 'spanish'])
     .default('vietnamese'),
-  intensity: z.coerce.number().min(0).max(1).default(0.84),
-  dialogueRatio: z.coerce.number().min(0.2).max(0.85).default(0.56),
-  hookDensity: z.coerce.number().min(0).max(1).default(0.67),
+  intensity: z.coerce.number().min(0).max(1).catch(0.84).default(0.84),
+  dialogueRatio: z.coerce.number().min(0.2).max(0.85).catch(0.56).default(0.56),
+  hookDensity: z.coerce.number().min(0).max(1).catch(0.67).default(0.67),
   stylePreset: z.string().trim().min(1).default(env.defaultStylePreset),
   storyControls: StoryControlsSchema.optional(),
 });
 
 const RewriteBodySchema = z.object({
-  chapterIndex: z.coerce.number().int().min(1).max(10),
+  chapterIndex: z.coerce.number().int().min(1).max(15),
   mode: z.string().trim().min(1).default('full_chapter'),
   instruction: z.string().trim().min(1),
 });
@@ -145,6 +151,29 @@ app.get('/healthz', async () => ({
   service: 'drama15-local-api',
   routerBaseUrl: env.routerBaseUrl,
 }));
+
+app.get('/status', async (request, reply) => {
+  if (!isAdminRequest(request)) {
+    return reply.code(401).send({ error: { code: 'unauthorized', message: 'Admin API key không hợp lệ.' } });
+  }
+  try {
+    return reply.send(await buildStatusReport());
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.post('/admin/telegram/status', async (request, reply) => {
+  if (!isAdminRequest(request)) {
+    return reply.code(401).send({ error: { code: 'unauthorized', message: 'Admin API key không hợp lệ.' } });
+  }
+  try {
+    const report = await sendStatusReport(request.log);
+    return reply.send({ sent: true, report });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
 
 app.get('/story/style-presets', async (_request, reply) => {
   try {
@@ -702,9 +731,19 @@ async function start() {
 
   await app.listen({ port: env.port, host: env.host });
   app.log.info(`Drama15 API listening on http://${env.host}:${env.port}`);
+
+  startTelegramBot(app.log);
+  // Announce that the API just came online (no-op if Telegram is unconfigured).
+  void sendStatusReport(app.log);
 }
 
 process.on('SIGINT', () => {
+  stopTelegramBot();
+  void app.close().finally(() => process.exit(0));
+});
+
+process.on('SIGTERM', () => {
+  stopTelegramBot();
   void app.close().finally(() => process.exit(0));
 });
 

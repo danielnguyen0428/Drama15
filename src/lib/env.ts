@@ -42,6 +42,11 @@ const EnvSchema = z.object({
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   ADMIN_API_KEY: z.string().optional(),
+  WEB_PUBLIC_URL: z.string().url().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+  TELEGRAM_ENABLE_POLLING: z.string().optional().transform((value) => value !== "false"),
+  TELEGRAM_STATUS_INTERVAL_MS: z.coerce.number().int().min(0).default(0),
 });
 
 const parsedEnv = EnvSchema.parse(process.env);
@@ -68,6 +73,11 @@ export const env = {
   supabaseAnonKey: parsedEnv.SUPABASE_ANON_KEY,
   supabaseServiceRoleKey: parsedEnv.SUPABASE_SERVICE_ROLE_KEY,
   adminApiKey: parsedEnv.ADMIN_API_KEY,
+  webPublicUrl: parsedEnv.WEB_PUBLIC_URL?.replace(/\/+$/, ""),
+  telegramBotToken: parsedEnv.TELEGRAM_BOT_TOKEN,
+  telegramChatId: parsedEnv.TELEGRAM_CHAT_ID,
+  telegramEnablePolling: parsedEnv.TELEGRAM_ENABLE_POLLING,
+  telegramStatusIntervalMs: parsedEnv.TELEGRAM_STATUS_INTERVAL_MS,
 } as const;
 
 function resolveOutputDir(value: string | undefined) {
