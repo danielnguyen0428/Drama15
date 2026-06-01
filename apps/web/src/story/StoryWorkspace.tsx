@@ -382,7 +382,7 @@ export function StoryWorkspace(): JSX.Element {
     setProgressLabel('Đang mở phiên viết...');
     setResult(EMPTY_RESULT);
     setActiveChapter(1);
-    setPanel('chapters');
+    setPanel('overview');
     setStoryTitle(config.title || 'Truyện chưa đặt tên');
     try {
       const response = await httpFetch('/stories', postJson(config));

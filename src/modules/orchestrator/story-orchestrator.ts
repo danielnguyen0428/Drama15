@@ -410,6 +410,34 @@ export class StoryOrchestrator {
     // Reset phrase reuse index for this generation run
     resetPhraseReuseIndex();
 
+    // Phát outline (ý tưởng, dàn ý, hồ sơ) ngay sau khi dựng xong để studio
+    // hiển thị trước khi chương đầu tiên được viết.
+    const outlineStoryPayload = StoryPayloadSchema.parse({
+      ...outline,
+      request: {
+        ...outline.request,
+        draftControls: request.draftControls,
+      },
+      chapters: [],
+      relationshipGraph,
+      meta: {
+        ...outline.meta,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+    emitProgress(
+      progress,
+      5,
+      {
+        id: "stream-outline",
+        label: "Chuẩn bị bản thảo",
+        detail: "Đang gửi ý tưởng, dàn ý và hồ sơ tới studio.",
+      },
+      "completed",
+      "Đã gửi ý tưởng, dàn ý và hồ sơ tới studio.",
+      { storyPayload: outlineStoryPayload },
+    );
+
     for (const chapterPlanItem of outline.chapterPlan) {
       const chapterStage = {
         id: `chapter-${chapterPlanItem.chapterNumber}`,

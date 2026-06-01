@@ -576,8 +576,8 @@ function emitStoryPayload(
       title: storyPayload.title,
       concept: formatConcept(storyPayload),
     });
-    broadcast(job, { stage: 'bible', bible: storyPayload.storyBible });
     broadcast(job, { stage: 'plan', plan: formatPlan(storyPayload) });
+    broadcast(job, { stage: 'bible', bible: storyPayload.storyBible });
     broadcast(job, { stage: 'relationshipGraph', relationshipGraph: storyPayload.relationshipGraph });
   }
 
