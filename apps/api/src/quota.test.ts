@@ -10,10 +10,10 @@ test('story quota limits follow user tier', () => {
   assert.equal(resolveStoryQuotaLimit(undefined), 1);
 });
 
-test('setup suggestion quota only limits free users', () => {
+test('setup suggestion quota limits free and pro users, premium stays unlimited', () => {
   assert.equal(resolveSetupSuggestionQuotaLimit('free'), 10);
   assert.equal(resolveSetupSuggestionQuotaLimit(undefined), 10);
-  assert.equal(resolveSetupSuggestionQuotaLimit('pro'), null);
+  assert.equal(resolveSetupSuggestionQuotaLimit('pro'), 10);
   assert.equal(resolveSetupSuggestionQuotaLimit('premium'), null);
 });
 

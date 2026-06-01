@@ -79,6 +79,9 @@ type StreamEvent = {
 
 const API_BASE = getApiBaseUrl();
 const FREE_SETUP_SUGGESTION_QUOTA_COPY = 'Free: 10 lượt gợi ý kịch bản/ngày.';
+// Bump the version string to re-show the beta notice to everyone after an update.
+const BETA_NOTICE_VERSION = '2026-06-01';
+const BETA_NOTICE_DISMISS_KEY = 'drama15:beta-notice';
 const EMPTY_RESULT: StoryResult = { concept: '', plan: '', chapters: [] };
 const DEFAULT_CONFIG: StoryConfig = {
   niche: 'billionaire_rich_poor_romance',
@@ -180,6 +183,19 @@ export function StoryWorkspace(): JSX.Element {
   const streamRef = useRef<EventSource | null>(null);
   const storyPanelRef = useRef<HTMLElement | null>(null);
   const [storyPanelFocused, setStoryPanelFocused] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.localStorage.getItem(BETA_NOTICE_DISMISS_KEY) !== BETA_NOTICE_VERSION;
+  });
+
+  const dismissNotice = useCallback(() => {
+    setNoticeOpen(false);
+    try {
+      window.localStorage.setItem(BETA_NOTICE_DISMISS_KEY, BETA_NOTICE_VERSION);
+    } catch {
+      // Ignore storage failures (private mode); the modal simply reappears next load.
+    }
+  }, []);
 
   const focusStoryPanel = useCallback(() => {
     setStoryPanelFocused(true);
@@ -596,6 +612,26 @@ export function StoryWorkspace(): JSX.Element {
 
   return (
     <main className="workspace-shell">
+      {noticeOpen && (
+        <div className="notice-overlay" role="presentation" onClick={dismissNotice}>
+          <div
+            className="notice-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="beta-notice-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="beta-notice-title">Thông báo thử nghiệm</h2>
+            <p>
+              Hệ thống đang mở cửa thử nghiệm nên còn 1 số trục trặc kỹ thuật về kết nối API AI.
+              Mong anh em thông cảm. Mình đang tìm phương án sử dụng Model AI khác ổn định hơn.
+            </p>
+            <button type="button" className="primary-button" onClick={dismissNotice}>
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
       <header className="workspace-header">
         <div className="studio-title-block">
           <div className="studio-kicker"><span>NovelKit Studio</span><i>Bản thảo 15 chương</i></div>

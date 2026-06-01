@@ -6,14 +6,22 @@ export const STORY_QUOTA_BY_TIER: Record<UserTier, number> = {
   premium: 5,
 };
 
-export const FREE_SETUP_SUGGESTION_QUOTA = 10;
+// Daily setup-suggestion quota per tier. `null` means unlimited.
+export const SETUP_SUGGESTION_QUOTA_BY_TIER: Record<UserTier, number | null> = {
+  free: 10,
+  pro: 10,
+  premium: null,
+};
+
+// Backwards-compatible alias for the free-tier setup suggestion quota.
+export const FREE_SETUP_SUGGESTION_QUOTA = SETUP_SUGGESTION_QUOTA_BY_TIER.free ?? 10;
 
 export function resolveStoryQuotaLimit(tier: string | undefined): number {
   return STORY_QUOTA_BY_TIER[parseUserTier(tier)];
 }
 
 export function resolveSetupSuggestionQuotaLimit(tier: string | undefined): number | null {
-  return parseUserTier(tier) === "free" ? FREE_SETUP_SUGGESTION_QUOTA : null;
+  return SETUP_SUGGESTION_QUOTA_BY_TIER[parseUserTier(tier)];
 }
 
 export function parseUserTier(value: string | undefined): UserTier {

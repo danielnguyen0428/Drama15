@@ -93,6 +93,9 @@ export async function syncUserProfile(user: User): Promise<AuthenticatedUser> {
       display_name: displayName,
       avatar_url: avatarUrl,
       updated_at: new Date().toISOString(),
+      // New registrations start on the Pro tier. Existing profiles keep their
+      // current tier because we only set it on genuinely new inserts.
+      ...(isNewUser ? { tier: 'pro' as UserTier } : {}),
     }, { onConflict: 'id' })
     .select('id,email,display_name,avatar_url,tier')
     .single();
