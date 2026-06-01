@@ -535,6 +535,28 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .empty-state { display: grid; min-height: 240px; place-items: center; color: var(--soft-muted); text-align: center; line-height: 1.6; font-family: var(--read); font-style: italic; font-size: 16px; }
 .empty-state.compact { min-height: 88px; font-size: 13px; font-style: normal; font-family: inherit; }
 
+/* ---- Reader loading (cat animation) ------------------------------------ */
+.reader-loading {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+}
+.reader-loading .loading-lottie {
+  width: min(320px, 70%);
+  opacity: 1;
+}
+.reader-loading p {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--read);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
 /* ---- Relationships ----------------------------------------------------- */
 .relationship-panel {
   min-height: 560px;
