@@ -19,7 +19,8 @@
     "test:seed-blueprint": "tsx --test src/seedBlueprintFictionMeSignals.test.ts",
     "test:story-title": "tsx --test src/storyTitleResolution.test.ts",
     "test:style-blueprints": "tsx --test src/styleBlueprintPresets.test.ts",
-    "test:web-csp": "tsx --test src/webCsp.test.ts"
+    "test:web-csp": "tsx --test src/webCsp.test.ts",
+    "test:concept-name-alignment": "tsx --test src/conceptNameAlignment.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

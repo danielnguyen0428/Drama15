@@ -10,7 +10,13 @@
  * 3. Enforce ONE consistent naming register per story: every named character
  *    must come from the same register. Do not mix modern-Vietnamese names with
  *    Sino-Vietnamese transcribed names inside a single story.
+ * 4. Match names to the story's output language: an English story uses English
+ *    names, a Japanese story uses Japanese names, and so on. Vietnamese stories
+ *    keep the richer modern / Sino-Vietnamese register policy below.
  */
+
+import type { OutputLanguage } from "../../types/story";
+
 
 /** Modern Vietnamese given names, deliberately wide to reduce collisions. */
 export const VIETNAMESE_GIVEN_NAME_POOL = [
@@ -45,13 +51,59 @@ export const BANNED_OVERUSED_MIDDLE_NAMES = [
 ];
 
 /**
+ * Guidance for matching character names to a non-Vietnamese output language.
+ * Keeps names culturally native to the language the story is written in.
+ */
+const LANGUAGE_NAMING_GUIDANCE: Partial<Record<OutputLanguage, string>> = {
+  english: "Use natural English (Anglophone) full names, e.g. Hannah Caldwell, Ethan Brooks, Vivian Ashford. Western given name + surname.",
+  japanese: "Use natural Japanese full names written in the order family name then given name, e.g. Sasaki Aoi, Takeda Ren, Fujimoto Misaki. Prefer kana/kanji-style romaji, not Western names.",
+  korean: "Use natural Korean full names written family name first, e.g. Seo Yujin, Kang Doyun, Han Sora. Use authentic Korean surnames (Kim, Lee, Park, Seo, Kang, Han, Jung).",
+  portuguese: "Use natural Brazilian/Portuguese full names, e.g. Mariana Albuquerque, Rafael Teixeira, Beatriz Fonseca. Given name + Lusophone surname.",
+  spanish: "Use natural Spanish/Latin-American full names, e.g. Valentina Ríos, Mateo Herrera, Camila Vargas. Given name + Hispanic surname.",
+};
+
+/**
+ * Render a compact naming policy for stories written in a non-Vietnamese
+ * language: names must be native to that language and stay consistent.
+ */
+function renderLanguageNamingPolicy(
+  outputLanguage: OutputLanguage,
+  recentCharacterNamesBlock?: string,
+): string {
+  const guidance = LANGUAGE_NAMING_GUIDANCE[outputLanguage] ?? "Use full names that are culturally native to the story's output language.";
+  const lines = [
+    "CHARACTER NAMING POLICY (hard constraint for heroine, betrayer, rival, and EVERY supporting character with a name):",
+    "1. LANGUAGE MATCH: The story is written in a non-Vietnamese language, so every character name MUST be native to that language. Do NOT use Vietnamese or Sino-Vietnamese names.",
+    `2. ${guidance}`,
+    "3. Use a fresh, distinct full name for every named character; no two characters share a given name or sound confusingly similar.",
+    "4. Keep one consistent cultural register for the whole cast; do not mix names from different cultures inside one story.",
+    "5. Keep the chosen names consistent across all chapters, the relationship graph, and any later rewrite.",
+  ];
+
+  if (recentCharacterNamesBlock && recentCharacterNamesBlock.trim()) {
+    lines.push(recentCharacterNamesBlock.trim());
+  }
+
+  return lines.join("\n");
+}
+
+/**
  * Render the full character naming policy block for a story bible prompt.
  *
  * @param recentCharacterNamesBlock Optional pre-rendered "recent names to
  *        avoid" block (from renderRecentCharacterNamesForPrompt). Included at
  *        the end when present.
+ * @param outputLanguage Story output language. When non-Vietnamese, names must
+ *        match that language instead of using the Vietnamese register policy.
  */
-export function renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock?: string): string {
+export function renderCharacterNamingPolicyForPrompt(
+  recentCharacterNamesBlock?: string,
+  outputLanguage: OutputLanguage = "vietnamese",
+): string {
+  if (outputLanguage !== "vietnamese") {
+    return renderLanguageNamingPolicy(outputLanguage, recentCharacterNamesBlock);
+  }
+
   const lines = [
     "CHARACTER NAMING POLICY (hard constraint for heroine, betrayer, rival, and EVERY supporting character with a name):",
     "1. NAMING REGISTER LOCK: Before naming anyone, silently choose ONE naming register for the whole story and apply it to the ENTIRE cast:",

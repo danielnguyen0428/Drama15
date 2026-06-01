@@ -166,6 +166,7 @@ export function buildStoryBiblePrompt(params: {
       params.recentCharacterNames && params.recentCharacterNames.length > 0
         ? `Recent character names to avoid: ${params.recentCharacterNames.join(", ")}`
         : undefined,
+      params.request.outputLanguage,
     ),
     "",
     // Speech pattern requirement (Wave 6 idiolect)

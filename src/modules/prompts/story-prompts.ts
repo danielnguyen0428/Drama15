@@ -256,7 +256,7 @@ function styleBlueprintSystemInstruction(stylePresetId: string): string {
     "--- STYLE BLUEPRINT RULES ---",
     "Treat the selected style preset as craft constraints: rhythm, POV distance, dialogue policy, emotion rendering, imagery palette, and chapter cadence.",
     "Do not copy, paraphrase, or closely imitate any source author, title, scene sequence, protected phrasing, or recognizable passage.",
-    "Use the blueprint to create original Vietnamese commercial-drama prose that fits the current story, niche, and chapter architecture.",
+    "Use the blueprint to create original commercial-drama prose, written in the story's output language, that fits the current story, niche, and chapter architecture.",
   ].join("\n");
 }
 
@@ -513,7 +513,7 @@ export function buildStoryBiblePrompt(params: {
       "Heroine must include: name, wound, strengths, blindSpots.",
       "Betrayer must include: name, wound, cowardiceVector.",
       "Rival must include: name, socialPower, demeanor.",
-      renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock),
+      renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock, request.outputLanguage),
       "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 11.",
       "Betrayal and class shame engines must support: masked threat in chapter 3, reveal without confrontation in chapter 7, no-rescue nadir in chapter 9, and public truth reveal in chapter 14.",
       customNicheLockInstruction(request),
@@ -522,6 +522,45 @@ export function buildStoryBiblePrompt(params: {
       architectureBlock(),
       block("Line preset", linePreset),
       block("Style preset", stylePreset),
+    ].join("\n\n"),
+  };
+}
+
+/**
+ * Reconcile the concept's free-text fields with the canonical character names
+ * the story bible assigned. The concept is written before the bible exists, so
+ * any character names it invents (in logline/promise/conflictEngine) will not
+ * match the bible — and therefore not match the chapters, which follow the
+ * bible. This pass rewrites ONLY the names so the studio's "Ý tưởng" tab is
+ * consistent with the actual story. Title, plot, tone, and structure stay put.
+ */
+export function buildConceptNameAlignmentPrompt(params: {
+  request: NormalizedOutlineRequest;
+  concept: Concept;
+  storyBible: StoryBible;
+}): PromptBundle {
+  const { request, concept, storyBible } = params;
+  const canonicalNames = {
+    heroine: storyBible.heroine.name,
+    betrayer: storyBible.betrayer.name,
+    rival: storyBible.rival.name,
+  };
+
+  return {
+    systemPrompt: composeSystemPrompt(
+      loadDrama15SystemPrompt(),
+      JSON_OUTPUT_GUARD,
+    ),
+    userPrompt: [
+      "Align the concept package below with the story's canonical character names.",
+      buildJsonLanguageInstruction(request.outputLanguage),
+      "Return JSON with exactly these keys: title, titleCandidates, logline, promise, conflictEngine.",
+      "ONLY replace character names so they match the canonical names. Do NOT change the plot, premise, tone, structure, title, or titleCandidates.",
+      "Map each character the concept refers to onto the matching canonical name by role (heroine / betrayer / rival). Replace every occurrence, including partial or shortened name references.",
+      "If the concept mentions a named place, brand, or organization that the canonical names imply should change, keep it consistent, but never invent new plot facts.",
+      "Preserve sentence meaning, length, and emotional beats. The only edits are name substitutions for consistency.",
+      block("Canonical character names (authoritative)", canonicalNames),
+      block("Concept to align", concept),
     ].join("\n\n"),
   };
 }

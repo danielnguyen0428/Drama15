@@ -9,6 +9,7 @@ import {
 import type {
   Chapter,
   ChapterPlanItem,
+  Concept,
   GenerateChapterRequest,
   NormalizedFullGenerateRequest,
   NormalizedOutlineRequest,
@@ -27,6 +28,7 @@ import {
   buildChapterRepairPrompt,
   buildChapterPlanPrompt,
   buildConceptPrompt,
+  buildConceptNameAlignmentPrompt,
   buildRegenerateChapterPrompt,
   buildSettingSeedPrompt,
   buildStoryBiblePrompt,
@@ -176,6 +178,46 @@ export class StoryOrchestrator {
     });
   }
 
+  /**
+   * Align the concept's free-text fields with the canonical character names
+   * from the story bible. The concept is written before the bible, so its
+   * invented names won't match the chapters (which follow the bible). This
+   * cosmetic pass keeps the studio's "Ý tưởng" tab consistent with the story.
+   *
+   * Title and titleCandidates are preserved verbatim; only logline, promise,
+   * and conflictEngine are rewritten. On any failure the original concept is
+   * returned unchanged so generation never breaks on this non-critical step.
+   */
+  private async alignConceptNames(
+    request: NormalizedOutlineRequest,
+    concept: Concept,
+    storyBible: StoryPayload["storyBible"],
+    context: Awaited<ReturnType<StoryOrchestrator["loadGenerationContext"]>>,
+  ): Promise<Concept> {
+    try {
+      const alignmentPrompt = buildConceptNameAlignmentPrompt({ request, concept, storyBible });
+      const result = await this.routerClient.generateJson<unknown>({
+        model: context.models.planner,
+        fallbackModel: context.models.fallback,
+        ...alignmentPrompt,
+        temperature: 0.2,
+        timeoutMs: env.routerPlanningTimeoutMs,
+      });
+
+      const aligned = parseConcept(unwrapEnvelope(result.data, "concept"));
+      // Preserve the original title and candidates; only the prose fields are
+      // allowed to change so we never alter the chosen title during alignment.
+      return {
+        ...aligned,
+        title: concept.title,
+        titleCandidates: concept.titleCandidates,
+      };
+    } catch {
+      // Cosmetic alignment must never block story generation.
+      return concept;
+    }
+  }
+
   async generateOutline(request: NormalizedOutlineRequest, progressOptions?: StoryProgressOptions, options?: { recentStoryTitles?: string[] }) {
     const progress = resolveProgressOptions(progressOptions, "outline", 5);
     const context = await runProgressStage(
@@ -257,6 +299,8 @@ export class StoryOrchestrator {
 
     await this.recordStoryBibleCharacterNames(request, concept.concept.title, storyBible.storyBible);
 
+    const alignedConcept = await this.alignConceptNames(request, concept.concept, storyBible.storyBible, context);
+
     const chapterPlan = await runProgressStage(
       progress,
       4,
@@ -268,7 +312,7 @@ export class StoryOrchestrator {
       async () => {
         const chapterPlanPrompt = buildChapterPlanPrompt({
           request,
-          concept: concept.concept,
+          concept: alignedConcept,
           storyBible: storyBible.storyBible,
           linePreset: context.linePreset,
           stylePreset: context.stylePreset,
@@ -298,16 +342,16 @@ export class StoryOrchestrator {
       },
       async () => {
         validateOutlineGeneration({
-          concept: concept.concept,
+          concept: alignedConcept,
           storyBible: storyBible.storyBible,
           chapterPlan: chapterPlan.chapterPlan,
         });
 
-        const title = resolveFinalStoryTitle(concept.concept, request.titleHint);
+        const title = resolveFinalStoryTitle(alignedConcept, request.titleHint);
         return StoryPayloadSchema.parse({
           title,
           request,
-          concept: concept.concept,
+          concept: alignedConcept,
           storyBible: storyBible.storyBible,
           chapterPlan: chapterPlan.chapterPlan,
           chapters: [],
