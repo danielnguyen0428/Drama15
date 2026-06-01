@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import lottie from 'lottie-web/build/player/lottie_light';
 
@@ -181,11 +181,18 @@ export function StoryWorkspace(): JSX.Element {
   const storyPanelRef = useRef<HTMLElement | null>(null);
   const [storyPanelFocused, setStoryPanelFocused] = useState(false);
 
-  function focusStoryPanel() {
+  const focusStoryPanel = useCallback(() => {
     setStoryPanelFocused(true);
     storyPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => setStoryPanelFocused(false), 1600);
-  }
+  }, []);
+
+  const typewriter = useTypewriterQueue({
+    onSectionStart: useCallback((job: RevealJob) => {
+      setPanel(job.panel);
+      if (job.chapterIndex !== undefined) setActiveChapter(job.chapterIndex);
+    }, []),
+  });
 
   const activeChapterData = useMemo(
     () => result.chapters.find((chapter) => chapter.index === activeChapter) ?? result.chapters[0],
@@ -198,7 +205,8 @@ export function StoryWorkspace(): JSX.Element {
   const resumableStory = useMemo(() => savedStories.find(canResumeStory), [savedStories]);
   const markdown = useMemo(() => buildMarkdown(storyTitle, result), [result, storyTitle]);
   const busy = phase === 'suggesting' || phase === 'creating' || phase === 'streaming';
-  const writing = phase === 'creating' || phase === 'streaming';
+  const streaming = phase === 'creating' || phase === 'streaming';
+  const writing = streaming || typewriter.active;
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
@@ -366,6 +374,7 @@ export function StoryWorkspace(): JSX.Element {
 
     focusStoryPanel();
     streamRef.current?.close();
+    typewriter.reset();
     setPhase('creating');
     setError(null);
     setProgress(0);
@@ -437,11 +446,14 @@ export function StoryWorkspace(): JSX.Element {
     }
     if (payload.stage === 'overview') {
       if (payload.title) setStoryTitle(payload.title);
-      setResult((current) => ({ ...current, concept: payload.concept ?? current.concept }));
+      const concept = payload.concept ?? '';
+      setResult((current) => ({ ...current, concept: concept || current.concept }));
+      if (concept) typewriter.enqueue({ key: 'concept', panel: 'overview', length: concept.length });
       return;
     }
     if (payload.stage === 'bible') {
       setResult((current) => ({ ...current, bible: payload.bible ?? current.bible }));
+      if (payload.bible !== undefined) typewriter.enqueue({ key: 'bible', panel: 'bible', length: stringifyBible(payload.bible).length });
       return;
     }
     if (payload.stage === 'relationshipGraph') {
@@ -449,13 +461,15 @@ export function StoryWorkspace(): JSX.Element {
       return;
     }
     if (payload.stage === 'plan') {
-      setResult((current) => ({ ...current, plan: payload.plan ?? current.plan }));
+      const plan = payload.plan ?? '';
+      setResult((current) => ({ ...current, plan: plan || current.plan }));
+      if (plan) typewriter.enqueue({ key: 'plan', panel: 'plan', length: plan.length });
       return;
     }
     if (payload.stage === 'chapter' && payload.chapter) {
-      setResult((current) => ({ ...current, chapters: upsertChapter(current.chapters, payload.chapter!) }));
-      setActiveChapter(payload.chapter.index);
-      setPanel('chapters');
+      const chapter = payload.chapter;
+      setResult((current) => ({ ...current, chapters: upsertChapter(current.chapters, chapter) }));
+      typewriter.enqueue({ key: `chapter-${chapter.index}`, panel: 'chapters', chapterIndex: chapter.index, length: chapter.content.length });
       return;
     }
     if (payload.stage === 'done') {
@@ -469,6 +483,7 @@ export function StoryWorkspace(): JSX.Element {
     }
     if (payload.stage === 'error') {
       fail(payload.error, 'Phiên viết bị gián đoạn. Bạn có thể thử viết tiếp từ bản thảo đã có.');
+      typewriter.complete();
       streamRef.current?.close();
       void loadSavedStories();
     }
@@ -493,6 +508,7 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const story = await fetchStory(id);
       applyStoryDetail(story, 'Đã nạp bản thảo dang dở');
+      typewriter.prime(existingRevealKeys(story));
       const response = await httpFetch(`/stories/${encodeURIComponent(id)}/resume`, { method: 'POST' });
       if (!response.ok) throw new Error(await readError(response));
       const data = (await response.json()) as { storyId?: string };
@@ -640,10 +656,10 @@ export function StoryWorkspace(): JSX.Element {
           <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>Viết tiếp truyện</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div></div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
-          {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} loading={writing} />}
-          {panel === 'overview' && <TextPanel title="Kịch bản / cốt truyện" content={result.concept} loading={writing} />}
-          {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} loading={writing} />}
-          {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={result.bible ? JSON.stringify(result.bible, null, 2) : ''} loading={writing} />}
+          {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} loading={writing} reveal={activeChapterData ? typewriter.revealed[`chapter-${activeChapterData.index}`] : undefined} typing={!!activeChapterData && typewriter.activeKey === `chapter-${activeChapterData.index}`} />}
+          {panel === 'overview' && <TextPanel title="Kịch bản / cốt truyện" content={result.concept} loading={writing} reveal={typewriter.revealed.concept} typing={typewriter.activeKey === 'concept'} />}
+          {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} loading={writing} reveal={typewriter.revealed.plan} typing={typewriter.activeKey === 'plan'} />}
+          {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={stringifyBible(result.bible)} loading={writing} reveal={typewriter.revealed.bible} typing={typewriter.activeKey === 'bible'} />}
           {panel === 'relationships' && <RelationshipGraphPanel graph={result.relationshipGraph} />}
 
           {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Chỉnh chương" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị xem thường ở đoạn cao trào." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
@@ -700,12 +716,21 @@ function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRen
   return <section className="saved-stories"><PanelHeading label="Tủ truyện" value={busy ? 'Đang nạp' : `${stories.length} truyện`} /><button type="button" className="secondary-button" disabled={!signedIn || busy} onClick={() => void onRefresh()}>Nạp lại tủ truyện</button>{!signedIn ? <div className="empty-state compact">Đăng nhập để xem các bản thảo đã lưu.</div> : stories.length === 0 ? <div className="empty-state compact">Tủ truyện đang trống. Viết bản thảo đầu tiên để lưu tại đây.</div> : <div className="story-list">{stories.map((story) => <article key={story.id} className="story-list-item"><button type="button" onClick={() => void onOpen(story.id)}><strong>{story.title}</strong><span>{STATUS_LABELS[story.status]} · {story.chapterCount}/{TOTAL_CHAPTERS} chương</span></button><div>{canResumeStory(story) && <button type="button" onClick={() => void onResume(story.id)}>Viết tiếp</button>}<button type="button" onClick={() => void onRename(story.id, story.title)}>Đổi tên</button><button type="button" onClick={() => void onDelete(story.id)}>Xóa</button></div></article>)}</div>}</section>;
 }
 
-function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect, loading }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void; loading?: boolean }) {
-  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: TOTAL_CHAPTERS }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><div className="prose">{activeChapterData.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></> : loading ? <ReaderLoading message="Mèo đang viết chương cho bạn..." /> : <div className="empty-state">Chưa có chương nào. Bấm “Viết bản thảo” để bắt đầu.</div>}</article></div>;
+function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect, loading, reveal, typing }: { chapters: Chapter[]; activeChapter: number; activeChapterData?: Chapter; onSelect: (chapter: number) => void; loading?: boolean; reveal?: number; typing?: boolean }) {
+  const fullText = activeChapterData?.content ?? '';
+  const shown = typing && reveal !== undefined ? fullText.slice(0, reveal) : fullText;
+  const hasText = shown.trim().length > 0;
+  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: TOTAL_CHAPTERS }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || 'Đang chờ'}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData && hasText ? <><h3>{activeChapterData.title || `Chương ${activeChapterData.index}`}</h3><TypewriterProse text={shown} typing={typing} /></> : loading ? <ReaderLoading message="Mèo đang viết chương cho bạn..." /> : <div className="empty-state">Chưa có chương nào. Bấm “Viết bản thảo” để bắt đầu.</div>}</article></div>;
 }
 
-function TextPanel({ title, content, loading }: { title: string; content: string; loading?: boolean }) {
-  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{content}</pre> : loading ? <ReaderLoading message="Mèo đang chuẩn bị nội dung..." /> : <div className="empty-state">Nội dung sẽ hiện ở đây khi phiên viết bắt đầu.</div>}</article>;
+function TextPanel({ title, content, loading, reveal, typing }: { title: string; content: string; loading?: boolean; reveal?: number; typing?: boolean }) {
+  const shown = typing && reveal !== undefined ? content.slice(0, reveal) : content;
+  return <article className="text-panel"><h3>{title}</h3>{content ? <pre>{shown}{typing && shown.length < content.length ? <span className="type-caret" aria-hidden="true" /> : null}</pre> : loading ? <ReaderLoading message="Mèo đang chuẩn bị nội dung..." /> : <div className="empty-state">Nội dung sẽ hiện ở đây khi phiên viết bắt đầu.</div>}</article>;
+}
+
+function TypewriterProse({ text, typing }: { text: string; typing?: boolean }) {
+  const paragraphs = text.split(/\n{2,}/);
+  return <div className="prose">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}{typing && index === paragraphs.length - 1 ? <span className="type-caret" aria-hidden="true" /> : null}</p>)}</div>;
 }
 
 function ReaderLoading({ message }: { message: string }) {
@@ -732,6 +757,154 @@ function PanelHeading({ label, value }: { label: string; value: string }) {
   return <div className="panel-heading"><span>{label}</span><strong>{value}</strong></div>;
 }
 
+type RevealJob = {
+  key: string;
+  panel: Panel;
+  chapterIndex?: number;
+  length: number;
+};
+
+type TypewriterController = {
+  /** Number of characters currently revealed for a given reveal key. */
+  revealed: Record<string, number>;
+  /** The reveal key that is actively typing, if any. */
+  activeKey: string | null;
+  /** True while there is queued or in-progress typing. */
+  active: boolean;
+  /** Queue a section to be typed out. Ignores duplicates already seen. */
+  enqueue: (job: RevealJob) => void;
+  /** Flush everything to fully revealed (used on done/error). */
+  complete: () => void;
+  /** Clear all reveal state for a fresh story session. */
+  reset: () => void;
+  /** Reset, then mark the given keys as already revealed (used on resume). */
+  prime: (keys: string[]) => void;
+};
+
+const TYPEWRITER_TICK_MS = 16;
+const TYPEWRITER_BASE_CPS = 200; // characters per second when caught up
+
+/**
+ * Client-side typewriter that reveals streamed sections one after another,
+ * activating the relevant panel as each section begins. The backend delivers
+ * whole blocks (concept/bible/plan, then each chapter), so the chatbot-style
+ * incremental reveal is simulated here without touching the API/stream.
+ */
+function useTypewriterQueue({ onSectionStart }: { onSectionStart: (job: RevealJob) => void }): TypewriterController {
+  const [revealed, setRevealed] = useState<Record<string, number>>({});
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [active, setActive] = useState(false);
+
+  const queueRef = useRef<RevealJob[]>([]);
+  const seenRef = useRef<Set<string>>(new Set());
+  const currentRef = useRef<RevealJob | null>(null);
+  const revealedRef = useRef<Record<string, number>>({});
+  const rafRef = useRef<number | null>(null);
+  const lastTickRef = useRef<number>(0);
+  const onSectionStartRef = useRef(onSectionStart);
+  onSectionStartRef.current = onSectionStart;
+
+  const stopLoop = useCallback(() => {
+    if (rafRef.current !== null) {
+      window.clearTimeout(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
+  const setRevealedFor = useCallback((key: string, value: number) => {
+    revealedRef.current = { ...revealedRef.current, [key]: value };
+    setRevealed(revealedRef.current);
+  }, []);
+
+  const tick = useCallback(() => {
+    const now = Date.now();
+    const elapsed = now - lastTickRef.current;
+    lastTickRef.current = now;
+
+    let job = currentRef.current;
+    if (!job) {
+      job = queueRef.current.shift() ?? null;
+      currentRef.current = job;
+      if (job) {
+        setActiveKey(job.key);
+        setRevealedFor(job.key, 0);
+        onSectionStartRef.current(job);
+      }
+    }
+
+    if (!job) {
+      stopLoop();
+      setActive(false);
+      setActiveKey(null);
+      return;
+    }
+
+    // Speed up when a backlog is waiting so the reader can catch up.
+    const backlog = queueRef.current.length;
+    const cps = TYPEWRITER_BASE_CPS * (1 + backlog * 0.6);
+    const current = revealedRef.current[job.key] ?? 0;
+    const next = Math.min(job.length, current + Math.max(1, Math.ceil((cps * elapsed) / 1000)));
+    if (next !== current) setRevealedFor(job.key, next);
+
+    if (next >= job.length) {
+      currentRef.current = null;
+    }
+
+    rafRef.current = window.setTimeout(tick, TYPEWRITER_TICK_MS);
+  }, [setRevealedFor, stopLoop]);
+
+  const startLoop = useCallback(() => {
+    if (rafRef.current !== null) return;
+    lastTickRef.current = Date.now();
+    setActive(true);
+    rafRef.current = window.setTimeout(tick, TYPEWRITER_TICK_MS);
+  }, [tick]);
+
+  const enqueue = useCallback((job: RevealJob) => {
+    if (seenRef.current.has(job.key)) {
+      // Already revealed (e.g. replayed on reconnect): show in full immediately.
+      if ((revealedRef.current[job.key] ?? 0) < job.length) setRevealedFor(job.key, job.length);
+      return;
+    }
+    seenRef.current.add(job.key);
+    queueRef.current.push(job);
+    startLoop();
+  }, [setRevealedFor, startLoop]);
+
+  const complete = useCallback(() => {
+    stopLoop();
+    const merged = { ...revealedRef.current };
+    if (currentRef.current) merged[currentRef.current.key] = currentRef.current.length;
+    for (const job of queueRef.current) merged[job.key] = job.length;
+    queueRef.current = [];
+    currentRef.current = null;
+    revealedRef.current = merged;
+    setRevealed(merged);
+    setActive(false);
+    setActiveKey(null);
+  }, [stopLoop]);
+
+  useEffect(() => stopLoop, [stopLoop]);
+
+  const reset = useCallback(() => {
+    stopLoop();
+    queueRef.current = [];
+    seenRef.current = new Set();
+    currentRef.current = null;
+    revealedRef.current = {};
+    setRevealed({});
+    setActive(false);
+    setActiveKey(null);
+  }, [stopLoop]);
+
+  const prime = useCallback((keys: string[]) => {
+    reset();
+    seenRef.current = new Set(keys);
+  }, [reset]);
+
+  return { revealed, activeKey, active, enqueue, complete, reset, prime };
+}
+
 function Range({ label, value, onChange, min = 0, max = 1, step = 0.01 }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number }) {
   return <label className="range-row"><span>{label}</span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /><strong>{Math.round(value * 100)}</strong></label>;
 }
@@ -746,6 +919,19 @@ function jsonRequest(method: string, value: unknown): RequestInit {
 
 function upsertChapter(chapters: Chapter[], next: Chapter) {
   return [...chapters.filter((chapter) => chapter.index !== next.index), next].sort((a, b) => a.index - b.index);
+}
+
+function stringifyBible(bible: unknown): string {
+  return bible ? JSON.stringify(bible, null, 2) : '';
+}
+
+/** Keys for content that already exists when resuming, so it shows instantly. */
+function existingRevealKeys(story: StoryDetail): string[] {
+  const keys = ['concept', 'bible', 'plan'];
+  for (const chapter of story.storyPayload?.chapters ?? []) {
+    keys.push(`chapter-${chapter.chapterNumber}`);
+  }
+  return keys;
 }
 
 function resultFromPayload(payload: StoryPayload): StoryResult {
