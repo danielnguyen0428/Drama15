@@ -25,6 +25,10 @@ supabase/.temp/
 .scratch_*.cjs
 *.tmp-*
 
+# Local story dumps from diagnostic scripts (may contain user content)
+apps/api/scripts/story-*.json
+apps/api/scripts/story-*.txt
+
 # Source-adjacent TypeScript emit artifacts
 src/**/*.js
 src/**/*.js.map
