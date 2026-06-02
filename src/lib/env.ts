@@ -41,7 +41,7 @@ const EnvSchema = z.object({
   MODEL_PRESET_FREE: z.string().default("free"),
   MODEL_PRESET_PRO: z.string().default("pro"),
   MODEL_PRESET_PREMIUM: z.string().default("premium"),
-  AUXILIARY_ANALYSIS_MODEL: z.string().default("deepseek-3.2"),
+  AUXILIARY_ANALYSIS_MODEL: z.string().default("hiennqhust/deepseek-v4-flash"),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

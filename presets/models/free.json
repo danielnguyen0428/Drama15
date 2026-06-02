@@ -1,7 +1,7 @@
 {
-  "planner": "deepseek-3.2",
-  "bible": "deepseek-3.2",
-  "drafter": "deepseek-3.2",
-  "rewriter": "deepseek-3.2",
+  "planner": "hiennqhust/deepseek-v4-flash",
+  "bible": "hiennqhust/deepseek-v4-flash",
+  "drafter": "hiennqhust/deepseek-v4-flash",
+  "rewriter": "hiennqhust/deepseek-v4-flash",
   "fallback": "deepseek-3.2"
 }
