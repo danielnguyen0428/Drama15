@@ -741,3 +741,53 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .notice-overlay,
   .notice-modal { animation: none; }
 }
+
+/* ---- Admin announcement (header) -------------------------------------- */
+.announcement-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.announcement-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--coral-dark);
+}
+
+.announcement-kicker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.announcement-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.announcement-card a {
+  color: var(--coral-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ---- Progress block moved into the draft panel ------------------------ */
+.story-status-card {
+  margin-bottom: 16px;
+  background: var(--paper-soft);
+}

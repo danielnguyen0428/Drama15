@@ -644,11 +644,9 @@ export function StoryWorkspace(): JSX.Element {
             <span>Bản thảo chương</span>
           </div>
         </div>
-        <aside className="status-card">
-          <span>{PHASE_LABELS[phase]}</span>
-          <small className="loading-action">{progressLabel}{busy && stageElapsed >= 3 ? ` · ${formatElapsed(stageElapsed)}` : ''}</small>
-          <LoadingAnimation active={busy} />
-          <div className="progress-row"><strong>{progress}%</strong><div className="progress-track"><i style={{ width: `${progress}%` }} /></div></div>
+        <aside className="announcement-card" role="note">
+          <span className="announcement-kicker">Thông báo từ Admin</span>
+          <p>Hệ thống thử nghiệm nên đôi khi chưa ổn định, ace gặp lỗi vui lòng nhắn admin qua <a href="https://t.me/chatnovelkit" target="_blank" rel="noreferrer noopener">t.me/chatnovelkit</a></p>
         </aside>
       </header>
 
@@ -690,6 +688,12 @@ export function StoryWorkspace(): JSX.Element {
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
           <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>Viết tiếp truyện</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div></div>
+          <div className="status-card story-status-card">
+            <span>{PHASE_LABELS[phase]}</span>
+            <small className="loading-action">{progressLabel}{busy && stageElapsed >= 3 ? ` · ${formatElapsed(stageElapsed)}` : ''}</small>
+            <LoadingAnimation active={busy} />
+            <div className="progress-row"><strong>{progress}%</strong><div className="progress-track"><i style={{ width: `${progress}%` }} /></div></div>
+          </div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
 
           {panel === 'chapters' && <ChapterPanel chapters={result.chapters} activeChapter={activeChapter} activeChapterData={activeChapterData} onSelect={setActiveChapter} loading={writing} reveal={activeChapterData ? typewriter.revealed[`chapter-${activeChapterData.index}`] : undefined} typing={!!activeChapterData && typewriter.activeKey === `chapter-${activeChapterData.index}`} />}
