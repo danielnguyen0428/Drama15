@@ -616,6 +616,8 @@ export function StoryWorkspace(): JSX.Element {
         <aside className="announcement-card" role="note">
           <span className="announcement-kicker">Thông báo từ Admin</span>
           <p>Hệ thống thử nghiệm nên đôi khi chưa ổn định, ace gặp lỗi vui lòng nhắn admin qua <a href="https://t.me/chatnovelkit" target="_blank" rel="noreferrer noopener">t.me/chatnovelkit</a></p>
+          <p>Hệ thống sử dụng Deepseek Flash 4 để sáng tác.</p>
+          <p>Khi nào giàu đổi lên Model Vip Pro hơn để chạy :/</p>
         </aside>
       </header>
 
