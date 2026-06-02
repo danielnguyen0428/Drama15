@@ -15,7 +15,7 @@ function readSetupSuggestRoute() {
 test('setup suggestion route consumes free suggestion quota before generating a seed', () => {
   const route = readSetupSuggestRoute();
   const quotaIndex = route.indexOf('consumeSetupSuggestionQuota(user)');
-  const generateIndex = route.indexOf('orchestrator.generateSettingSeed');
+  const generateIndex = route.indexOf('.generateSettingSeed');
 
   assert.ok(quotaIndex >= 0, 'route must consume setup suggestion quota');
   assert.ok(generateIndex >= 0, 'route must generate a setup suggestion');

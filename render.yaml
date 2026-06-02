@@ -17,11 +17,19 @@ services:
       - key: CORS_ORIGINS
         value: https://drama.novelkit.cc
       - key: OPENAI_BASE_URL
-        sync: false
+        value: https://ckey.vn/v1
       - key: OPENAI_API_KEY
         sync: false
       - key: MODEL_PRESET
         value: default
+      - key: MODEL_PRESET_FREE
+        value: free
+      - key: MODEL_PRESET_PRO
+        value: pro
+      - key: MODEL_PRESET_PREMIUM
+        value: premium
+      - key: AUXILIARY_ANALYSIS_MODEL
+        value: deepseek-3.2
       - key: ROUTER_DEFAULT_TIMEOUT_MS
         value: "300000"
       - key: ROUTER_PLANNING_TIMEOUT_MS

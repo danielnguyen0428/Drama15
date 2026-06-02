@@ -66,6 +66,7 @@ type StreamPayload = Record<string, unknown> & {
 type StoryJob = {
   id: string;
   userId: string;
+  tier: 'free' | 'pro' | 'premium';
   createdAt: string;
   request?: NormalizedFullGenerateRequest;
   resumePayload?: StoryPayload;
@@ -117,12 +118,37 @@ const modeMap: Record<string, RegenerateMode> = {
 };
 
 const jobs = new Map<string, StoryJob>();
-const orchestrator = new StoryOrchestrator(
-  new PresetLoader(),
-  new RouterClient(),
-  env.modelPreset,
-  new SeedHistoryStore(),
-);
+
+// One orchestrator per tier. Each is wired with its own model preset so a
+// premium user's generation never gets its model overwritten by a concurrent
+// free/pro request (the previous single-orchestrator + setModelAliasOverride
+// approach mutated shared state and was not concurrency-safe). The router
+// provider itself is shared (ckey.vn via OPENAI_BASE_URL/OPENAI_API_KEY).
+type UserTier = 'free' | 'pro' | 'premium';
+const sharedPresetLoader = new PresetLoader();
+const sharedRouterClient = new RouterClient();
+const sharedSeedHistoryStore = new SeedHistoryStore();
+
+const orchestratorByTier = new Map<UserTier, InstanceType<typeof StoryOrchestrator>>();
+
+function getOrchestrator(tier: UserTier = 'free') {
+  const existing = orchestratorByTier.get(tier);
+  if (existing) return existing;
+
+  const presetName = env.modelPresetByTier[tier] ?? env.modelPreset;
+  const instance = new StoryOrchestrator(
+    sharedPresetLoader,
+    sharedRouterClient,
+    presetName,
+    sharedSeedHistoryStore,
+  );
+  orchestratorByTier.set(tier, instance);
+  return instance;
+}
+
+function normalizeTier(tier: string | undefined): UserTier {
+  return tier === 'pro' || tier === 'premium' ? tier : 'free';
+}
 
 function getStoryStore() {
   return new StoryStore(getSupabaseAdmin());
@@ -214,7 +240,7 @@ app.post('/story/setup-suggest', async (request, reply) => {
     }
 
     const suggestionRequest = normalizeOutlineRequest(config);
-    const result = await orchestrator.generateSettingSeed(suggestionRequest);
+    const result = await getOrchestrator(normalizeTier(user.tier)).generateSettingSeed(suggestionRequest);
 
     return reply.send({
       title: result.seedPackage.titleHint,
@@ -263,6 +289,7 @@ app.post('/stories', async (request, reply) => {
     const job: StoryJob = {
       id,
       userId: user.id,
+      tier: normalizeTier(user.tier),
       createdAt: new Date().toISOString(),
       request: storyRequest,
       events: [],
@@ -334,6 +361,7 @@ app.post('/stories/:id/resume', async (request, reply) => {
     const job: StoryJob = {
       id,
       userId: user.id,
+      tier: normalizeTier(user.tier),
       createdAt: new Date().toISOString(),
       resumePayload: story.storyPayload,
       events: [],
@@ -414,7 +442,7 @@ app.post('/stories/:id/rewrite', async (request, reply) => {
 
     const body = RewriteBodySchema.parse(request.body);
     const mode = modeMap[body.mode] ?? 'rewrite_chapter';
-    const result = await orchestrator.regenerateChapter({
+    const result = await getOrchestrator(normalizeTier(user.tier)).regenerateChapter({
       storyPayload,
       targetChapter: body.chapterIndex,
       mode,
@@ -552,7 +580,8 @@ async function runStoryJob(job: StoryJob) {
   }
 }
 
-function runJobGeneration(job: StoryJob, progressOptions: Parameters<typeof orchestrator.generateFull>[1]) {
+function runJobGeneration(job: StoryJob, progressOptions: Parameters<InstanceType<typeof StoryOrchestrator>['generateFull']>[1]) {
+  const orchestrator = getOrchestrator(job.tier);
   if (job.resumePayload) {
     return orchestrator.resumeFull(job.resumePayload, progressOptions);
   }

@@ -1,0 +1,7 @@
+{
+  "planner": "deepseek-3.2",
+  "bible": "deepseek-3.2",
+  "drafter": "deepseek-3.2",
+  "rewriter": "deepseek-3.2",
+  "fallback": "deepseek-3.2"
+}

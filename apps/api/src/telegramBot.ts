@@ -202,13 +202,13 @@ async function checkRouter(): Promise<ServiceCheck> {
   try {
     const health = await sharedRouterClient.checkHealth();
     return {
-      name: '9Router',
+      name: 'AI Provider',
       status: health.status === 'healthy' ? 'up' : 'degraded',
       detail: `${health.baseUrl}${health.details ? ` · ${health.details}` : ''}`,
     };
   } catch (error) {
     return {
-      name: '9Router',
+      name: 'AI Provider',
       status: 'down',
       detail: errorText(error),
     };

@@ -8,6 +8,7 @@
  * Shared module used by both desktop orchestrator and web API engine.
  */
 
+import { env } from "../../lib/env";
 import type { RouterClient } from "../router/router-client";
 import type { StoryBible } from "../core-pipeline/pipeline-types";
 import type { CharacterFactSheet } from "./character-memory-store";
@@ -16,10 +17,12 @@ export const TEMPERATURE_FACT_EXTRACTION = 0.2;
 export const TEMPERATURE_FACT_EXTRACTION_RETRY = 0.1;
 
 // Fast, cheap model for auxiliary analysis (fact extraction / consistency).
-// Must be a model the configured router actually serves. The previous value
-// "gpt-4o-mini" does not exist on the 9router and always 404'd, silently
-// disabling LLM fact extraction (it fell back to regex).
-export const AUXILIARY_ANALYSIS_MODEL = "cx/gpt-5.4-mini";
+// Must be a model the configured provider actually serves, so it is env-driven
+// (AUXILIARY_ANALYSIS_MODEL). Defaults to a ckey.vn model. The previous
+// hardcoded values ("gpt-4o-mini", then "cx/gpt-5.4-mini") only existed on
+// specific providers and 404'd elsewhere, silently disabling LLM fact
+// extraction (it falls back to regex).
+export const AUXILIARY_ANALYSIS_MODEL = env.auxiliaryAnalysisModel;
 
 const COMMON_NON_NAME_WORDS = new Set([
   "The", "When", "Chapter", "And", "But", "Then", "Now", "Not",
