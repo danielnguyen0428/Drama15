@@ -681,67 +681,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .prose { font-size: 17px; }
 }
 
-/* ---- Beta notice modal ------------------------------------------------- */
-.notice-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(26, 22, 17, 0.42);
-  backdrop-filter: blur(2px);
-  animation: notice-fade 160ms ease-out;
-}
-
-.notice-modal {
-  width: min(460px, 100%);
-  background: var(--paper-strong);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 26px 26px 24px;
-  display: grid;
-  gap: 14px;
-  animation: notice-rise 200ms ease-out;
-}
-
-.notice-modal h2 {
-  font-family: var(--serif);
-  margin: 0;
-  font-size: 1.32rem;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-
-.notice-modal p {
-  margin: 0;
-  color: var(--ink-soft);
-  line-height: 1.62;
-  font-size: 0.98rem;
-}
-
-.notice-modal .primary-button {
-  justify-self: end;
-  margin-top: 4px;
-}
-
-@keyframes notice-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes notice-rise {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .notice-overlay,
-  .notice-modal { animation: none; }
-}
-
 /* ---- Admin announcement (header) -------------------------------------- */
 .announcement-card {
   background: var(--paper);
@@ -788,6 +727,27 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 
 /* ---- Progress block moved into the draft panel ------------------------ */
 .story-status-card {
+  margin-top: 16px;
   margin-bottom: 16px;
   background: var(--paper-soft);
 }
+
+/* Smaller cat animation + tighter text inside the draft progress block. */
+.story-status-card .loading-lottie {
+  width: min(140px, 45%);
+  justify-self: center;
+}
+
+.story-status-card span {
+  font-size: 12px;
+}
+
+.story-status-card small {
+  font-size: 12px;
+}
+
+.story-status-card strong {
+  font-size: 20px;
+  min-width: 56px;
+}
+
