@@ -212,48 +212,10 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   transition: opacity 180ms ease;
 }
 .loading-dog.active { opacity: 1; }
-.loading-dog svg {
+.loading-dog img {
   display: block;
   width: 100%;
   height: auto;
-}
-
-/* Leg walk: alternate front/back pairs */
-.loading-dog.active .leg-fl,
-.loading-dog.active .leg-br {
-  transform-origin: 50% 0%;
-  animation: dog-leg-a 0.5s ease-in-out infinite alternate;
-}
-.loading-dog.active .leg-fr,
-.loading-dog.active .leg-bl {
-  transform-origin: 50% 0%;
-  animation: dog-leg-b 0.5s ease-in-out infinite alternate;
-}
-
-/* Body bob */
-.loading-dog.active svg {
-  animation: dog-bob 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes dog-leg-a {
-  from { transform: rotate(-18deg); }
-  to   { transform: rotate(18deg); }
-}
-@keyframes dog-leg-b {
-  from { transform: rotate(18deg); }
-  to   { transform: rotate(-18deg); }
-}
-@keyframes dog-bob {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(-3px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loading-dog.active .leg-fl,
-  .loading-dog.active .leg-fr,
-  .loading-dog.active .leg-bl,
-  .loading-dog.active .leg-br,
-  .loading-dog.active svg { animation: none; }
 }
 .progress-track { height: 6px; overflow: hidden; border-radius: 99px; background: rgba(26, 22, 17, 0.1); }
 .progress-track i {
@@ -604,7 +566,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   text-align: center;
 }
 .reader-loading .loading-dog {
-  width: min(200px, 70%);
+  width: min(160px, 60%);
   opacity: 1;
   margin: 0 auto;
 }
