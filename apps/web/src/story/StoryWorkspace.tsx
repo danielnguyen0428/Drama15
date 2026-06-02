@@ -649,14 +649,14 @@ export function StoryWorkspace(): JSX.Element {
           <PanelHeading label="Khởi tạo" value="Cốt truyện" />
           <label>Dòng truyện<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           {config.niche === 'custom' && <label>Nhánh riêng<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder="VD: mẹ đơn thân bị xem thường" /></label>}
-          <label>Nhan đề dự kiến<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Có thể để trống" /></label>
-          <label>Kịch bản / cốt truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Một cảnh mở đầu, bí mật, vật chứng, mối quan hệ hoặc cảm xúc bạn muốn giữ..." rows={6} /></label>
+          <label>Nhan đề dự kiến<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder="Nhập nhan đề (bắt buộc)" /></label>
+          <label>Kịch bản / cốt truyện<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder="Một cảnh mở đầu, bí mật, vật chứng, mối quan hệ hoặc cảm xúc bạn muốn giữ... (bắt buộc)" rows={6} /></label>
           <label>Giọng kể<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
           <label>Ngôn ngữ bản thảo<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <Range label="Cường độ cảm xúc" value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
           <Range label="Tỷ lệ thoại" value={config.dialogueRatio} min={0.2} max={0.85} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label="Mật độ móc câu" value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý kịch bản</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota} onClick={() => void createStory()}>Viết bản thảo</button></div>
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>Gợi ý kịch bản</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>Viết bản thảo</button></div>
         </aside>
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
