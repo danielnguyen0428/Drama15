@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import lottie from 'lottie-web/build/player/lottie_light';
 
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
@@ -189,7 +188,13 @@ export function StoryWorkspace(): JSX.Element {
 
   const typewriter = useTypewriterQueue({
     onSectionStart: useCallback((job: RevealJob) => {
-      setPanel(job.panel);
+      // Auto-switch to overview when concept starts (first content to arrive).
+      // For chapters, switch to the chapters panel so user sees writing happen.
+      // For bible/plan, do NOT force a panel switch — they type in the background
+      // and user can navigate there at will while concept is still animating.
+      if (job.panel === 'overview' || job.panel === 'chapters') {
+        setPanel(job.panel);
+      }
       if (job.chapterIndex !== undefined) setActiveChapter(job.chapterIndex);
     }, []),
   });
@@ -686,34 +691,42 @@ export function StoryWorkspace(): JSX.Element {
 }
 
 function LoadingAnimation({ active }: { active: boolean }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const animationRef = useRef<ReturnType<typeof lottie.loadAnimation> | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    animationRef.current = lottie.loadAnimation({
-      container: containerRef.current,
-      renderer: 'svg',
-      loop: true,
-      autoplay: active,
-      path: '/loading-cat.json',
-      rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
-    });
-
-    return () => {
-      animationRef.current?.destroy();
-      animationRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const animation = animationRef.current;
-    if (!animation) return;
-    if (active) animation.play();
-    else animation.pause();
-  }, [active]);
-
-  return <div className={active ? 'loading-lottie active' : 'loading-lottie'} ref={containerRef} aria-hidden="true" />;
+  return (
+    <div className={active ? 'loading-dog active' : 'loading-dog'} aria-hidden="true">
+      <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+        {/* Body */}
+        <ellipse cx="100" cy="95" rx="42" ry="28" fill="#a0632a" />
+        {/* Head */}
+        <ellipse cx="148" cy="72" rx="26" ry="22" fill="#a0632a" />
+        {/* Snout */}
+        <ellipse cx="166" cy="80" rx="13" ry="10" fill="#b87333" />
+        {/* Nose */}
+        <ellipse cx="175" cy="77" rx="6" ry="5" fill="#1a1611" />
+        {/* Left eye */}
+        <circle cx="153" cy="64" r="9" fill="white" />
+        <circle cx="155" cy="65" r="3.5" fill="#1a1611" />
+        {/* Right eye */}
+        <circle cx="165" cy="63" r="8" fill="white" />
+        <circle cx="167" cy="64" r="3.5" fill="#1a1611" />
+        {/* Ear left */}
+        <ellipse cx="143" cy="54" rx="8" ry="14" fill="#7a4520" transform="rotate(-15 143 54)" />
+        {/* Ear right */}
+        <ellipse cx="155" cy="52" rx="7" ry="12" fill="#7a4520" transform="rotate(10 155 52)" />
+        {/* Collar */}
+        <rect x="126" y="88" width="24" height="7" rx="3" fill="#3b82f6" />
+        {/* Tag */}
+        <circle cx="138" cy="97" r="4" fill="#f59e0b" />
+        {/* Tail */}
+        <path d="M58 85 Q40 60 52 50" stroke="#7a4520" strokeWidth="10" strokeLinecap="round" fill="none" />
+        {/* Front legs */}
+        <rect className="leg-fl" x="128" y="116" width="12" height="28" rx="6" fill="#a0632a" />
+        <rect className="leg-fr" x="148" y="116" width="12" height="28" rx="6" fill="#a0632a" />
+        {/* Back legs */}
+        <rect className="leg-bl" x="76" y="116" width="12" height="28" rx="6" fill="#a0632a" />
+        <rect className="leg-br" x="96" y="116" width="12" height="28" rx="6" fill="#a0632a" />
+      </svg>
+    </div>
+  );
 }
 
 function StoryList({ stories, busy, signedIn, onRefresh, onOpen, onResume, onRename, onDelete }: { stories: SavedStory[]; busy: boolean; signedIn: boolean; onRefresh: () => Promise<void>; onOpen: (id: string) => Promise<void>; onResume: (id: string) => Promise<void>; onRename: (id: string, title: string) => Promise<void>; onDelete: (id: string) => Promise<void> }) {

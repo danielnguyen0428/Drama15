@@ -202,16 +202,59 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   align-items: center;
   gap: 14px;
 }
-.loading-lottie {
+
+/* ---- Dog SVG animation ------------------------------------------------- */
+.loading-dog {
   width: 100%;
-  aspect-ratio: 1070 / 456;
   overflow: hidden;
   background: transparent;
-  opacity: 0.7;
+  opacity: 0;
   transition: opacity 180ms ease;
 }
-.loading-lottie.active { opacity: 1; }
-.loading-lottie svg { display: block; width: 100%; height: 100%; }
+.loading-dog.active { opacity: 1; }
+.loading-dog svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Leg walk: alternate front/back pairs */
+.loading-dog.active .leg-fl,
+.loading-dog.active .leg-br {
+  transform-origin: 50% 0%;
+  animation: dog-leg-a 0.5s ease-in-out infinite alternate;
+}
+.loading-dog.active .leg-fr,
+.loading-dog.active .leg-bl {
+  transform-origin: 50% 0%;
+  animation: dog-leg-b 0.5s ease-in-out infinite alternate;
+}
+
+/* Body bob */
+.loading-dog.active svg {
+  animation: dog-bob 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes dog-leg-a {
+  from { transform: rotate(-18deg); }
+  to   { transform: rotate(18deg); }
+}
+@keyframes dog-leg-b {
+  from { transform: rotate(18deg); }
+  to   { transform: rotate(-18deg); }
+}
+@keyframes dog-bob {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-dog.active .leg-fl,
+  .loading-dog.active .leg-fr,
+  .loading-dog.active .leg-bl,
+  .loading-dog.active .leg-br,
+  .loading-dog.active svg { animation: none; }
+}
 .progress-track { height: 6px; overflow: hidden; border-radius: 99px; background: rgba(26, 22, 17, 0.1); }
 .progress-track i {
   display: block;
@@ -560,9 +603,10 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   gap: 8px;
   text-align: center;
 }
-.reader-loading .loading-lottie {
-  width: min(320px, 70%);
+.reader-loading .loading-dog {
+  width: min(200px, 70%);
   opacity: 1;
+  margin: 0 auto;
 }
 .reader-loading p {
   margin: 0;
@@ -732,9 +776,9 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   background: var(--paper-soft);
 }
 
-/* Smaller cat animation + tighter text inside the draft progress block. */
-.story-status-card .loading-lottie {
-  width: min(140px, 45%);
+/* Smaller dog animation + tighter text inside the draft progress block. */
+.story-status-card .loading-dog {
+  width: min(120px, 40%);
   justify-self: center;
 }
 
