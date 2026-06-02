@@ -614,10 +614,12 @@ export function StoryWorkspace(): JSX.Element {
           </div>
         </div>
         <aside className="announcement-card" role="note">
-          <span className="announcement-kicker">Thông báo từ Admin</span>
-          <p>Hệ thống thử nghiệm nên đôi khi chưa ổn định, ace gặp lỗi vui lòng nhắn admin qua <a href="https://t.me/chatnovelkit" target="_blank" rel="noreferrer noopener">t.me/chatnovelkit</a></p>
-          <p>Hệ thống sử dụng Deepseek Flash 4 để sáng tác.</p>
-          <p>Khi nào giàu đổi lên Model Vip Pro hơn để chạy :/</p>
+          <span className="announcement-kicker">📢 Thông báo từ Admin</span>
+          <ul className="announcement-list">
+            <li>🎉 Hệ thống <strong className="highlight-free">MIỄN PHÍ HOÀN TOÀN</strong> &amp; đang thử nghiệm nên đôi khi chưa ổn định, ace gặp lỗi vui lòng nhắn admin <a href="https://www.facebook.com/novelkit" target="_blank" rel="noreferrer noopener">Fanpage NovelKit</a></li>
+            <li>🤖 Hệ thống sử dụng Deepseek Flash 4 để sáng tác.</li>
+            <li>😢 Khi nào giàu đổi lên Model Vip Pro hơn để chạy :(</li>
+          </ul>
         </aside>
       </header>
 
@@ -688,6 +690,9 @@ export function StoryWorkspace(): JSX.Element {
         </nav>
         <span>Made NovelKit.Cc with ❤️ by Dũng Nguyễn</span>
       </footer>
+      <a className="fb-float-btn" href="https://www.facebook.com/novelkit" target="_blank" rel="noreferrer noopener" aria-label="Chat với NovelKit trên Facebook">
+        <svg viewBox="0 0 36 36" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M18 2C9.163 2 2 8.636 2 16.7c0 4.592 2.268 8.694 5.812 11.396V34l5.592-3.072A17.838 17.838 0 0 0 18 31.4c8.837 0 16-6.636 16-14.7S26.837 2 18 2Zm1.588 19.79-4.074-4.346-7.95 4.346 8.744-9.28 4.178 4.345 7.846-4.345-8.744 9.28Z" /></svg>
+      </a>
     </main>
   );
 }

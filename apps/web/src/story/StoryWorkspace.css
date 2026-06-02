@@ -757,3 +757,59 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   min-width: 56px;
 }
 
+
+/* ---- Announcement list styling ----------------------------------------- */
+.announcement-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.announcement-list li {
+  color: var(--ink-soft);
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.announcement-list a {
+  color: var(--coral-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.highlight-free {
+  color: var(--coral-dark);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* ---- Floating Facebook chat button ------------------------------------- */
+.fb-float-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1877f2;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.45);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  text-decoration: none;
+}
+
+.fb-float-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.55);
+}
+
+.fb-float-btn svg {
+  width: 28px;
+  height: 28px;
+}
