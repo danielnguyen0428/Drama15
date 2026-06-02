@@ -475,9 +475,21 @@ function isModelUnavailableError(error: unknown) {
   }
 
   const details = error.details as { endpoint?: unknown; status?: unknown; body?: unknown } | undefined;
-  if (details?.endpoint !== "/chat/completions" || details.status !== 404 || typeof details.body !== "string") {
+  if (details?.endpoint !== "/chat/completions" || typeof details.body !== "string") {
     return false;
   }
 
-  return /model\b.*\b(not available|not found|does not exist)/i.test(details.body);
+  const status = details.status as number | undefined;
+
+  // Classic 404 model-not-found
+  if (status === 404 && /model\b.*\b(not available|not found|does not exist)/i.test(details.body)) {
+    return true;
+  }
+
+  // Upstream errors from ckey.vn proxy: 401 (auth rejected), 403 (permission), 502 (upstream down)
+  if (status === 401 || status === 403 || status === 502) {
+    return true;
+  }
+
+  return false;
 }

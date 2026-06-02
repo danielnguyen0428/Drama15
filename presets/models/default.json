@@ -1,7 +1,7 @@
 {
-  "planner": "cx/gpt-5.5",
-  "bible": "cx/gpt-5.5",
-  "drafter": "cx/gpt-5.5",
-  "rewriter": "cx/gpt-5.5",
-  "fallback": "cx/gpt-5.5"
+  "planner": "deepseek-v4-flash",
+  "bible": "deepseek-v4-flash",
+  "drafter": "deepseek-v4-flash",
+  "rewriter": "deepseek-v4-flash",
+  "fallback": "deepseek-v4-pro"
 }

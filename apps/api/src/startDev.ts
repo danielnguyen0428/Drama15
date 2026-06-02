@@ -416,6 +416,9 @@ app.get('/stories/:id/stream', async (request, reply) => {
 
   if (!job.promise) {
     job.promise = runStoryJob(job);
+    job.promise.catch((err) => {
+      app.log.error({ err, storyId: job.id }, 'Story generation failed');
+    });
   }
 
   return reply;
