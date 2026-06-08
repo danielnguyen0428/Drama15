@@ -660,8 +660,12 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 
 @media (max-width: 1240px) {
-  .workspace-grid { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
-  .saved-panel { grid-column: 1 / -1; position: static; }
+  /* Below large-desktop, stack everything into one column so the saved-stories
+     "tủ truyện" sits in the same column as the main writing panel instead of
+     overlapping it as a sticky side column. */
+  .workspace-grid { grid-template-columns: 1fr; }
+  .setup-panel,
+  .saved-panel { position: static; grid-column: auto; }
   .story-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; padding-right: 0; }
 }
 
@@ -812,4 +816,136 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .fb-float-btn svg {
   width: 28px;
   height: 28px;
+}
+
+/* ---- Quality report panel (autonovel reader panel / review / debt) ------ */
+.quality-panel {
+  padding: 26px;
+  min-height: 560px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+.quality-panel h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 600;
+}
+.quality-section {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-faint);
+}
+.quality-section:first-of-type { border-top: 0; padding-top: 0; }
+.quality-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.quality-section-head h4 { margin: 0; font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); }
+.quality-score {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--coral-soft);
+  color: var(--coral-dark);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+.quality-persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.quality-persona {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+}
+.quality-persona-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.quality-persona-head strong { font-size: 13px; font-weight: 600; color: var(--ink); }
+.quality-persona-head span { font-family: var(--mono); font-weight: 700; color: var(--coral-dark); }
+.quality-liked, .quality-concern { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.quality-concern { color: var(--muted); }
+.quality-verdict { margin: 0; color: var(--ink-soft); font-family: var(--read); font-size: 15px; line-height: 1.7; }
+.quality-issues { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.quality-issues li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper-strong);
+}
+.quality-issue-text { flex: 1 1 200px; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+.quality-chapter { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.quality-persona-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+}
+.sev {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sev-high { background: rgba(185, 69, 47, 0.16); color: var(--coral-dark); }
+.sev-medium { background: rgba(215, 99, 78, 0.10); color: var(--coral); }
+.sev-low { background: var(--paper-strong); color: var(--muted); }
+
+/* ---- Responsive refinements (tablet → mobile) -------------------------- */
+@media (max-width: 980px) {
+  /* Panels are full-width now; the tall desktop min-heights waste screen. */
+  .story-panel { min-height: auto; }
+  .chapter-reader,
+  .text-panel,
+  .relationship-panel,
+  .quality-panel { min-height: 420px; }
+  /* Make the tab strip edge-to-edge scrollable with a hint of momentum. */
+  .panel-tabs { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+}
+
+@media (max-width: 640px) {
+  .quality-persona-grid { grid-template-columns: 1fr; }
+  .quality-panel { padding: 18px; gap: 18px; }
+  .relationship-panel,
+  .chapter-reader,
+  .text-panel { padding: 18px; }
+  .story-toolbar h2 { font-size: clamp(22px, 6vw, 30px); }
+  /* Wrap long evaluation rows cleanly instead of overflowing. */
+  .quality-issues li { gap: 6px; }
+  .quality-chapter { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .workspace-shell { padding: 12px; }
+  .chapter-list button { flex: 0 0 132px; min-height: 52px; }
+  .panel-tabs button { padding: 0 12px; font-size: 11px; }
+  .text-panel pre { font-size: 14px; }
+  .prose { font-size: 16px; line-height: 1.85; }
+  .prose p:first-of-type::first-letter { font-size: 48px; }
+  /* Stack the per-chapter rewrite controls full width. */
+  .rewrite-panel select,
+  .rewrite-panel textarea,
+  .rewrite-panel button { width: 100%; }
+  .status-card { gap: 10px; }
+  .status-card strong { font-size: 28px; }
+  /* Keep the floating chat button from covering primary actions. */
+  .fb-float-btn { bottom: 16px; right: 16px; width: 48px; height: 48px; }
+}
+
+/* Comfortable tap targets on touch devices. */
+@media (hover: none) and (pointer: coarse) {
+  .panel-tabs button { min-height: 44px; }
+  button { min-height: 44px; }
 }

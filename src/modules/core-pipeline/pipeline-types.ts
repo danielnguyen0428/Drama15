@@ -185,6 +185,7 @@ export interface ContinuityLite {
     heroineAgency: number;
     emotionalTemperature: string;
   }>;
+  canonFacts?: string[];
 }
 
 // ─── Quality Metrics ─────────────────────────────────────────────────────────

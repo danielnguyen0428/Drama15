@@ -3,6 +3,7 @@ import type { OutputLanguage } from "../../types/story";
 import { getDrama15ChapterArchitecture } from "../prompts/drama15-chapter-architecture";
 import { detectAiTells, type AiTellReport } from "../core-pipeline/validators/ai-tell-detector";
 import { analyzeSentenceVariance, type SentenceVarianceMetrics } from "../core-pipeline/validators/sentence-variance";
+import { detectStructuralSlop, type StructuralSlopReport } from "../core-pipeline/validators/structural-slop";
 import {
   createPhraseReuseIndex,
   scoreCandidate,
@@ -36,11 +37,13 @@ const DIALOGUE_RATIO_FAILURE = "dialogue ratio is materially below the requested
 const AI_TELL_FAILURE = "AI-tell phrases exceed acceptable threshold";
 const SENTENCE_VARIANCE_FAILURE = "sentence length variance is too uniform (AI-like)";
 const PHRASE_REUSE_FAILURE = "phrase reuse across chapters exceeds threshold";
+const STRUCTURAL_SLOP_FAILURE = "structural slop patterns exceed acceptable threshold";
 const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   DIALOGUE_RATIO_FAILURE,
   AI_TELL_FAILURE,
   SENTENCE_VARIANCE_FAILURE,
   PHRASE_REUSE_FAILURE,
+  STRUCTURAL_SLOP_FAILURE,
 ]);
 
 export type ChapterQualityMetrics = {
@@ -51,6 +54,7 @@ export type ChapterQualityMetrics = {
   aiTellScore: number;
   aiTellReport: AiTellReport;
   sentenceVariance: SentenceVarianceMetrics;
+  structuralSlop: StructuralSlopReport;
   phraseReuse: PhraseReuseReport;
   failures: string[];
 };
@@ -85,6 +89,10 @@ export function analyzeChapterQuality(
   // Sentence Variance Analysis
   const sentenceVariance = analyzeSentenceVariance(text);
 
+  // Structural Slop Detection (em-dash overload, "not just X but Y",
+  // transition-opening addiction, hedge chains) — autonovel ANTI-PATTERNS.
+  const structuralSlop = detectStructuralSlop(text);
+
   // Phrase Reuse Tracking
   const phraseReuseIndex = getOrCreatePhraseReuseIndex();
   const phraseReuse = chapterNumber !== undefined
@@ -99,6 +107,7 @@ export function analyzeChapterQuality(
     aiTellScore: aiTellReport.score,
     aiTellReport,
     sentenceVariance,
+    structuralSlop,
     phraseReuse,
     failures: [],
   };
@@ -114,6 +123,10 @@ export function analyzeChapterQuality(
 
   if (sentenceVariance.needsRepair) {
     metrics.failures.push(SENTENCE_VARIANCE_FAILURE);
+  }
+
+  if (structuralSlop.needsRepair) {
+    metrics.failures.push(STRUCTURAL_SLOP_FAILURE);
   }
 
   if (phraseReuse.needsRepair) {

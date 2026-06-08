@@ -179,6 +179,7 @@ export const ContinuityLiteSchema = z.object({
   endingMode: z.string().min(1),
   speechPatterns: z.record(z.string(), SpeechPatternSchema).default({}),
   chapterState: z.array(ChapterStateSchema).default([]),
+  canonFacts: z.array(z.string().min(1)).default([]),
 });
 
 export const RelationshipNodeSchema = z.object({
@@ -213,6 +214,61 @@ export const StoryPosterSchema = z.object({
   error: z.string().min(1).optional(),
 });
 
+// ─── Evaluation Reports (autonovel: reader panel + expert review) ───────────
+
+export const ReaderPanelPersonaScoreSchema = z.object({
+  persona: z.string().min(1),
+  score: z.number().min(0).max(10),
+  liked: z.string().default(""),
+  concern: z.string().default(""),
+});
+
+export const EvaluationIssueSchema = z.object({
+  issue: z.string().min(1),
+  severity: z.enum(["low", "medium", "high"]).default("medium"),
+  chapters: z.array(z.number().int().min(1).max(15)).default([]),
+});
+
+export const ReaderPanelReportSchema = z.object({
+  overallScore: z.number().min(0).max(10),
+  personas: z.array(ReaderPanelPersonaScoreSchema).default([]),
+  topIssues: z.array(EvaluationIssueSchema).default([]),
+  model: z.string().min(1),
+  generatedAt: z.string(),
+});
+
+export const ManuscriptReviewReportSchema = z.object({
+  verdict: z.string().default(""),
+  items: z.array(
+    EvaluationIssueSchema.extend({
+      persona: z.enum(["critic", "professor"]).default("critic"),
+    }),
+  ).default([]),
+  model: z.string().min(1),
+  generatedAt: z.string(),
+});
+
+export const PropagationDebtSchema = z.object({
+  kind: z.enum(["missed_foreshadow", "pending_foreshadow", "unachieved_beat", "late_fact"]),
+  detail: z.string().min(1),
+  chapters: z.array(z.number().int().min(1).max(15)).default([]),
+  severity: z.enum(["low", "medium", "high"]).default("medium"),
+});
+
+export const FoundationReportSchema = z.object({
+  overallScore: z.number().min(0).max(10),
+  dimensions: z.array(z.object({
+    name: z.string().min(1),
+    score: z.number().min(0).max(10),
+    note: z.string().default(""),
+  })).default([]),
+  issues: z.array(z.string()).default([]),
+  suggestions: z.array(z.string()).default([]),
+  attempts: z.number().int().min(1).optional(),
+  model: z.string().min(1),
+  generatedAt: z.string(),
+});
+
 export const StoryPayloadSchema = z.object({
   title: z.string().min(1),
   request: z.object({
@@ -243,6 +299,10 @@ export const StoryPayloadSchema = z.object({
       fallback: z.string().min(1).optional(),
     }),
     poster: StoryPosterSchema.optional(),
+    readerPanel: ReaderPanelReportSchema.optional(),
+    manuscriptReview: ManuscriptReviewReportSchema.optional(),
+    propagationDebt: z.array(PropagationDebtSchema).optional(),
+    foundationReport: FoundationReportSchema.optional(),
   }),
 });
 
@@ -258,6 +318,8 @@ export const GenerateChapterRequestSchema = z
     draftControls: DraftControlsSchema.optional(),
     stylePreset: z.string().trim().min(1).optional(),
     continuityLite: ContinuityLiteSchema.optional(),
+    // ─── Voice lock (optional, derived from earlier chapters) ─────────────
+    voiceLock: z.string().optional(),
     // ─── Character Consistency (optional, added for character tracking) ──
     memoryStore: z.any().optional(),
     continuityTracker: z.any().optional(),

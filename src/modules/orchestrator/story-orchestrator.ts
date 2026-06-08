@@ -10,9 +10,11 @@ import type {
   Chapter,
   ChapterPlanItem,
   Concept,
+  DraftControls,
   GenerateChapterRequest,
   NormalizedFullGenerateRequest,
   NormalizedOutlineRequest,
+  OutputLanguage,
   RegenerateChapterRequest,
   StoryPayload,
 } from "../../types/story";
@@ -36,6 +38,12 @@ import {
 import { createSeedBlueprint, type SeedHistoryEntry } from "../prompts/seed-blueprint";
 import { getLocalProsePolishConfig, type LocalProsePolishConfig, type ProsePolishTarget } from "../presets/prose-polish-config";
 import { postProcessProseHumanizer } from "../postprocessors/prose-humanizer-post-processor";
+import { runReaderPanel } from "../postprocessors/reader-panel";
+import { reviewManuscript } from "../postprocessors/manuscript-review";
+import { tightenChapterText } from "../postprocessors/adversarial-cut";
+import { planChapterRevisions, buildRevisionInstruction } from "../postprocessors/revision-planner";
+import { evaluateFoundation, type FoundationReport } from "../postprocessors/foundation-gate";
+import { generateCanonFacts } from "../postprocessors/canon-facts";
 import { RouterClient } from "../router/router-client";
 import {
   createContinuityLite,
@@ -69,6 +77,8 @@ import {
   type MinimalChapterRef,
 } from "../core-pipeline/continuity-tracker";
 import { applyCharacterFactsToRelationshipGraph, createInitialRelationshipGraph } from "../relationship/relationship-graph";
+import { analyzeVoiceFingerprint, buildVoiceLockInstruction } from "../core-pipeline/validators/voice-fingerprint";
+import { buildPropagationLedger } from "../core-pipeline/validators/propagation-ledger";
 import { getRemainingChapterPlanItems } from "./story-resume";
 import { resolveFinalStoryTitle } from "./story-title";
 
@@ -439,7 +449,8 @@ export class StoryOrchestrator {
     const finalizeStageNumber = chapterStageOffset + request.chapterCount + 1;
     const totalStages = finalizeStageNumber;
     const progress = resolveProgressOptions(progressOptions, "full", totalStages);
-    const outline = await this.generateOutline(request, progress, options);
+    const initialOutline = await this.generateOutline(request, progress, options);
+    const { outline, foundationReport } = await this.applyFoundationGate(initialOutline, request, progress, options);
     const posterPromise = this.startPosterGeneration(outline, progress);
     const chapters: Chapter[] = [];
     let relationshipGraph = createInitialRelationshipGraph(outline.storyBible);
@@ -453,6 +464,14 @@ export class StoryOrchestrator {
 
     // Reset phrase reuse index for this generation run
     resetPhraseReuseIndex();
+
+    // Canon hard-facts (autonovel gen_canon): lock facts before drafting and
+    // feed them into every chapter via the continuity tracker.
+    const canonFacts = await this.computeCanonFacts(outline);
+    if (canonFacts.length > 0) {
+      continuityTracker.setCanonFacts(canonFacts);
+      outline.continuityLite = { ...outline.continuityLite, canonFacts };
+    }
 
     // Phát outline (ý tưởng, dàn ý, hồ sơ) ngay sau khi dựng xong để studio
     // hiển thị trước khi chương đầu tiên được viết.
@@ -502,6 +521,7 @@ export class StoryOrchestrator {
               draftControls: request.draftControls,
               outputLanguage: request.outputLanguage,
               storyTitle: outline.title,
+              voiceLock: this.computeVoiceLock(chapters),
               memoryStore,
               continuityTracker,
             },
@@ -574,7 +594,11 @@ export class StoryOrchestrator {
     }
 
     const poster = await posterPromise;
-    const assembledStoryPayload = StoryPayloadSchema.parse({
+    const evaluationModels: PostProcessModels = {
+      rewriter: outline.meta.modelAliases.rewriter ?? outline.meta.modelAliases.drafter,
+      fallback: outline.meta.modelAliases.fallback,
+    };
+    const baseAssembledStoryPayload = StoryPayloadSchema.parse({
       ...outline,
       request: {
         ...outline.request,
@@ -586,6 +610,11 @@ export class StoryOrchestrator {
         ...outline.meta,
         generatedAt: new Date().toISOString(),
         ...(poster ? { poster } : {}),
+        ...(foundationReport ? { foundationReport } : {}),
+        ...((): { propagationDebt?: StoryPayload["meta"]["propagationDebt"] } => {
+          const propagationDebt = this.computePropagationDebt(continuityTracker);
+          return propagationDebt ? { propagationDebt } : {};
+        })(),
       },
     });
     return runProgressStage(
@@ -596,7 +625,28 @@ export class StoryOrchestrator {
         label: "Hoàn tất truyện",
         detail: "Đang kiểm tra bản thảo đã ghép.",
       },
-      async () => assembledStoryPayload,
+      async () => {
+        const evaluations = await this.runManuscriptEvaluations(baseAssembledStoryPayload, evaluationModels);
+        if (!evaluations.readerPanel && !evaluations.manuscriptReview) {
+          return baseAssembledStoryPayload;
+        }
+        const withReports = StoryPayloadSchema.parse({
+          ...baseAssembledStoryPayload,
+          meta: {
+            ...baseAssembledStoryPayload.meta,
+            ...evaluations,
+          },
+        });
+        const { chapters: revisedChapters, revised } = await this.maybeRunRevisionLoop(withReports, evaluations);
+        if (revised.length === 0) {
+          return withReports;
+        }
+        return StoryPayloadSchema.parse({
+          ...withReports,
+          chapters: revisedChapters,
+          meta: { ...withReports.meta, generatedAt: new Date().toISOString() },
+        });
+      },
       `Đã ghép ${chapters.length} chương.`,
     );
   }
@@ -643,6 +693,7 @@ export class StoryOrchestrator {
               draftControls: storyPayload.request.draftControls,
               outputLanguage: storyPayload.request.outputLanguage,
               storyTitle: storyPayload.title,
+              voiceLock: this.computeVoiceLock(chapters),
               memoryStore,
             },
             storyPayload.request.stylePreset,
@@ -709,6 +760,10 @@ export class StoryOrchestrator {
         generatedAt: new Date().toISOString(),
       },
     });
+    const evaluationModels: PostProcessModels = {
+      rewriter: storyPayload.meta.modelAliases.rewriter ?? storyPayload.meta.modelAliases.drafter,
+      fallback: storyPayload.meta.modelAliases.fallback,
+    };
     return runProgressStage(
       progress,
       totalStages,
@@ -717,7 +772,28 @@ export class StoryOrchestrator {
         label: "Hoàn tất truyện",
         detail: "Đang kiểm tra bản thảo viết tiếp đã ghép.",
       },
-      async () => assembledStoryPayload,
+      async () => {
+        const evaluations = await this.runManuscriptEvaluations(assembledStoryPayload, evaluationModels);
+        if (!evaluations.readerPanel && !evaluations.manuscriptReview) {
+          return assembledStoryPayload;
+        }
+        const withReports = StoryPayloadSchema.parse({
+          ...assembledStoryPayload,
+          meta: {
+            ...assembledStoryPayload.meta,
+            ...evaluations,
+          },
+        });
+        const { chapters: revisedChapters, revised } = await this.maybeRunRevisionLoop(withReports, evaluations);
+        if (revised.length === 0) {
+          return withReports;
+        }
+        return StoryPayloadSchema.parse({
+          ...withReports,
+          chapters: revisedChapters,
+          meta: { ...withReports.meta, generatedAt: new Date().toISOString() },
+        });
+      },
       `Đã ghép ${chapters.length} chương.`,
     );
   }
@@ -772,6 +848,7 @@ export class StoryOrchestrator {
       outputLanguage: parsed.outputLanguage ?? "english",
       stylePreset: context.stylePreset,
       prosePolishConfig: this.prosePolishConfig,
+      voiceLock: parsed.voiceLock,
     });
 
     const chapterResult = await runProgressStage(
@@ -995,7 +1072,13 @@ export class StoryOrchestrator {
       },
       async () => {
         if (!draftedChapter.repaired) {
-          return draftedChapter.chapter;
+          return this.maybeTightenChapter(draftedChapter.chapter, {
+            draftControls,
+            outputLanguage: parsed.outputLanguage ?? "english",
+            models: context.models,
+            chapterNumber: parsed.chapterNumber,
+            timeoutMs: env.routerChapterTimeoutMs,
+          });
         }
 
         const finalMetrics = analyzeChapterQuality(draftedChapter.chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
@@ -1012,7 +1095,13 @@ export class StoryOrchestrator {
           );
         }
 
-        return draftedChapter.chapter;
+        return this.maybeTightenChapter(draftedChapter.chapter, {
+          draftControls,
+          outputLanguage: parsed.outputLanguage ?? "english",
+          models: context.models,
+          chapterNumber: parsed.chapterNumber,
+          timeoutMs: env.routerChapterTimeoutMs,
+        });
       },
       `Chương ${parsed.chapterNumber} đã sẵn sàng.`,
     );
@@ -1240,6 +1329,316 @@ export class StoryOrchestrator {
       timeoutMs: params.timeoutMs,
       contextLabel: params.contextLabel,
     });
+  }
+
+  /**
+   * Derive a prompt-only "voice lock" from the chapters written so far so later
+   * chapters keep the same prose register (autonovel voice fingerprint).
+   * Cheap (no LLM), opt-out via VOICE_LOCK_ENABLED=false. Returns undefined when
+   * disabled, when there is nothing to sample, or on any analysis miss.
+   */
+  /**
+   * Generate canon hard-facts (autonovel gen_canon) for a freshly built
+   * outline. Opt-in via CANON_FACTS_ENABLED; fail-open returns [].
+   */
+  private async computeCanonFacts(outline: StoryPayload): Promise<string[]> {
+    if (!env.canonFactsEnabled) {
+      return [];
+    }
+    return generateCanonFacts({
+      concept: outline.concept,
+      storyBible: outline.storyBible,
+      chapterPlan: outline.chapterPlan,
+      outputLanguage: outline.request.outputLanguage,
+      routerClient: this.routerClient,
+      model: outline.meta.modelAliases.planner,
+      fallbackModel: outline.meta.modelAliases.fallback,
+      timeoutMs: env.routerPlanningTimeoutMs,
+    });
+  }
+
+  private computeVoiceLock(chapters: Chapter[]): string | undefined {
+    if (!env.voiceLockEnabled || chapters.length === 0) {
+      return undefined;
+    }
+    const fingerprint = analyzeVoiceFingerprint(chapters.map((chapter) => chapter.text));
+    return fingerprint ? buildVoiceLockInstruction(fingerprint) : undefined;
+  }
+
+  /**
+   * Build the propagation-debt ledger (autonovel state.json) from the continuity
+   * tracker once the story is assembled. Prompt-free analysis; opt-out via
+   * PROPAGATION_LEDGER_ENABLED=false. Returns undefined when disabled or empty.
+   */
+  private computePropagationDebt(continuityTracker?: ContinuityTracker): StoryPayload["meta"]["propagationDebt"] {
+    if (!env.propagationLedgerEnabled || !continuityTracker) {
+      return undefined;
+    }
+    try {
+      const plotBeats = continuityTracker.getPlotBeatReport();
+      const debts = buildPropagationLedger({
+        foreshadow: continuityTracker.getForeshadowReport(),
+        plotBeats,
+        establishedFacts: continuityTracker.getAllEstablishedFacts(),
+        totalChapters: plotBeats.total,
+      });
+      return debts.length > 0 ? debts : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * autonovel adversarial-cut pass on a finalized chapter (opt-in via
+   * ADVERSARIAL_CUT_ENABLED). The tightened text is re-checked against the
+   * quality gate; if the cut introduced a hard failure the original is kept.
+   * Fully fail-open: any error returns the chapter unchanged.
+   */
+  private async maybeTightenChapter(
+    chapter: Chapter,
+    options: {
+      draftControls: DraftControls;
+      outputLanguage: OutputLanguage;
+      models: PostProcessModels;
+      chapterNumber: number;
+      timeoutMs?: number;
+    },
+  ): Promise<Chapter> {
+    if (!env.adversarialCutEnabled) {
+      return chapter;
+    }
+
+    try {
+      const tightened = await tightenChapterText({
+        text: chapter.text,
+        outputLanguage: options.outputLanguage,
+        routerClient: this.routerClient,
+        model: options.models.rewriter,
+        fallbackModel: options.models.fallback,
+        timeoutMs: options.timeoutMs,
+        targetCutRatio: env.adversarialCutTargetRatio,
+        contextLabel: `chapter ${options.chapterNumber} adversarial cut`,
+      });
+
+      if (tightened === chapter.text) {
+        return chapter;
+      }
+
+      const metrics = analyzeChapterQuality(tightened, options.draftControls, options.outputLanguage, options.chapterNumber);
+      if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
+        // Cut broke a hard rule (e.g. word count floor) — keep the original.
+        return chapter;
+      }
+
+      return { ...chapter, text: tightened };
+    } catch {
+      return chapter;
+    }
+  }
+
+  /**
+   * Foundation gate (autonovel Phase 1): score the freshly built outline and,
+   * if it is below FOUNDATION_GATE_MIN_SCORE, rebuild the whole outline up to
+   * FOUNDATION_GATE_MAX_ATTEMPTS times, keeping the highest-scoring version.
+   * Opt-in via FOUNDATION_GATE_ENABLED. Fail-open: a null evaluation counts as
+   * a pass, and any error returns the original outline untouched.
+   */
+  private async applyFoundationGate(
+    outline: StoryPayload,
+    request: NormalizedFullGenerateRequest,
+    progress: ResolvedStoryProgressOptions,
+    options?: { recentStoryTitles?: string[] },
+  ): Promise<{ outline: StoryPayload; foundationReport?: FoundationReport }> {
+    if (!env.foundationGateEnabled) {
+      return { outline };
+    }
+
+    const models: PostProcessModels = {
+      rewriter: outline.meta.modelAliases.planner,
+      fallback: outline.meta.modelAliases.fallback,
+    };
+
+    const evaluate = (candidate: StoryPayload) =>
+      evaluateFoundation({
+        concept: candidate.concept,
+        storyBible: candidate.storyBible,
+        chapterPlan: candidate.chapterPlan,
+        outputLanguage: candidate.request.outputLanguage,
+        linePreset: candidate.request.linePreset,
+        routerClient: this.routerClient,
+        model: models.rewriter,
+        fallbackModel: models.fallback,
+        timeoutMs: env.routerPlanningTimeoutMs,
+      });
+
+    try {
+      let best = outline;
+      let bestReport = await evaluate(outline);
+      let attempts = 1;
+
+      // null report = evaluation unavailable -> treat as pass (fail-open).
+      while (
+        bestReport !== null &&
+        bestReport.overallScore < env.foundationGateMinScore &&
+        attempts < env.foundationGateMaxAttempts
+      ) {
+        attempts += 1;
+        const candidate = await this.generateOutline(request, progress, options);
+        const candidateReport = await evaluate(candidate);
+        if (!candidateReport || candidateReport.overallScore > (bestReport?.overallScore ?? 0)) {
+          best = candidate;
+          bestReport = candidateReport;
+          if (!candidateReport) break; // can't compare further; keep this one
+        }
+      }
+
+      const foundationReport = bestReport ? { ...bestReport, attempts } : undefined;
+      return { outline: best, foundationReport };
+    } catch {
+      return { outline };
+    }
+  }
+
+  /**
+   * Run the novel-level evaluations (autonovel reader panel + expert review).
+   * Both are opt-in, run in parallel, and fail-open: a failed evaluation simply
+   * yields no report and never blocks story completion.
+   */
+  private async runManuscriptEvaluations(
+    storyPayload: StoryPayload,
+    models: PostProcessModels,
+  ): Promise<Pick<StoryPayload["meta"], "readerPanel" | "manuscriptReview">> {
+    if ((!env.readerPanelEnabled && !env.manuscriptReviewEnabled) || storyPayload.chapters.length === 0) {
+      return {};
+    }
+
+    const concept = { logline: storyPayload.concept.logline, promise: storyPayload.concept.promise };
+    const [readerPanel, manuscriptReview] = await Promise.all([
+      env.readerPanelEnabled
+        ? runReaderPanel({
+            title: storyPayload.title,
+            concept,
+            chapters: storyPayload.chapters,
+            outputLanguage: storyPayload.request.outputLanguage,
+            routerClient: this.routerClient,
+            model: models.rewriter,
+            fallbackModel: models.fallback,
+            timeoutMs: env.routerPlanningTimeoutMs,
+          })
+        : Promise.resolve(null),
+      env.manuscriptReviewEnabled
+        ? reviewManuscript({
+            title: storyPayload.title,
+            concept,
+            chapters: storyPayload.chapters,
+            outputLanguage: storyPayload.request.outputLanguage,
+            routerClient: this.routerClient,
+            model: models.rewriter,
+            fallbackModel: models.fallback,
+            timeoutMs: env.routerPlanningTimeoutMs,
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return {
+      ...(readerPanel ? { readerPanel } : {}),
+      ...(manuscriptReview ? { manuscriptReview } : {}),
+    };
+  }
+
+  /**
+   * autonovel revision loop: turn the evaluation reports into per-chapter
+   * revision briefs and rewrite the highest-priority chapters in place
+   * (opt-in via REVISION_LOOP_ENABLED, capped by REVISION_MAX_CHAPTERS).
+   *
+   * Each rewrite is re-checked against the quality gate; if a rewrite would
+   * introduce a hard failure or the model errors, the original chapter is kept.
+   * Fully fail-open — never throws, never blocks completion.
+   */
+  private async maybeRunRevisionLoop(
+    storyPayload: StoryPayload,
+    reports: Pick<StoryPayload["meta"], "readerPanel" | "manuscriptReview">,
+  ): Promise<{ chapters: Chapter[]; revised: number[] }> {
+    const unchanged = { chapters: storyPayload.chapters, revised: [] as number[] };
+    if (!env.revisionLoopEnabled || storyPayload.chapters.length === 0) {
+      return unchanged;
+    }
+
+    const briefs = planChapterRevisions(reports.readerPanel, reports.manuscriptReview, {
+      minSeverity: "high",
+      maxChapters: env.revisionMaxChapters,
+    });
+    if (briefs.length === 0) {
+      return unchanged;
+    }
+
+    try {
+      const context = await this.loadGenerationContext(
+        storyPayload.request.linePreset,
+        storyPayload.request.stylePreset,
+      );
+      const draftControls = resolveDraftControls(storyPayload.request.draftControls);
+      const outputLanguage = storyPayload.request.outputLanguage;
+      const chapters = [...storyPayload.chapters];
+      const revised: number[] = [];
+
+      for (const brief of briefs) {
+        const index = chapters.findIndex((chapter) => chapter.chapterNumber === brief.chapterNumber);
+        const chapterPlanItem = storyPayload.chapterPlan.find((item) => item.chapterNumber === brief.chapterNumber);
+        if (index === -1 || !chapterPlanItem) {
+          continue;
+        }
+        const current = chapters[index];
+
+        try {
+          const revisePrompt = buildRegenerateChapterPrompt({
+            storyTitle: storyPayload.title,
+            storyBible: storyPayload.storyBible,
+            chapterPlanItem,
+            currentChapter: {
+              chapterNumber: current.chapterNumber,
+              title: current.title,
+              summary: current.summary ?? "",
+              text: current.text,
+            },
+            continuityLite: storyPayload.continuityLite,
+            instruction: buildRevisionInstruction(brief),
+            mode: "rewrite_chapter",
+            preserveConstraints: { preserveNames: true, preserveMainReveal: true, preserveEndingMode: true },
+            outputLanguage,
+            stylePreset: context.stylePreset,
+            prosePolishConfig: this.prosePolishConfig,
+          });
+
+          const result = await this.routerClient.generateJson<unknown>({
+            model: context.models.rewriter,
+            fallbackModel: context.models.fallback,
+            ...revisePrompt,
+            temperature: 0.7,
+            timeoutMs: env.routerChapterTimeoutMs,
+          });
+
+          const candidate = alignChapterTitleWithPlan(
+            validateChapterDraft(unwrapEnvelope(result.data, "chapter"), current.chapterNumber),
+            chapterPlanItem.title,
+          );
+          const metrics = analyzeChapterQuality(candidate.text, draftControls, outputLanguage, current.chapterNumber);
+          if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
+            continue; // keep original — revision broke a hard rule
+          }
+
+          chapters[index] = candidate;
+          revised.push(current.chapterNumber);
+        } catch {
+          // keep original chapter on any failure
+        }
+      }
+
+      chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+      return { chapters, revised };
+    } catch {
+      return unchanged;
+    }
   }
 
   private startPosterGeneration(outline: StoryPayload, progress: ResolvedStoryProgressOptions) {

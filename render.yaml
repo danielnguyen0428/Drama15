@@ -17,7 +17,7 @@ services:
       - key: CORS_ORIGINS
         value: https://drama.novelkit.cc
       - key: OPENAI_BASE_URL
-        value: https://ckey.vn/v1
+        value: https://api.xah.io/v1
       - key: OPENAI_API_KEY
         sync: false
       - key: MODEL_PRESET

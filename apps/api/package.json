@@ -20,7 +20,16 @@
     "test:story-title": "tsx --test src/storyTitleResolution.test.ts",
     "test:style-blueprints": "tsx --test src/styleBlueprintPresets.test.ts",
     "test:web-csp": "tsx --test src/webCsp.test.ts",
-    "test:concept-name-alignment": "tsx --test src/conceptNameAlignment.test.ts"
+    "test:concept-name-alignment": "tsx --test src/conceptNameAlignment.test.ts",
+    "test:structural-slop": "tsx --test src/structuralSlop.test.ts",
+    "test:reader-panel": "tsx --test src/readerPanel.test.ts",
+    "test:manuscript-review": "tsx --test src/manuscriptReview.test.ts",
+    "test:adversarial-cut": "tsx --test src/adversarialCut.test.ts",
+    "test:revision-planner": "tsx --test src/revisionPlanner.test.ts",
+    "test:voice-fingerprint": "tsx --test src/voiceFingerprint.test.ts",
+    "test:propagation-ledger": "tsx --test src/propagationLedger.test.ts",
+    "test:foundation-gate": "tsx --test src/foundationGate.test.ts",
+    "test:canon-facts": "tsx --test src/canonFacts.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

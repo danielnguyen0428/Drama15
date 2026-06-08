@@ -4,11 +4,11 @@ import type { Session } from '@supabase/supabase-js';
 import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
-import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, TOTAL_CHAPTERS, type RelationshipGraphView } from './storyViewModel';
+import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
-type Panel = 'chapters' | 'overview' | 'plan' | 'bible' | 'relationships';
+type Panel = 'chapters' | 'overview' | 'plan' | 'bible' | 'relationships' | 'quality';
 type StoryStatus = 'queued' | 'running' | 'completed' | 'failed';
 
 type StoryConfig = {
@@ -34,7 +34,7 @@ type StoryControls = {
 
 type StylePreset = { id: string; displayName: string; description: string };
 type Chapter = { index: number; title?: string; content: string };
-type StoryResult = { concept: string; plan: string; bible?: unknown; relationshipGraph?: RelationshipGraphView; chapters: Chapter[] };
+type StoryResult = { concept: string; plan: string; bible?: unknown; relationshipGraph?: RelationshipGraphView; quality?: QualityReportView; chapters: Chapter[] };
 type AppUser = { id: string; email: string; displayName: string; avatarUrl?: string; tier: 'free' | 'pro' | 'premium' };
 type Quota = { usageDate: string; used: number; limit: number; remaining: number };
 type SavedStory = {
@@ -59,6 +59,7 @@ type StoryPayload = {
   chapterPlan: Array<{ chapterNumber: number; title: string; mainBeat: string; hook: string; endingBeat: string }>;
   chapters: Array<{ chapterNumber: number; title?: string; text: string }>;
   relationshipGraph?: unknown;
+  meta?: unknown;
 };
 
 type StreamEvent = {
@@ -188,13 +189,11 @@ export function StoryWorkspace(): JSX.Element {
 
   const typewriter = useTypewriterQueue({
     onSectionStart: useCallback((job: RevealJob) => {
-      // Auto-switch to overview when concept starts (first content to arrive).
-      // For chapters, switch to the chapters panel so user sees writing happen.
-      // For bible/plan, do NOT force a panel switch — they type in the background
-      // and user can navigate there at will while concept is still animating.
-      if (job.panel === 'overview' || job.panel === 'chapters') {
-        setPanel(job.panel);
-      }
+      // Follow the writing: switch to whichever section is actively being typed
+      // so concept, plan (Dàn ý), bible (Hồ sơ) and chapters all show their
+      // realtime reveal. onSectionStart only fires for typed sections, so this
+      // never yanks the user onto the non-streamed tabs (Quan hệ, Chất lượng).
+      setPanel(job.panel);
       if (job.chapterIndex !== undefined) setActiveChapter(job.chapterIndex);
     }, []),
   });
@@ -661,7 +660,7 @@ export function StoryWorkspace(): JSX.Element {
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
           <div className="story-toolbar"><div><p className="eyebrow">Bản thảo truyện</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>Viết tiếp truyện</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>Tải bản thảo</button></div></div>
-          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button></nav>
+          <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>Chương</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>Ý tưởng</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>Dàn ý</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>Hồ sơ</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>Quan hệ</button><button type="button" className={panel === 'quality' ? 'active' : ''} onClick={() => setPanel('quality')}>Chất lượng</button></nav>
           <div className="status-card story-status-card">
             <span>{PHASE_LABELS[phase]}</span>
             <small className="loading-action">{progressLabel}{busy && stageElapsed >= 3 ? ` · ${formatElapsed(stageElapsed)}` : ''}</small>
@@ -674,6 +673,7 @@ export function StoryWorkspace(): JSX.Element {
           {panel === 'plan' && <TextPanel title="Dàn ý chương" content={result.plan} loading={writing} reveal={typewriter.revealed.plan} typing={typewriter.activeKey === 'plan'} />}
           {panel === 'bible' && <TextPanel title="Hồ sơ truyện" content={stringifyBible(result.bible)} loading={writing} reveal={typewriter.revealed.bible} typing={typewriter.activeKey === 'bible'} />}
           {panel === 'relationships' && <RelationshipGraphPanel graph={result.relationshipGraph} />}
+          {panel === 'quality' && <QualityReportPanel quality={result.quality} />}
 
           {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label="Chỉnh chương" value={`Chương ${activeChapterData.index}`} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder="VD: giữ cốt truyện, tăng cảm giác bị xem thường ở đoạn cao trào." rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? 'Đang viết lại...' : 'Viết lại chương'}</button></section>}
         </section>
@@ -748,6 +748,55 @@ function RelationshipGraphPanel({ graph }: { graph?: RelationshipGraphView }) {
 
 function PanelHeading({ label, value }: { label: string; value: string }) {
   return <div className="panel-heading"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+const SEVERITY_LABELS: Record<'low' | 'medium' | 'high', string> = { low: 'Thấp', medium: 'Vừa', high: 'Cao' };
+const DEBT_KIND_LABELS: Record<'missed_foreshadow' | 'pending_foreshadow' | 'unachieved_beat' | 'late_fact', string> = {
+  missed_foreshadow: 'Mạch gài bị bỏ',
+  pending_foreshadow: 'Mạch gài chưa trả',
+  unachieved_beat: 'Beat chưa đạt',
+  late_fact: 'Sự thật xuất hiện muộn',
+};
+
+function chapterTag(chapters: number[]) {
+  return chapters.length > 0 ? `Ch. ${chapters.join(', ')}` : '';
+}
+
+function QualityReportPanel({ quality }: { quality?: QualityReportView }) {
+  if (!quality) {
+    return <article className="text-panel"><h3>Đánh giá chất lượng</h3><div className="empty-state">Chưa có báo cáo. Bật hội đồng độc giả / phê bình (READER_PANEL_ENABLED, MANUSCRIPT_REVIEW_ENABLED) để có đánh giá; sổ nợ liên tục hiện sau khi truyện hoàn tất.</div></article>;
+  }
+
+  const { readerPanel, manuscriptReview, propagationDebt, foundation } = quality;
+
+  return <article className="quality-panel">
+    <h3>Đánh giá chất lượng</h3>
+
+    {foundation && <section className="quality-section">
+      <div className="quality-section-head"><h4>Nền truyện (concept · hồ sơ · dàn ý)</h4><span className="quality-score">{foundation.overallScore.toFixed(1)}/10</span></div>
+      {foundation.attempts && foundation.attempts > 1 && <p className="relationship-note">Đã dựng lại nền {foundation.attempts} lần để đạt chất lượng.</p>}
+      {foundation.dimensions.length > 0 && <div className="quality-persona-grid">{foundation.dimensions.map((d, i) => <div key={i} className="quality-persona"><div className="quality-persona-head"><strong>{d.name}</strong><span>{d.score.toFixed(1)}</span></div>{d.note && <p className="quality-liked">{d.note}</p>}</div>)}</div>}
+      {foundation.issues.length > 0 && <ul className="quality-issues">{foundation.issues.map((issue, i) => <li key={i}><span className="quality-issue-text">⚠️ {issue}</span></li>)}</ul>}
+      {foundation.suggestions.length > 0 && <ul className="quality-issues">{foundation.suggestions.map((s, i) => <li key={i}><span className="quality-issue-text">💡 {s}</span></li>)}</ul>}
+    </section>}
+
+    {readerPanel && <section className="quality-section">
+      <div className="quality-section-head"><h4>Hội đồng độc giả</h4><span className="quality-score">{readerPanel.overallScore.toFixed(1)}/10</span></div>
+      <div className="quality-persona-grid">{readerPanel.personas.map((p, i) => <div key={i} className="quality-persona"><div className="quality-persona-head"><strong>{p.persona}</strong><span>{p.score.toFixed(1)}</span></div>{p.liked && <p className="quality-liked">👍 {p.liked}</p>}{p.concern && <p className="quality-concern">⚠️ {p.concern}</p>}</div>)}</div>
+      {readerPanel.topIssues.length > 0 && <ul className="quality-issues">{readerPanel.topIssues.map((issue, i) => <li key={i}><span className={`sev sev-${issue.severity}`}>{SEVERITY_LABELS[issue.severity]}</span><span className="quality-issue-text">{issue.issue}</span>{chapterTag(issue.chapters) && <span className="quality-chapter">{chapterTag(issue.chapters)}</span>}</li>)}</ul>}
+    </section>}
+
+    {manuscriptReview && <section className="quality-section">
+      <div className="quality-section-head"><h4>Phê bình biên tập</h4></div>
+      {manuscriptReview.verdict && <p className="quality-verdict">{manuscriptReview.verdict}</p>}
+      {manuscriptReview.items.length > 0 && <ul className="quality-issues">{manuscriptReview.items.map((item, i) => <li key={i}><span className={`sev sev-${item.severity}`}>{SEVERITY_LABELS[item.severity]}</span><span className="quality-persona-tag">{item.persona === 'professor' ? 'Giáo sư' : 'Phê bình'}</span><span className="quality-issue-text">{item.issue}</span>{chapterTag(item.chapters) && <span className="quality-chapter">{chapterTag(item.chapters)}</span>}</li>)}</ul>}
+    </section>}
+
+    {propagationDebt && propagationDebt.length > 0 && <section className="quality-section">
+      <div className="quality-section-head"><h4>Sổ nợ liên tục</h4><span className="quality-score">{propagationDebt.length}</span></div>
+      <ul className="quality-issues">{propagationDebt.map((debt, i) => <li key={i}><span className={`sev sev-${debt.severity}`}>{SEVERITY_LABELS[debt.severity]}</span><span className="quality-persona-tag">{DEBT_KIND_LABELS[debt.kind]}</span><span className="quality-issue-text">{debt.detail}</span>{chapterTag(debt.chapters) && <span className="quality-chapter">{chapterTag(debt.chapters)}</span>}</li>)}</ul>
+    </section>}
+  </article>;
 }
 
 type RevealJob = {
@@ -933,6 +982,7 @@ function resultFromPayload(payload: StoryPayload): StoryResult {
     plan: payload.chapterPlan.map((chapter) => [`${chapter.chapterNumber}. ${chapter.title}`, `Nhịp chính: ${chapter.mainBeat}`, `Móc câu: ${chapter.hook}`, `Kết chương: ${chapter.endingBeat}`].join('\n')).join('\n\n'),
     bible: payload.storyBible,
     relationshipGraph: normalizeRelationshipGraph(payload.relationshipGraph),
+    quality: normalizeQualityReports(payload.meta),
     chapters: payload.chapters.map((chapter) => ({ index: chapter.chapterNumber, title: chapter.title, content: chapter.text })),
   };
 }

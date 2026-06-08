@@ -130,6 +130,30 @@ export {
   type SentenceVarianceMetrics,
 } from "./validators/sentence-variance";
 
+// ─── Structural Slop Detection ───────────────────────────────────────────────
+export {
+  detectStructuralSlop,
+  buildStructuralSlopRepairInstructions,
+  type StructuralSlopKind,
+  type StructuralSlopHit,
+  type StructuralSlopReport,
+} from "./validators/structural-slop";
+
+// ─── Voice Fingerprint ───────────────────────────────────────────────────────
+export {
+  analyzeVoiceFingerprint,
+  buildVoiceLockInstruction,
+  type VoiceFingerprint,
+} from "./validators/voice-fingerprint";
+
+// ─── Propagation Ledger ──────────────────────────────────────────────────────
+export {
+  buildPropagationLedger,
+  type PropagationDebt,
+  type PropagationDebtKind,
+  type PropagationLedgerInput,
+} from "./validators/propagation-ledger";
+
 // ─── Prompt Templates ────────────────────────────────────────────────────────
 export {
   JSON_OUTPUT_GUARD,

@@ -72,6 +72,37 @@ try {
   console.log('model aliases:', JSON.stringify(payload.meta?.modelAliases ?? {}));
   const firstLen = payload.chapters[0]?.text?.length ?? 0;
   console.log(`first chapter length: ${firstLen} chars`);
+
+  // ─── autonovel upgrade reports ──────────────────────────────────────────
+  const rp = payload.meta?.readerPanel;
+  if (rp) {
+    console.log(`\n[reader panel] overall=${rp.overallScore}/10  personas=${rp.personas.length}  topIssues=${rp.topIssues.length}`);
+    for (const issue of rp.topIssues.slice(0, 5)) {
+      console.log(`   - (${issue.severity}) ${issue.issue} ${issue.chapters.length ? `[ch ${issue.chapters.join(',')}]` : ''}`);
+    }
+  } else {
+    console.log('\n[reader panel] (not enabled / no report)');
+  }
+
+  const mr = payload.meta?.manuscriptReview;
+  if (mr) {
+    console.log(`\n[manuscript review] items=${mr.items.length}\n   verdict: ${mr.verdict}`);
+    for (const item of mr.items.slice(0, 5)) {
+      console.log(`   - (${item.severity}/${item.persona}) ${item.issue} ${item.chapters.length ? `[ch ${item.chapters.join(',')}]` : ''}`);
+    }
+  } else {
+    console.log('\n[manuscript review] (not enabled / no report)');
+  }
+
+  const debt = payload.meta?.propagationDebt;
+  if (debt && debt.length > 0) {
+    console.log(`\n[propagation debt] ${debt.length} item(s):`);
+    for (const d of debt.slice(0, 8)) {
+      console.log(`   - (${d.severity}) ${d.kind}: ${d.detail}`);
+    }
+  } else {
+    console.log('\n[propagation debt] none');
+  }
 } catch (error) {
   console.log(`\n✗ generation failed after ${((Date.now() - started) / 1000).toFixed(1)}s: ${error?.message ?? error}`);
   process.exit(1);

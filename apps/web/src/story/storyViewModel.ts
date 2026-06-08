@@ -89,3 +89,165 @@ function isRelationshipEdge(value: unknown): value is RelationshipEdgeView {
   const record = value as Record<string, unknown>;
   return typeof record.source === 'string' && typeof record.target === 'string' && typeof record.label === 'string' && typeof record.type === 'string';
 }
+
+// ─── Quality reports (autonovel reader panel / review / propagation debt) ─────
+
+export type Severity = 'low' | 'medium' | 'high';
+export type EvaluationIssueView = { issue: string; severity: Severity; chapters: number[] };
+export type ReaderPanelView = {
+  overallScore: number;
+  personas: Array<{ persona: string; score: number; liked: string; concern: string }>;
+  topIssues: EvaluationIssueView[];
+};
+export type ManuscriptReviewView = {
+  verdict: string;
+  items: Array<EvaluationIssueView & { persona: 'critic' | 'professor' }>;
+};
+export type PropagationDebtView = {
+  kind: 'missed_foreshadow' | 'pending_foreshadow' | 'unachieved_beat' | 'late_fact';
+  detail: string;
+  chapters: number[];
+  severity: Severity;
+};
+export type FoundationReportView = {
+  overallScore: number;
+  dimensions: Array<{ name: string; score: number; note: string }>;
+  issues: string[];
+  suggestions: string[];
+  attempts?: number;
+};
+export type QualityReportView = {
+  readerPanel?: ReaderPanelView;
+  manuscriptReview?: ManuscriptReviewView;
+  propagationDebt?: PropagationDebtView[];
+  foundation?: FoundationReportView;
+};
+
+const SEVERITIES: Severity[] = ['low', 'medium', 'high'];
+const DEBT_KINDS = ['missed_foreshadow', 'pending_foreshadow', 'unachieved_beat', 'late_fact'] as const;
+
+export function normalizeQualityReports(meta: unknown): QualityReportView | undefined {
+  if (!meta || typeof meta !== 'object') return undefined;
+  const record = meta as Record<string, unknown>;
+
+  const readerPanel = normalizeReaderPanel(record.readerPanel);
+  const manuscriptReview = normalizeManuscriptReview(record.manuscriptReview);
+  const propagationDebt = normalizePropagationDebt(record.propagationDebt);
+  const foundation = normalizeFoundation(record.foundationReport);
+
+  if (!readerPanel && !manuscriptReview && !foundation && (!propagationDebt || propagationDebt.length === 0)) {
+    return undefined;
+  }
+  return {
+    ...(readerPanel ? { readerPanel } : {}),
+    ...(manuscriptReview ? { manuscriptReview } : {}),
+    ...(propagationDebt && propagationDebt.length > 0 ? { propagationDebt } : {}),
+    ...(foundation ? { foundation } : {}),
+  };
+}
+
+function normalizeFoundation(value: unknown): FoundationReportView | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.overallScore !== 'number') return undefined;
+  const dimensions = Array.isArray(record.dimensions)
+    ? record.dimensions
+        .map((entry) => {
+          const d = entry as Record<string, unknown>;
+          if (typeof d.name !== 'string' || typeof d.score !== 'number') return undefined;
+          return { name: d.name, score: d.score, note: typeof d.note === 'string' ? d.note : '' };
+        })
+        .filter((d): d is NonNullable<typeof d> => d !== undefined)
+    : [];
+  const toStrings = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []);
+  return {
+    overallScore: record.overallScore,
+    dimensions,
+    issues: toStrings(record.issues),
+    suggestions: toStrings(record.suggestions),
+    attempts: typeof record.attempts === 'number' ? record.attempts : undefined,
+  };
+}
+
+function normalizeReaderPanel(value: unknown): ReaderPanelView | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.overallScore !== 'number') return undefined;
+  const personas = Array.isArray(record.personas)
+    ? record.personas
+        .map((entry) => {
+          const p = entry as Record<string, unknown>;
+          if (typeof p.persona !== 'string' || typeof p.score !== 'number') return undefined;
+          return {
+            persona: p.persona,
+            score: p.score,
+            liked: typeof p.liked === 'string' ? p.liked : '',
+            concern: typeof p.concern === 'string' ? p.concern : '',
+          };
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== undefined)
+    : [];
+  return {
+    overallScore: record.overallScore,
+    personas,
+    topIssues: normalizeIssues(record.topIssues),
+  };
+}
+
+function normalizeManuscriptReview(value: unknown): ManuscriptReviewView | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const items = Array.isArray(record.items)
+    ? record.items
+        .map((entry) => {
+          const issue = normalizeIssue(entry);
+          if (!issue) return undefined;
+          const persona = (entry as Record<string, unknown>).persona === 'professor' ? 'professor' : 'critic';
+          return { ...issue, persona } as ManuscriptReviewView['items'][number];
+        })
+        .filter((i): i is NonNullable<typeof i> => i !== undefined)
+    : [];
+  const verdict = typeof record.verdict === 'string' ? record.verdict : '';
+  if (!verdict && items.length === 0) return undefined;
+  return { verdict, items };
+}
+
+function normalizePropagationDebt(value: unknown): PropagationDebtView[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return undefined;
+      const record = entry as Record<string, unknown>;
+      if (!DEBT_KINDS.includes(record.kind as PropagationDebtView['kind'])) return undefined;
+      if (typeof record.detail !== 'string') return undefined;
+      return {
+        kind: record.kind as PropagationDebtView['kind'],
+        detail: record.detail,
+        chapters: normalizeChapters(record.chapters),
+        severity: SEVERITIES.includes(record.severity as Severity) ? (record.severity as Severity) : 'medium',
+      };
+    })
+    .filter((d): d is PropagationDebtView => d !== undefined);
+}
+
+function normalizeIssues(value: unknown): EvaluationIssueView[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeIssue).filter((i): i is EvaluationIssueView => i !== undefined);
+}
+
+function normalizeIssue(value: unknown): EvaluationIssueView | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const text = typeof record.issue === 'string' ? record.issue : typeof record.item === 'string' ? record.item : undefined;
+  if (!text || text.trim().length === 0) return undefined;
+  return {
+    issue: text.trim(),
+    severity: SEVERITIES.includes(record.severity as Severity) ? (record.severity as Severity) : 'medium',
+    chapters: normalizeChapters(record.chapters),
+  };
+}
+
+function normalizeChapters(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= TOTAL_CHAPTERS);
+}

@@ -691,6 +691,7 @@ export function buildChapterDraftPrompt(params: {
   outputLanguage: OutputLanguage;
   stylePreset: StylePreset;
   prosePolishConfig?: LocalProsePolishConfig;
+  voiceLock?: string;
 }): PromptBundle {
   const {
     storyTitle,
@@ -701,6 +702,7 @@ export function buildChapterDraftPrompt(params: {
     draftControls,
     outputLanguage,
     stylePreset,
+    voiceLock,
   } = params;
   const targetWords = resolveLegacyTargetWords(draftControls);
   const effectiveChapterDialogueRatio = effectiveDialogueRatio(draftControls.dialogueRatio, chapterPlanItem.chapterNumber);
@@ -741,10 +743,17 @@ export function buildChapterDraftPrompt(params: {
       "Cut duplicate reaction beats. Do not explain the same humiliation twice in narration.",
       "Keep the prose sharp and readable. Avoid padded description.",
       prosePolishBlock(params.prosePolishConfig, "chapter", outputLanguage),
+      ...(voiceLock ? [voiceLock] : []),
       ...(storyTitle ? [block("Story title", { title: storyTitle })] : []),
       block("Story bible", storyBible),
       block("Target chapter plan item", chapterPlanItem),
       block("Previous chapter summaries", previousChapterSummaries),
+      ...(continuityLite?.canonFacts && continuityLite.canonFacts.length > 0
+        ? [
+            "Canon — đây là các sự thật cứng đã chốt; KHÔNG được mâu thuẫn hay đổi chúng:",
+            block("Canon facts", continuityLite.canonFacts),
+          ]
+        : []),
       block("Continuity", continuityLite ?? {}),
       block("Style preset", stylePreset),
     ].join("\n\n"),

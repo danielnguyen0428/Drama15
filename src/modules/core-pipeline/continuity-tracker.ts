@@ -49,6 +49,7 @@ export class ContinuityTracker {
   private plotBeats: PlotBeat[] = [];
   private characterFacts: Map<number, CharacterFactSheet> = new Map();
   private chapterStates: Map<number, { heroineAgency: number; emotionalTemperature: string }> = new Map();
+  private canonFacts: string[] = [];
 
   constructor(options: ContinuityTrackerOptions) {
     this.heroineName = options.storyBible.heroine.name;
@@ -76,6 +77,13 @@ export class ContinuityTracker {
         status: "planted",
       });
     }
+  }
+
+  /** Lock the canon hard-facts that every chapter must respect. */
+  setCanonFacts(facts: string[]): void {
+    this.canonFacts = Array.isArray(facts)
+      ? facts.filter((f) => typeof f === "string" && f.trim().length > 0)
+      : [];
   }
 
   recordChapter(chapter: MinimalChapterRef, factSheet: CharacterFactSheet): void {
@@ -112,6 +120,7 @@ export class ContinuityTracker {
       coreReveal: this.coreReveal,
       endingMode: this.endingMode,
       speechPatterns: this.buildSpeechPatterns(),
+      canonFacts: this.canonFacts,
       chapterState: Array.from(this.chapterStates.entries())
         .sort((a, b) => a[0] - b[0])
         .map(([ch, state]) => ({
@@ -137,6 +146,20 @@ export class ContinuityTracker {
       total: this.plotBeats.length,
       beats: this.plotBeats,
     };
+  }
+
+  /** Flatten every newly-established fact across all chapters (for propagation
+   * debt analysis). */
+  getAllEstablishedFacts(): Array<{ chapterNumber: number; fact: string; confidence: string }> {
+    const results: Array<{ chapterNumber: number; fact: string; confidence: string }> = [];
+    for (const [chapterNumber, factSheet] of this.characterFacts) {
+      for (const character of factSheet.characters) {
+        for (const fact of character.newlyEstablishedFacts) {
+          results.push({ chapterNumber, fact: fact.fact, confidence: fact.confidence });
+        }
+      }
+    }
+    return results.sort((a, b) => a.chapterNumber - b.chapterNumber);
   }
 
   getCharacterArc(characterName: string): Array<{

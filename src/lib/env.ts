@@ -51,6 +51,23 @@ const EnvSchema = z.object({
   TELEGRAM_CHAT_ID: z.string().optional(),
   TELEGRAM_ENABLE_POLLING: z.string().optional().transform((value) => value !== "false"),
   TELEGRAM_STATUS_INTERVAL_MS: z.coerce.number().int().min(0).default(0),
+  // ─── autonovel upgrades (opt-in; add LLM passes, off by default) ──────────
+  READER_PANEL_ENABLED: z.string().optional().transform((value) => value === "true"),
+  MANUSCRIPT_REVIEW_ENABLED: z.string().optional().transform((value) => value === "true"),
+  ADVERSARIAL_CUT_ENABLED: z.string().optional().transform((value) => value === "true"),
+  ADVERSARIAL_CUT_TARGET_RATIO: z.coerce.number().min(0.05).max(0.3).default(0.12),
+  REVISION_LOOP_ENABLED: z.string().optional().transform((value) => value === "true"),
+  REVISION_MAX_CHAPTERS: z.coerce.number().int().min(1).max(15).default(3),
+  // Voice lock adds no extra LLM call (prompt-only), so it defaults ON.
+  VOICE_LOCK_ENABLED: z.string().optional().transform((value) => value !== "false"),
+  // Propagation ledger is prompt-free analysis, so it defaults ON.
+  PROPAGATION_LEDGER_ENABLED: z.string().optional().transform((value) => value !== "false"),
+  // Foundation gate: score concept+bible+plan, regenerate weak foundations.
+  FOUNDATION_GATE_ENABLED: z.string().optional().transform((value) => value === "true"),
+  FOUNDATION_GATE_MIN_SCORE: z.coerce.number().min(0).max(10).default(7),
+  FOUNDATION_GATE_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(4).default(2),
+  // Canon facts: lock hard facts at outline time and inject into chapters.
+  CANON_FACTS_ENABLED: z.string().optional().transform((value) => value === "true"),
 });
 
 const parsedEnv = EnvSchema.parse(process.env);
@@ -88,6 +105,18 @@ export const env = {
   telegramChatId: parsedEnv.TELEGRAM_CHAT_ID,
   telegramEnablePolling: parsedEnv.TELEGRAM_ENABLE_POLLING,
   telegramStatusIntervalMs: parsedEnv.TELEGRAM_STATUS_INTERVAL_MS,
+  readerPanelEnabled: parsedEnv.READER_PANEL_ENABLED,
+  manuscriptReviewEnabled: parsedEnv.MANUSCRIPT_REVIEW_ENABLED,
+  adversarialCutEnabled: parsedEnv.ADVERSARIAL_CUT_ENABLED,
+  adversarialCutTargetRatio: parsedEnv.ADVERSARIAL_CUT_TARGET_RATIO,
+  revisionLoopEnabled: parsedEnv.REVISION_LOOP_ENABLED,
+  revisionMaxChapters: parsedEnv.REVISION_MAX_CHAPTERS,
+  voiceLockEnabled: parsedEnv.VOICE_LOCK_ENABLED,
+  propagationLedgerEnabled: parsedEnv.PROPAGATION_LEDGER_ENABLED,
+  foundationGateEnabled: parsedEnv.FOUNDATION_GATE_ENABLED,
+  foundationGateMinScore: parsedEnv.FOUNDATION_GATE_MIN_SCORE,
+  foundationGateMaxAttempts: parsedEnv.FOUNDATION_GATE_MAX_ATTEMPTS,
+  canonFactsEnabled: parsedEnv.CANON_FACTS_ENABLED,
 } as const;
 
 function resolveOutputDir(value: string | undefined) {

@@ -51,6 +51,10 @@ import {
   buildVarianceRepairInstruction,
   analyzeSentenceVariance,
 } from "../core-pipeline/validators/sentence-variance";
+import {
+  detectStructuralSlop,
+  buildStructuralSlopRepairInstructions,
+} from "../core-pipeline/validators/structural-slop";
 
 const OUTPUT_LANGUAGE_NAMES: Record<OutputLanguage, string> = {
   english: "English",
@@ -345,6 +349,10 @@ export function buildChapterRepairPrompt(params: {
         "PHRASE REUSE REPAIR: Replace repeated trigram phrases with fresh expressions. " +
         "Keep all plot facts, character names, and dialogue meaning identical."
       );
+    }
+    if (failure.includes("structural slop")) {
+      const structural = detectStructuralSlop(params.previousDraft);
+      failureInstructions.push(buildStructuralSlopRepairInstructions(structural));
     }
     if (failure.includes("word count")) {
       failureInstructions.push(

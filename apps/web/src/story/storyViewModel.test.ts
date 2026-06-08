@@ -5,6 +5,7 @@ import {
   canResumeStory,
   createRelationshipGraphPreview,
   normalizeRelationshipGraph,
+  normalizeQualityReports,
 } from './storyViewModel.js';
 
 test('story list shows resume when API marks a zero-chapter partial story resumable', () => {
@@ -57,4 +58,34 @@ test('relationship graph preview limits dense graphs to readable nodes and edges
   assert.equal(preview.hiddenNodeCount, 16);
   assert.ok(preview.hiddenEdgeCount > 0);
   assert.ok(preview.edges.every((edge) => preview.nodes.some((node) => node.id === edge.source) && preview.nodes.some((node) => node.id === edge.target)));
+});
+
+test('quality reports normalization returns undefined when meta has no reports', () => {
+  assert.equal(normalizeQualityReports({ generatedAt: 'x', modelAliases: {} }), undefined);
+  assert.equal(normalizeQualityReports(null), undefined);
+});
+
+test('quality reports normalization parses reader panel, review and debt', () => {
+  const quality = normalizeQualityReports({
+    readerPanel: {
+      overallScore: 7.2,
+      personas: [{ persona: 'A', score: 8, liked: 'x', concern: 'y' }],
+      topIssues: [{ issue: 'mỏng', severity: 'high', chapters: [4, 99] }],
+    },
+    manuscriptReview: {
+      verdict: 'ổn',
+      items: [{ item: 'lặp', severity: 'medium', persona: 'professor', chapters: [2] }],
+    },
+    propagationDebt: [
+      { kind: 'missed_foreshadow', detail: 'd', chapters: [3], severity: 'high' },
+      { kind: 'bogus', detail: 'x', chapters: [], severity: 'low' },
+    ],
+  });
+
+  assert.ok(quality);
+  assert.equal(quality.readerPanel?.overallScore, 7.2);
+  assert.deepEqual(quality.readerPanel?.topIssues[0]?.chapters, [4]); // 99 dropped
+  assert.equal(quality.manuscriptReview?.items[0]?.persona, 'professor');
+  assert.equal(quality.manuscriptReview?.items[0]?.issue, 'lặp');
+  assert.equal(quality.propagationDebt?.length, 1); // bogus kind dropped
 });
