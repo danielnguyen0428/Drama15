@@ -40,6 +40,19 @@ services:
         value: "2"
       - key: ROUTER_FALLBACK_ENABLED
         value: "true"
+      # ─── autonovel writing upgrades (production) ───────────────────────────
+      - key: ADVERSARIAL_CUT_ENABLED
+        value: "true"
+      - key: READER_PANEL_ENABLED
+        value: "true"
+      - key: MANUSCRIPT_REVIEW_ENABLED
+        value: "true"
+      - key: REVISION_LOOP_ENABLED
+        value: "true"
+      - key: FOUNDATION_GATE_ENABLED
+        value: "true"
+      - key: CANON_FACTS_ENABLED
+        value: "true"
       - key: DEFAULT_LINE_PRESET
         value: billionaire_rich_poor_romance
       - key: DEFAULT_STYLE_PRESET
