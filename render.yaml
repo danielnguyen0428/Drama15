@@ -41,14 +41,17 @@ services:
       - key: ROUTER_FALLBACK_ENABLED
         value: "true"
       # ─── autonovel writing upgrades (production) ───────────────────────────
+      # Light profile: keep cheap high-value passes on; heavy full-manuscript
+      # passes (reader panel / review) and chapter rewrites (revision) are off
+      # to keep latency and token cost down under real traffic.
       - key: ADVERSARIAL_CUT_ENABLED
         value: "true"
       - key: READER_PANEL_ENABLED
-        value: "true"
+        value: "false"
       - key: MANUSCRIPT_REVIEW_ENABLED
-        value: "true"
+        value: "false"
       - key: REVISION_LOOP_ENABLED
-        value: "true"
+        value: "false"
       - key: FOUNDATION_GATE_ENABLED
         value: "true"
       - key: CANON_FACTS_ENABLED
