@@ -11,12 +11,12 @@ test('workspace footer links to NovelKit properties and credits the maker', () =
   assert.match(source, /href="https:\/\/novelkit\.cc"/);
   assert.match(source, /href="https:\/\/meowsolo\.com"/);
   assert.match(source, /href="https:\/\/beta\.novelkit\.cc"/);
-  assert.match(source, /Made NovelKit\.Cc with ❤️ by Dũng Nguyễn/);
+  assert.match(source, /footer\.tagline/);
 });
 
 test('setup suggestion CTA uses script wording and shows the free daily quota fallback', () => {
-  assert.match(source, />Gợi ý kịch bản</);
-  assert.match(source, /10 lượt gợi ý kịch bản\/ngày/);
+  assert.match(source, /setup\.suggest_btn/);
+  assert.match(source, /setup_quota_free/);
   assert.doesNotMatch(source, /Gợi ý mầm truyện/);
   assert.doesNotMatch(source, /lượt gợi ý mầm truyện/);
 });
@@ -52,7 +52,7 @@ test('stream disconnect refreshes saved stories so resume controls can appear', 
 
 test('failed current draft exposes a direct continue-story button', () => {
   assert.match(source, /canResumeCurrentStory/);
-  assert.match(source, />Viết tiếp truyện</);
+  assert.match(source, /story\.resume_btn/);
   assert.match(source, /resumeStory\(storyId\)/);
 });
 
@@ -65,6 +65,6 @@ test('account block exposes resume when a saved story can continue', () => {
 
   const accountBlock = source.slice(accountStart, workspaceStart);
   assert.match(source, /resumableStory/);
-  assert.match(accountBlock, /Viết tiếp truyện/);
+  assert.match(accountBlock, /account\.resume_btn/);
   assert.match(accountBlock, /resumeStory\(resumableStory\.id\)/);
 });

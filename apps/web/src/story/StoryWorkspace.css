@@ -57,13 +57,17 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 /* ---- Masthead ---------------------------------------------------------- */
 .workspace-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  gap: 20px;
-  align-items: stretch;
   margin: 0 auto 22px;
   max-width: 1600px;
   padding: 6px 0 22px;
+}
+
+/* ---- Language switcher ------------------------------------------------- */
+.lang-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .workspace-header h1,
@@ -93,7 +97,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .studio-kicker i { color: var(--muted); padding-left: 10px; border-left: 1px solid var(--line-strong); }
 
 .workspace-header h1 {
-  max-width: 16ch;
+  max-width: none;
   color: var(--ink);
   font-size: clamp(40px, 5vw, 72px);
   font-weight: 600;
@@ -101,7 +105,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 }
 .workspace-header p {
   margin: 0;
-  max-width: 60ch;
+  max-width: none;
   color: var(--muted);
   font-size: 15px;
   line-height: 1.7;
@@ -671,7 +675,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 
 @media (max-width: 980px) {
   .workspace-shell { padding: 16px; }
-  .workspace-header,
   .workspace-grid { grid-template-columns: 1fr; }
   .account-bar { grid-template-columns: 1fr; align-items: stretch; }
   .account-quota { padding-left: 0; padding-top: 12px; border-left: 0; border-top: 2px solid var(--coral); }
@@ -693,14 +696,41 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 
 /* ---- Admin announcement (header) -------------------------------------- */
 .announcement-card {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 890;
+  width: 340px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 30px rgba(26, 22, 17, 0.15);
   padding: 18px 20px;
   display: grid;
   align-content: center;
   gap: 8px;
+}
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.announcement-close-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms ease;
+  line-height: 1;
+}
+.announcement-close-btn:hover {
+  color: var(--coral-dark);
 }
 
 .announcement-kicker {
@@ -804,8 +834,12 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(24, 119, 242, 0.45);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, bottom 200ms ease;
   text-decoration: none;
+}
+
+.fb-float-btn.with-announcement {
+  bottom: 300px;
 }
 
 .fb-float-btn:hover {
@@ -941,7 +975,14 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .status-card { gap: 10px; }
   .status-card strong { font-size: 28px; }
   /* Keep the floating chat button from covering primary actions. */
-  .fb-float-btn { bottom: 16px; right: 16px; width: 48px; height: 48px; }
+  .fb-float-btn { bottom: 24px; right: 12px; width: 48px; height: 48px; }
+  .fb-float-btn.with-announcement { bottom: 310px; }
+  .announcement-card {
+    width: calc(100% - 24px);
+    bottom: 12px;
+    right: 12px;
+    padding: 14px 16px;
+  }
 }
 
 /* Comfortable tap targets on touch devices. */
