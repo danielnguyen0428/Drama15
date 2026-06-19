@@ -5,7 +5,7 @@ export type TranslationKeys = typeof vi;
 const vi = {
   // Header
   'header.kicker': 'Bản thảo 15 chương',
-  'header.title': 'Drama 15: Xưởng viết tiểu thuyết ngắn',
+  'header.title': 'Drama 15: Trợ lý AI Sáng tác Tiểu thuyết Drama 15 Chương',
   'header.subtitle': 'Ươm ý tưởng, dựng nhân vật, lập dàn ý và viết từng chương trong một không gian gọn gàng cho người viết truyện.',
   'header.meta.idea': 'Ý tưởng',
   'header.meta.character': 'Nhân vật',
@@ -231,7 +231,7 @@ const vi = {
 const en: Record<keyof typeof vi, string> = {
   // Header
   'header.kicker': '15-Chapter Manuscript',
-  'header.title': 'Drama 15: Short Novel Writing Studio',
+  'header.title': 'Drama 15: AI 15-Chapter Drama Novel Assistant',
   'header.subtitle': 'Brainstorm ideas, build characters, create outlines, and write each chapter in one seamless workspace for storytellers.',
   'header.meta.idea': 'Idea',
   'header.meta.character': 'Characters',
