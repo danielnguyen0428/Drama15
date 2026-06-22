@@ -321,27 +321,61 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   font-size: 30px;
   line-height: 1;
 }
-.provider-tabs,
-.provider-presets {
+.settings-field {
   display: grid;
-  gap: 10px;
+  gap: 7px;
 }
-.provider-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.provider-tabs button,
-.provider-presets button {
-  min-height: 38px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-strong);
-  color: var(--ink-soft);
+.settings-field > small,
+.settings-field-heading small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.settings-field-heading {
+  display: grid;
+  gap: 3px;
+}
+.settings-field-heading > span {
+  color: var(--ink);
+  font-size: 13px;
   font-weight: 600;
 }
-.provider-tabs button.active {
-  border-color: var(--coral);
-  background: var(--coral-soft);
-  color: var(--coral-dark);
+.provider-tabbar {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
-.provider-presets { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.provider-tabbar button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms cubic-bezier(0.16, 1, 0.3, 1), background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.provider-tabbar button:not(:disabled):hover {
+  transform: none;
+  color: var(--ink);
+  background: var(--paper-strong);
+}
+.provider-tabbar button.active {
+  color: var(--coral-dark);
+  border-bottom-color: var(--coral);
+  background: var(--coral-soft);
+}
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -804,6 +838,14 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   transition: color 150ms ease;
   line-height: 1;
 }
+.announcement-close-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
 .announcement-close-btn:hover {
   color: var(--coral-dark);
 }
@@ -834,12 +876,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   font-size: 14px;
 }
 
-.announcement-card a {
-  color: var(--coral-dark);
-  font-weight: 600;
-  text-decoration: underline;
-}
-
 /* ---- Progress block moved into the draft panel ------------------------ */
 .story-status-card {
   margin-top: 16px;
@@ -867,33 +903,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 
 
-/* ---- Announcement list styling ----------------------------------------- */
-.announcement-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 6px;
-}
-
-.announcement-list li {
-  color: var(--ink-soft);
-  line-height: 1.55;
-  font-size: 14px;
-}
-
-.announcement-list a {
-  color: var(--coral-dark);
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-.highlight-free {
-  color: var(--coral-dark);
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
 /* ---- Floating Facebook chat button ------------------------------------- */
 .fb-float-btn {
   position: fixed;
@@ -914,7 +923,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 
 .fb-float-btn.with-announcement {
-  bottom: 300px;
+  bottom: 190px;
 }
 
 .fb-float-btn:hover {
@@ -1051,7 +1060,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .status-card strong { font-size: 28px; }
   /* Keep the floating chat button from covering primary actions. */
   .fb-float-btn { bottom: 24px; right: 12px; width: 48px; height: 48px; }
-  .fb-float-btn.with-announcement { bottom: 310px; }
+  .fb-float-btn.with-announcement { bottom: 190px; }
   .announcement-card {
     width: calc(100% - 24px);
     bottom: 12px;

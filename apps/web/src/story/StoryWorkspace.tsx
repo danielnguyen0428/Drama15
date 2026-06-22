@@ -688,13 +688,13 @@ export function StoryWorkspace(): JSX.Element {
         <aside className="announcement-card" role="note">
           <div className="announcement-header">
             <span className="announcement-kicker">{t('announcement.kicker')}</span>
-            <button type="button" className="announcement-close-btn" onClick={() => setShowAnnouncement(false)} aria-label="Close announcement">✕</button>
+            <button type="button" className="announcement-close-btn" onClick={() => setShowAnnouncement(false)} aria-label="Close announcement">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 3.5 12.5 12.5M12.5 3.5 3.5 12.5" />
+              </svg>
+            </button>
           </div>
-          <ul className="announcement-list">
-            <li>{t('announcement.line1_pre')}<strong className="highlight-free">{t('announcement.free')}</strong>{t('announcement.line1_post')}<a href="https://www.facebook.com/novelkit" target="_blank" rel="noreferrer noopener">{t('announcement.line1_link')}</a></li>
-            <li>{t('announcement.line2')}</li>
-            <li>{t('announcement.line3')}</li>
-          </ul>
+          <p className="announcement-copy">{t('announcement.body')}</p>
         </aside>
       )}
       <a className={`fb-float-btn ${showAnnouncement ? 'with-announcement' : ''}`} href="https://www.facebook.com/novelkit" target="_blank" rel="noreferrer noopener" aria-label={t('footer.fb_aria')}>

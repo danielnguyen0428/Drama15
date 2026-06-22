@@ -14,13 +14,8 @@ const vi = {
   'header.meta.aria': 'Quy trình sáng tác',
 
   // Announcement
-  'announcement.kicker': '📢 Thông báo từ Admin',
-  'announcement.free': 'MIỄN PHÍ HOÀN TOÀN',
-  'announcement.line1_pre': '🎉 Hệ thống ',
-  'announcement.line1_post': ' & đang thử nghiệm nên đôi khi chưa ổn định, ace gặp lỗi vui lòng nhắn admin ',
-  'announcement.line1_link': 'Fanpage NovelKit',
-  'announcement.line2': '🤖 Hệ thống sử dụng Deepseek Flash 4 để sáng tác.',
-  'announcement.line3': '😢 Khi nào giàu đổi lên Model Vip Pro hơn để chạy :(',
+  'announcement.kicker': 'Thông báo từ Admin',
+  'announcement.body': 'Hệ thống vận hành miễn phí hoàn toàn. Người dùng có thể nhập API key từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) cá nhân hoặc các Provider khác được cung cấp từ admin.',
 
   // Account
   'account.avatar_alt': 'Ảnh đại diện',
@@ -240,13 +235,8 @@ const en: Record<keyof typeof vi, string> = {
   'header.meta.aria': 'Writing process',
 
   // Announcement
-  'announcement.kicker': '📢 Admin Announcement',
-  'announcement.free': 'COMPLETELY FREE',
-  'announcement.line1_pre': '🎉 The system is ',
-  'announcement.line1_post': ' & still in beta, so it may be unstable. Please contact admin via ',
-  'announcement.line1_link': 'NovelKit Fanpage',
-  'announcement.line2': '🤖 The system uses Deepseek Flash 4 for writing.',
-  'announcement.line3': '😢 When we can afford it, we\'ll upgrade to a better model :(',
+  'announcement.kicker': 'Admin Announcement',
+  'announcement.body': 'The system is completely free to use. Users can enter personal API keys from OpenAI, OpenRouter, Gemini (OpenAI-compatible), or other providers supplied by the admin.',
 
   // Account
   'account.avatar_alt': 'Avatar',

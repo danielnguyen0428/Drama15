@@ -22,9 +22,21 @@ type LlmPreset = {
 };
 
 type LlmCatalog = {
-  tabs: Array<{ id: LlmProvider; label: string }>;
   presets: LlmPreset[];
 };
+
+const FALLBACK_PRESETS: LlmPreset[] = [
+  { id: 'c', label: 'C-PROVIDER', provider: 'c', baseUrl: 'https://api.xah.io/v1' },
+  { id: 's', label: 'S-PROVIDER', provider: 's', baseUrl: 'https://api.shopaikey.com/v1' },
+  { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
+  { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },
+  {
+    id: 'gemini-openai',
+    label: 'Gemini',
+    provider: 'other',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+  },
+];
 
 type Props = {
   open: boolean;
@@ -74,7 +86,10 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
 
   if (!open) return null;
 
-  const presets = catalog?.presets.filter((preset) => preset.provider === provider) ?? [];
+  const providerOptions = catalog?.presets.length ? catalog.presets : FALLBACK_PRESETS;
+  const activePresetId = providerOptions.find((preset) =>
+    preset.provider === provider && normalizeBaseUrl(preset.baseUrl) === normalizeBaseUrl(baseUrl),
+  )?.id ?? 'custom';
 
   async function saveSettings() {
     setBusy(true);
@@ -127,6 +142,14 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
     setClearApiKey(Boolean(settings?.apiKeySet && preset.baseUrl !== settings.baseUrl));
   }
 
+  function useCustomProvider() {
+    if (activePresetId !== 'custom') {
+      setBaseUrl('');
+      setClearApiKey(Boolean(settings?.apiKeySet));
+    }
+    setProvider('other');
+  }
+
   function closeAndClearSecret() {
     setApiKey('');
     setClearApiKey(false);
@@ -144,42 +167,45 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
           <button type="button" className="secondary-button" onClick={closeAndClearSecret}>Đóng</button>
         </div>
 
-        <div className="provider-tabs" role="tablist" aria-label="LLM provider">
-          {(catalog?.tabs ?? [
-            { id: 'c', label: 'C-PROVIDER' },
-            { id: 's', label: 'S-PROVIDER' },
-            { id: 'other', label: 'OTHER' },
-          ]).map((tab) => (
+        <div className="settings-field">
+          <div className="settings-field-heading">
+            <span>Provider</span>
+            <small>Chọn dịch vụ có sẵn hoặc dùng endpoint OpenAI-compatible riêng.</small>
+          </div>
+          <div className="provider-tabbar" role="tablist" aria-label="LLM provider">
+            {providerOptions.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                role="tab"
+                aria-selected={activePresetId === preset.id}
+                className={activePresetId === preset.id ? 'active' : ''}
+                onClick={() => applyPreset(preset)}
+              >
+                {providerTabLabel(preset)}
+              </button>
+            ))}
             <button
-              key={tab.id}
               type="button"
-              className={provider === tab.id ? 'active' : ''}
-              onClick={() => {
-                const firstPreset = catalog?.presets.find((preset) => preset.provider === tab.id);
-                if (firstPreset) applyPreset(firstPreset);
-                else setProvider(tab.id);
-              }}
+              role="tab"
+              aria-selected={activePresetId === 'custom'}
+              className={activePresetId === 'custom' ? 'active' : ''}
+              onClick={useCustomProvider}
             >
-              {tab.label}
+              Tùy chỉnh
             </button>
-          ))}
+          </div>
         </div>
 
-        <div className="provider-presets">
-          {presets.map((preset) => (
-            <button key={preset.id} type="button" onClick={() => applyPreset(preset)}>
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
-        <label>Base URL
+        <label className="settings-field">Base URL
           <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://api.openai.com/v1" />
+          <small>Endpoint API tương thích chuẩn OpenAI.</small>
         </label>
-        <label>Model
+        <label className="settings-field">Model
           <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="gpt-4o-mini" />
+          <small>Nhập chính xác model ID do provider cung cấp.</small>
         </label>
-        <label>API key {settings?.apiKeySet && <span className="muted-inline">đã đặt: {settings.apiKeyFingerprint}</span>}
+        <label className="settings-field">API key {settings?.apiKeySet && <span className="muted-inline">đã đặt: {settings.apiKeyFingerprint}</span>}
           <input
             type="password"
             value={apiKey}
@@ -211,6 +237,14 @@ function jsonRequest(method: 'POST' | 'PUT', body: unknown): RequestInit {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   };
+}
+
+function normalizeBaseUrl(value: string) {
+  return value.trim().replace(/\/+$/, '');
+}
+
+function providerTabLabel(preset: LlmPreset) {
+  return preset.id === 'gemini-openai' ? 'Gemini' : preset.label;
 }
 
 async function readApiError(response: Response) {
