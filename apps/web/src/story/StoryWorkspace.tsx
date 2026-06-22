@@ -5,6 +5,7 @@ import { getApiBaseUrl } from '../api/apiBase';
 import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
 import { useI18n } from '../i18n/useI18n';
+import { LlmSettingsModal, type LlmSettings } from './LlmSettingsModal';
 import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
 import './StoryWorkspace.css';
 
@@ -154,6 +155,8 @@ export function StoryWorkspace(): JSX.Element {
   const [user, setUser] = useState<AppUser | null>(null);
   const [quota, setQuota] = useState<Quota | null>(null);
   const [setupSuggestionQuota, setSetupSuggestionQuota] = useState<Quota | null>(null);
+  const [llmSettings, setLlmSettings] = useState<LlmSettings | null>(null);
+  const [showLlmSettings, setShowLlmSettings] = useState(false);
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [storyListBusy, setStoryListBusy] = useState(false);
   const streamRef = useRef<EventSource | null>(null);
@@ -194,6 +197,7 @@ export function StoryWorkspace(): JSX.Element {
   const isSignedIn = Boolean(session && user);
   const outOfQuota = Boolean(quota && quota.remaining <= 0);
   const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
+  const llmConfigured = Boolean(llmSettings?.configured);
   const canResumeCurrentStory = Boolean(
     storyId && phase !== 'completed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < TOTAL_CHAPTERS),
   );
@@ -244,6 +248,7 @@ export function StoryWorkspace(): JSX.Element {
         setSession(data.session);
         if (!data.session) return;
         void refreshAccount();
+        void refreshLlmSettings();
         void loadSavedStories();
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : t('error.login'));
@@ -251,16 +256,18 @@ export function StoryWorkspace(): JSX.Element {
     })();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      if (nextSession) {
-        void refreshAccount();
-        void loadSavedStories();
-      } else {
-        setUser(null);
-        setQuota(null);
-        setSetupSuggestionQuota(null);
-        setSavedStories([]);
-      }
+        setSession(nextSession);
+        if (nextSession) {
+          void refreshAccount();
+          void refreshLlmSettings();
+          void loadSavedStories();
+        } else {
+          setUser(null);
+          setQuota(null);
+          setSetupSuggestionQuota(null);
+          setLlmSettings(null);
+          setSavedStories([]);
+        }
     });
 
     return () => {
@@ -300,6 +307,16 @@ export function StoryWorkspace(): JSX.Element {
       setSetupSuggestionQuota(data.setupSuggestionQuota ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('error.account'));
+    }
+  }
+
+  async function refreshLlmSettings() {
+    try {
+      const response = await httpFetch('/llm/settings');
+      if (!response.ok) throw new Error(await readError(response));
+      setLlmSettings((await response.json()) as LlmSettings);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không tải được cấu hình LLM.');
     }
   }
 
@@ -597,7 +614,7 @@ export function StoryWorkspace(): JSX.Element {
           <div className={outOfSetupSuggestionQuota ? 'account-quota blocked' : 'account-quota'}><strong>{setupSuggestionQuotaCopy}</strong></div>
         </div>
         <div className="account-actions">
-          {user ? <>{resumableStory && <button type="button" className="primary-button" disabled={busy} onClick={() => void resumeStory(resumableStory.id)}>{t('account.resume_btn')}</button>}<button type="button" className="secondary-button" onClick={() => void signOut()}>{t('account.sign_out')}</button></> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>{t('account.sign_in')}</button>}
+          {user ? <>{resumableStory && <button type="button" className="primary-button" disabled={busy || !llmConfigured} onClick={() => void resumeStory(resumableStory.id)}>{t('account.resume_btn')}</button>}<button type="button" className={llmConfigured ? 'secondary-button' : 'primary-button'} onClick={() => setShowLlmSettings(true)}>{llmConfigured ? llmSettings?.model : 'Cấu hình LLM'}</button><button type="button" className="secondary-button" onClick={() => void signOut()}>{t('account.sign_out')}</button></> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>{t('account.sign_in')}</button>}
           <button type="button" className="secondary-button lang-switch-btn" onClick={toggleLocale} aria-label="Switch language" title={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}>🌐 {t('lang_switch.label')}</button>
         </div>
       </section>
@@ -630,11 +647,11 @@ export function StoryWorkspace(): JSX.Element {
           <Range label={t('setup.intensity')} value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
           <Range label={t('setup.dialogue_ratio')} value={config.dialogueRatio} min={0.2} max={0.85} onChange={(value) => updateConfig('dialogueRatio', value)} />
           <Range label={t('setup.hook_density')} value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>{t('setup.suggest_btn')}</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || outOfQuota || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>{t('setup.write_btn')}</button></div>
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>{t('setup.suggest_btn')}</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfQuota || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>{t('setup.write_btn')}</button></div>
         </aside>
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
-          <div className="story-toolbar"><div><p className="eyebrow">{t('story.eyebrow')}</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || busy} onClick={() => storyId && void resumeStory(storyId)}>{t('story.resume_btn')}</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>{t('story.export_btn')}</button></div></div>
+          <div className="story-toolbar"><div><p className="eyebrow">{t('story.eyebrow')}</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || !llmConfigured || busy} onClick={() => storyId && void resumeStory(storyId)}>{t('story.resume_btn')}</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>{t('story.export_btn')}</button></div></div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>{t('story.tab.chapters')}</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>{t('story.tab.overview')}</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>{t('story.tab.plan')}</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>{t('story.tab.bible')}</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>{t('story.tab.relationships')}</button><button type="button" className={panel === 'quality' ? 'active' : ''} onClick={() => setPanel('quality')}>{t('story.tab.quality')}</button></nav>
           {!(storyId === null && phase === 'idle') && (
             <div className="status-card story-status-card">
@@ -652,7 +669,7 @@ export function StoryWorkspace(): JSX.Element {
           {panel === 'relationships' && <RelationshipGraphPanel graph={result.relationshipGraph} t={t} />}
           {panel === 'quality' && <QualityReportPanel quality={result.quality} t={t} />}
 
-          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label={t('rewrite.heading_label')} value={t('rewrite.heading_value', { index: activeChapterData.index })} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODE_KEYS.map((key) => <option key={key} value={key}>{t(`rewrite.${key}`)}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder={t('rewrite.placeholder')} rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn} onClick={() => void rewriteChapter()}>{rewriteBusy ? t('rewrite.btn_busy') : t('rewrite.btn')}</button></section>}
+          {phase === 'completed' && activeChapterData && <section className="rewrite-panel"><PanelHeading label={t('rewrite.heading_label')} value={t('rewrite.heading_value', { index: activeChapterData.index })} /><select value={rewriteMode} onChange={(event) => setRewriteMode(event.target.value)}>{REWRITE_MODE_KEYS.map((key) => <option key={key} value={key}>{t(`rewrite.${key}`)}</option>)}</select><textarea value={rewriteInstruction} onChange={(event) => setRewriteInstruction(event.target.value)} placeholder={t('rewrite.placeholder')} rows={3} /><button type="button" className="primary-button" disabled={rewriteBusy || !rewriteInstruction.trim() || !isSignedIn || !llmConfigured} onClick={() => void rewriteChapter()}>{rewriteBusy ? t('rewrite.btn_busy') : t('rewrite.btn')}</button></section>}
         </section>
 
         <aside className="saved-panel">
@@ -683,6 +700,11 @@ export function StoryWorkspace(): JSX.Element {
       <a className={`fb-float-btn ${showAnnouncement ? 'with-announcement' : ''}`} href="https://www.facebook.com/novelkit" target="_blank" rel="noreferrer noopener" aria-label={t('footer.fb_aria')}>
         <svg viewBox="0 0 36 36" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M18 2C9.163 2 2 8.636 2 16.7c0 4.592 2.268 8.694 5.812 11.396V34l5.592-3.072A17.838 17.838 0 0 0 18 31.4c8.837 0 16-6.636 16-14.7S26.837 2 18 2Zm1.588 19.79-4.074-4.346-7.95 4.346 8.744-9.28 4.178 4.345 7.846-4.345-8.744 9.28Z" /></svg>
       </a>
+      <LlmSettingsModal
+        open={showLlmSettings}
+        onClose={() => setShowLlmSettings(false)}
+        onSaved={setLlmSettings}
+      />
     </main>
   );
 }

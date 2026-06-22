@@ -284,6 +284,83 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .account-actions { display: flex; gap: 10px; justify-self: end; flex-shrink: 0; }
 .account-actions button { padding: 0 16px; }
 
+/* ---- LLM settings modal ------------------------------------------------ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(26, 22, 17, 0.42);
+  backdrop-filter: blur(8px);
+}
+.settings-modal {
+  display: grid;
+  gap: 16px;
+  width: min(680px, 100%);
+  max-height: min(90vh, 820px);
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: calc(var(--radius) + 6px);
+  padding: 22px;
+  background: var(--paper);
+  box-shadow: 0 30px 80px -42px rgba(26, 22, 17, 0.72);
+}
+.settings-modal-head,
+.settings-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-modal h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1;
+}
+.provider-tabs,
+.provider-presets,
+.settings-grid-2 {
+  display: grid;
+  gap: 10px;
+}
+.provider-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.provider-tabs button,
+.provider-presets button {
+  min-height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-strong);
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.provider-tabs button.active {
+  border-color: var(--coral);
+  background: var(--coral-soft);
+  color: var(--coral-dark);
+}
+.provider-presets { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.settings-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.checkbox-row input { width: auto; }
+.muted-inline { color: var(--muted); font-weight: 500; }
+.settings-message {
+  margin: 0;
+  border-left: 3px solid var(--coral);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
 /* ---- Grid -------------------------------------------------------------- */
 .workspace-grid {
   display: grid;

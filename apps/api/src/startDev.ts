@@ -9,6 +9,7 @@ import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
 import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
+import type { EffectiveLlmSettings, LlmSettingsSpec } from './llm-settings/spec.js';
 import {
   consumeSetupSuggestionQuota,
   consumeStoryQuota,
@@ -41,11 +42,15 @@ process.env.DRAMA15_APP_ROOT ??= projectRoot;
 process.env.DRAMA15_ASSET_ROOT ??= projectRoot;
 
 const { env } = await import('../../../src/lib/env.js');
-const { isAppError } = await import('../../../src/lib/errors.js');
+const { AppError, isAppError } = await import('../../../src/lib/errors.js');
 const { StoryOrchestrator } = await import('../../../src/modules/orchestrator/story-orchestrator.js');
 const { PresetLoader } = await import('../../../src/modules/presets/preset-loader.js');
 const { RouterClient } = await import('../../../src/modules/router/router-client.js');
 const { SeedHistoryStore } = await import('../../../src/modules/session/seed-history-store.js');
+const { createAesGcmCipher } = await import('./llm-settings/crypto.js');
+const { LlmSettingsHandler } = await import('./llm-settings/handler.js');
+const { SupabaseLlmSettingsRepository } = await import('./llm-settings/repository.js');
+const { registerLlmSettingsRoutes } = await import('./llm-settings/routes.js');
 const {
   NormalizedFullGenerateRequestSchema,
   NormalizedOutlineRequestSchema,
@@ -70,6 +75,7 @@ type StoryJob = {
   createdAt: string;
   request?: NormalizedFullGenerateRequest;
   resumePayload?: StoryPayload;
+  llmSettings: EffectiveLlmSettings;
   events: StreamPayload[];
   clients: Set<(payload: StreamPayload) => void>;
   promise?: Promise<StoryPayload>;
@@ -119,30 +125,66 @@ const modeMap: Record<string, RegenerateMode> = {
 
 const jobs = new Map<string, StoryJob>();
 
-// One orchestrator per tier. Each is wired with its own model preset so a
-// premium user's generation never gets its model overwritten by a concurrent
-// free/pro request (the previous single-orchestrator + setModelAliasOverride
-// approach mutated shared state and was not concurrency-safe). The router
-// provider itself is shared (ckey.vn via OPENAI_BASE_URL/OPENAI_API_KEY).
 type UserTier = 'free' | 'pro' | 'premium';
 const sharedPresetLoader = new PresetLoader();
-const sharedRouterClient = new RouterClient();
 const sharedSeedHistoryStore = new SeedHistoryStore();
+let cachedLlmSettingsHandler: LlmSettingsSpec | null = null;
 
-const orchestratorByTier = new Map<UserTier, InstanceType<typeof StoryOrchestrator>>();
+function getLlmSettingsHandler() {
+  if (cachedLlmSettingsHandler) return cachedLlmSettingsHandler;
+  if (!env.llmSettingsEncryptionKey) {
+    throw new AppError(
+      'UNKNOWN_ERROR',
+      'LLM_SETTINGS_ENCRYPTION_KEY chưa được cấu hình trên API server.',
+      500,
+    );
+  }
+  cachedLlmSettingsHandler = new LlmSettingsHandler(
+    new SupabaseLlmSettingsRepository(getSupabaseAdmin()),
+    createAesGcmCipher(env.llmSettingsEncryptionKey),
+    {
+      additionalAllowedHosts: env.llmAllowedHosts,
+      allowInsecureLocalhost: env.llmAllowInsecureLocalhost,
+    },
+  );
+  return cachedLlmSettingsHandler;
+}
 
-function getOrchestrator(tier: UserTier = 'free') {
-  const existing = orchestratorByTier.get(tier);
-  if (existing) return existing;
+const llmSettingsRouteHandler: LlmSettingsSpec = {
+  getPublic: (userId) => getLlmSettingsHandler().getPublic(userId),
+  save: (userId, input) => getLlmSettingsHandler().save(userId, input),
+  resolveDraft: (userId, input) => getLlmSettingsHandler().resolveDraft(userId, input),
+  resolve: (userId) => getLlmSettingsHandler().resolve(userId),
+};
 
+async function requireLlmSettings(userId: string) {
+  const result = await getLlmSettingsHandler().resolve(userId);
+  if (result.success === true) return result.data;
+  const statusCode = result.error.code === 'NOT_CONFIGURED' ? 400 : 500;
+  throw new AppError('VALIDATION_ERROR', result.error.message, statusCode, {
+    code: result.error.code,
+  });
+}
+
+function createUserRouterClient(settings: EffectiveLlmSettings) {
+  return new RouterClient(() => ({
+    apiKey: settings.apiKey,
+    baseUrl: settings.baseUrl,
+    source: 'user',
+    temperature: settings.temperature,
+    maxTokens: settings.maxTokens,
+  }));
+}
+
+function createUserOrchestrator(tier: UserTier, settings: EffectiveLlmSettings) {
   const presetName = env.modelPresetByTier[tier] ?? env.modelPreset;
   const instance = new StoryOrchestrator(
     sharedPresetLoader,
-    sharedRouterClient,
+    createUserRouterClient(settings),
     presetName,
     sharedSeedHistoryStore,
   );
-  orchestratorByTier.set(tier, instance);
+  instance.setModelAliasOverride(settings.model);
   return instance;
 }
 
@@ -170,6 +212,15 @@ app.addHook('onRequest', (request, reply, done) => {
   }
 
   done();
+});
+
+registerLlmSettingsRoutes(app, {
+  handler: llmSettingsRouteHandler,
+  authenticate: async (request, reply) => {
+    const user = await requireUser(request, reply);
+    return user?.id ?? null;
+  },
+  testConnection: async (settings) => createUserRouterClient(settings).testConnection(settings.model),
 });
 
 app.get('/healthz', async () => ({
@@ -228,6 +279,7 @@ app.post('/story/setup-suggest', async (request, reply) => {
 
   try {
     const config = StoryConfigSchema.parse(request.body);
+    const llmSettings = await requireLlmSettings(user.id);
     const setupSuggestionQuota = await consumeSetupSuggestionQuota(user);
     if (setupSuggestionQuota && !setupSuggestionQuota.allowed) {
       return reply.code(429).send({
@@ -240,7 +292,10 @@ app.post('/story/setup-suggest', async (request, reply) => {
     }
 
     const suggestionRequest = normalizeOutlineRequest(config);
-    const result = await getOrchestrator(normalizeTier(user.tier)).generateSettingSeed(suggestionRequest);
+    const result = await createUserOrchestrator(
+      normalizeTier(user.tier),
+      llmSettings,
+    ).generateSettingSeed(suggestionRequest);
 
     return reply.send({
       title: result.seedPackage.titleHint,
@@ -274,6 +329,7 @@ app.post('/stories', async (request, reply) => {
   try {
     const config = StoryConfigSchema.parse(request.body);
     const storyRequest = normalizeFullRequest(config);
+    const llmSettings = await requireLlmSettings(user.id);
     const quota = await consumeStoryQuota(user);
     if (!quota.allowed) {
       return reply.code(429).send({
@@ -292,6 +348,7 @@ app.post('/stories', async (request, reply) => {
       tier: normalizeTier(user.tier),
       createdAt: new Date().toISOString(),
       request: storyRequest,
+      llmSettings,
       events: [],
       clients: new Set(),
       status: 'queued',
@@ -358,12 +415,14 @@ app.post('/stories/:id/resume', async (request, reply) => {
       });
     }
 
+    const llmSettings = await requireLlmSettings(user.id);
     const job: StoryJob = {
       id,
       userId: user.id,
       tier: normalizeTier(user.tier),
       createdAt: new Date().toISOString(),
       resumePayload: story.storyPayload,
+      llmSettings,
       events: [],
       clients: new Set(),
       status: 'queued',
@@ -445,7 +504,11 @@ app.post('/stories/:id/rewrite', async (request, reply) => {
 
     const body = RewriteBodySchema.parse(request.body);
     const mode = modeMap[body.mode] ?? 'rewrite_chapter';
-    const result = await getOrchestrator(normalizeTier(user.tier)).regenerateChapter({
+    const llmSettings = await requireLlmSettings(user.id);
+    const result = await createUserOrchestrator(
+      normalizeTier(user.tier),
+      llmSettings,
+    ).regenerateChapter({
       storyPayload,
       targetChapter: body.chapterIndex,
       mode,
@@ -584,7 +647,7 @@ async function runStoryJob(job: StoryJob) {
 }
 
 function runJobGeneration(job: StoryJob, progressOptions: Parameters<InstanceType<typeof StoryOrchestrator>['generateFull']>[1]) {
-  const orchestrator = getOrchestrator(job.tier);
+  const orchestrator = createUserOrchestrator(job.tier, job.llmSettings);
   if (job.resumePayload) {
     return orchestrator.resumeFull(job.resumePayload, progressOptions);
   }

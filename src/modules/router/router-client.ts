@@ -2,10 +2,12 @@ import { env } from "../../lib/env";
 import { AppError, isAppError } from "../../lib/errors";
 import { parseJsonText } from "../../lib/json";
 
-type RouterRuntimeConfig = {
+export type RouterRuntimeConfig = {
   apiKey: string;
   baseUrl: string;
-  source: "env";
+  source: "env" | "user";
+  temperature?: number;
+  maxTokens?: number;
 };
 type ChatMessage = {
   role: "system" | "user";
@@ -137,20 +139,24 @@ export class RouterClient {
   private async createCompletion(params: {
     model: string;
     messages: ChatMessage[];
-    temperature: number;
+    temperature?: number;
     timeoutMs: number;
   }) {
     const runtimeConfig = await this.getRuntimeConfig();
+    const payload: Record<string, unknown> = {
+      model: params.model,
+      messages: params.messages,
+      temperature: params.temperature ?? runtimeConfig.temperature ?? 0.7,
+      stream: true,
+      ...(supportsJsonResponseFormat(params.model) ? { response_format: { type: "json_object" } } : {}),
+    };
+    if (runtimeConfig.maxTokens) {
+      payload.max_tokens = runtimeConfig.maxTokens;
+    }
     const response = await this.fetchText("/chat/completions", {
       method: "POST",
       timeoutMs: params.timeoutMs,
-      body: {
-        model: params.model,
-        messages: params.messages,
-        temperature: params.temperature,
-        stream: true,
-        ...(supportsJsonResponseFormat(params.model) ? { response_format: { type: "json_object" } } : {}),
-      },
+      body: payload,
     }, runtimeConfig);
 
     const choice = extractCompletionContent(response);
@@ -161,6 +167,26 @@ export class RouterClient {
     }
 
     return choice;
+  }
+
+  async testConnection(model: string): Promise<{ ok: boolean; detail: string }> {
+    try {
+      const text = await this.createCompletion({
+        model,
+        messages: [
+          { role: "system", content: "You are a connectivity probe." },
+          { role: "user", content: "Reply with the single word: OK" },
+        ],
+        temperature: 0,
+        timeoutMs: 15_000,
+      });
+      return { ok: true, detail: text.trim().slice(0, 80) || "OK" };
+    } catch (error) {
+      return {
+        ok: false,
+        detail: error instanceof Error ? error.message : "Connection test failed.",
+      };
+    }
   }
 
   private async fetchJson(

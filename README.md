@@ -22,7 +22,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-The API service must set `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `HOST=0.0.0.0`, `CORS_ORIGINS=https://drama.novelkit.cc`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `ADMIN_API_KEY`.
+The API service must set `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `HOST=0.0.0.0`, `CORS_ORIGINS=https://drama.novelkit.cc`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_API_KEY`, and `LLM_SETTINGS_ENCRYPTION_KEY`.
 
 Run the Supabase migrations in `supabase/migrations/` before enabling production login. They create profile, story, quota tables, RLS policies, and the atomic quota RPCs.
 
@@ -39,7 +39,9 @@ npm --prefix apps/web install
 cp .env.example .env
 ```
 
-Edit `.env` for your router URL, API key, model preset, and allowed CORS origins.
+Edit `.env` for your router URL, API key, model preset, allowed CORS origins, and per-user LLM settings encryption key.
+
+Per-user LLM settings are stored in Supabase and encrypted server-side with `LLM_SETTINGS_ENCRYPTION_KEY`. Keep this key stable; rotate it only with a decrypt/re-encrypt migration.
 
 ## Run Locally
 
