@@ -35,6 +35,8 @@ test('admin announcement uses the new personal API key message without the old i
     /Hệ thống vận hành miễn phí hoàn toàn\. Người dùng có thể nhập API key từ OpenAI, OpenRouter, Gemini \(OpenAI-compatible\) cá nhân hoặc các Provider khác được cung cấp từ admin\./,
   );
   assert.match(workspaceSource, /t\('announcement\.body'\)/);
+  assert.match(workspaceSource, /showAnnouncement && !showLlmSettings/);
+  assert.match(workspaceSource, /!showLlmSettings && \(\s*<a className=\{`fb-float-btn/);
   assert.doesNotMatch(workspaceSource, /announcement-list/);
   assert.doesNotMatch(translationsSource, /announcement\.line[123]|Deepseek Flash 4|📢|🎉|🤖|😢/);
 });
