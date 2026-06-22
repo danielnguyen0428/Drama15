@@ -8,8 +8,6 @@ type SettingsRow = {
   base_url: string;
   model: string;
   api_key_ciphertext: string | null;
-  temperature: number;
-  max_tokens: number;
   updated_at: string;
 };
 
@@ -19,8 +17,6 @@ const SETTINGS_COLUMNS = [
   'base_url',
   'model',
   'api_key_ciphertext',
-  'temperature',
-  'max_tokens',
   'updated_at',
 ].join(',');
 
@@ -52,8 +48,6 @@ function fromRow(row: SettingsRow): StoredLlmSettings {
     baseUrl: row.base_url,
     model: row.model,
     apiKeyCiphertext: row.api_key_ciphertext,
-    temperature: Number(row.temperature),
-    maxTokens: Number(row.max_tokens),
     updatedAt: row.updated_at,
   };
 }
@@ -65,8 +59,6 @@ function toRow(row: StoredLlmSettings): SettingsRow {
     base_url: row.baseUrl,
     model: row.model,
     api_key_ciphertext: row.apiKeyCiphertext,
-    temperature: row.temperature,
-    max_tokens: row.maxTokens,
     updated_at: row.updatedAt,
   };
 }

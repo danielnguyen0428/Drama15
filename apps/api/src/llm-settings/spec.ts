@@ -8,8 +8,6 @@ export const SaveLlmSettingsInputSchema = z.object({
   model: z.string().trim().min(1).max(160).optional(),
   apiKey: z.string().trim().min(1).optional(),
   clearApiKey: z.boolean().optional().default(false),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().int().min(256).max(32_768).optional(),
 });
 
 export type SaveLlmSettingsInput = z.input<typeof SaveLlmSettingsInputSchema>;
@@ -20,8 +18,6 @@ export type StoredLlmSettings = {
   baseUrl: string;
   model: string;
   apiKeyCiphertext: string | null;
-  temperature: number;
-  maxTokens: number;
   updatedAt: string;
 };
 
@@ -36,8 +32,6 @@ export type EffectiveLlmSettings = {
   baseUrl: string;
   model: string;
   apiKey: string;
-  temperature: number;
-  maxTokens: number;
   updatedAt: string;
 };
 

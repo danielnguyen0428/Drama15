@@ -171,8 +171,6 @@ function createUserRouterClient(settings: EffectiveLlmSettings) {
     apiKey: settings.apiKey,
     baseUrl: settings.baseUrl,
     source: 'user',
-    temperature: settings.temperature,
-    maxTokens: settings.maxTokens,
   }));
 }
 

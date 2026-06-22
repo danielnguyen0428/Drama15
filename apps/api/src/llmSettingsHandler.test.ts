@@ -107,8 +107,6 @@ test('public view reports decrypt failure instead of hiding a corrupt saved key'
     baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
     apiKeyCiphertext: 'broken-ciphertext',
-    temperature: 0.8,
-    maxTokens: 8192,
     updatedAt: '2026-06-22T00:00:00.000Z',
   });
   const handler = new LlmSettingsHandler(repository, {
@@ -132,8 +130,6 @@ test('Supabase repository scopes reads and writes to the requested user id', asy
     base_url: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
     api_key_ciphertext: 'encrypted:alice-secret',
-    temperature: 0.8,
-    max_tokens: 8192,
     updated_at: '2026-06-22T00:00:00.000Z',
   };
   const query = {
@@ -153,8 +149,6 @@ test('Supabase repository scopes reads and writes to the requested user id', asy
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'model-b',
     apiKeyCiphertext: 'encrypted:bob-secret',
-    temperature: 0.7,
-    maxTokens: 4096,
     updatedAt: '2026-06-22T01:00:00.000Z',
   });
 

@@ -16,8 +16,6 @@ const DEFAULT_SETTINGS = {
   provider: 'other' as const,
   baseUrl: 'https://api.openai.com/v1',
   model: 'gpt-4o-mini',
-  temperature: 0.8,
-  maxTokens: 8192,
 };
 
 type LlmSettingsHandlerOptions = {
@@ -105,8 +103,6 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
           : value.apiKey
             ? this.cipher.encrypt(value.apiKey)
             : current?.apiKeyCiphertext ?? null,
-        temperature: value.temperature ?? current?.temperature ?? DEFAULT_SETTINGS.temperature,
-        maxTokens: value.maxTokens ?? current?.maxTokens ?? DEFAULT_SETTINGS.maxTokens,
         updatedAt: new Date().toISOString(),
       };
       await this.repository.upsert(row);
@@ -142,8 +138,6 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
           baseUrl: row.baseUrl,
           model: row.model,
           apiKey: this.cipher.decrypt(row.apiKeyCiphertext),
-          temperature: row.temperature,
-          maxTokens: row.maxTokens,
           updatedAt: row.updatedAt,
         },
       };
@@ -242,8 +236,6 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
         baseUrl: validatedUrl.baseUrl,
         model: value.model ?? current?.model ?? DEFAULT_SETTINGS.model,
         apiKey,
-        temperature: value.temperature ?? current?.temperature ?? DEFAULT_SETTINGS.temperature,
-        maxTokens: value.maxTokens ?? current?.maxTokens ?? DEFAULT_SETTINGS.maxTokens,
         updatedAt: current?.updatedAt ?? '',
       },
     };
@@ -256,8 +248,6 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
       provider: row.provider,
       baseUrl: row.baseUrl,
       model: row.model,
-      temperature: row.temperature,
-      maxTokens: row.maxTokens,
       updatedAt: row.updatedAt,
       apiKeySet: Boolean(apiKey),
       apiKeyFingerprint: fingerprint(apiKey),

@@ -69,8 +69,8 @@ test('settings API keeps two authenticated users isolated and never returns plai
   assert.equal(bob.statusCode, 200);
   assert.equal(alice.json().model, 'gpt-4o-mini');
   assert.equal(bob.json().model, 'anthropic/claude-sonnet-4');
-  assert.doesNotMatch(alice.body, /alice-secret|bob-secret|apiKeyCiphertext/);
-  assert.doesNotMatch(bob.body, /alice-secret|bob-secret|apiKeyCiphertext/);
+  assert.doesNotMatch(alice.body, /alice-secret|bob-secret|apiKeyCiphertext|temperature|maxTokens/);
+  assert.doesNotMatch(bob.body, /alice-secret|bob-secret|apiKeyCiphertext|temperature|maxTokens/);
   await app.close();
 });
 

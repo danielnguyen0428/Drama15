@@ -322,8 +322,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   line-height: 1;
 }
 .provider-tabs,
-.provider-presets,
-.settings-grid-2 {
+.provider-presets {
   display: grid;
   gap: 10px;
 }
@@ -343,7 +342,6 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   color: var(--coral-dark);
 }
 .provider-presets { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.settings-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .checkbox-row {
   display: flex;
   align-items: center;

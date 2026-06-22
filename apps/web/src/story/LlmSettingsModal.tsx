@@ -8,8 +8,6 @@ export type LlmSettings = {
   provider: LlmProvider;
   baseUrl: string;
   model: string;
-  temperature: number;
-  maxTokens: number;
   updatedAt: string;
   apiKeySet: boolean;
   apiKeyFingerprint: string;
@@ -42,8 +40,6 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
   const [model, setModel] = useState('gpt-4o-mini');
   const [apiKey, setApiKey] = useState('');
   const [clearApiKey, setClearApiKey] = useState(false);
-  const [temperature, setTemperature] = useState(0.8);
-  const [maxTokens, setMaxTokens] = useState(8192);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -67,8 +63,6 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
         setProvider(nextSettings.provider);
         setBaseUrl(nextSettings.baseUrl);
         setModel(nextSettings.model);
-        setTemperature(nextSettings.temperature);
-        setMaxTokens(nextSettings.maxTokens);
         setApiKey('');
         setClearApiKey(false);
       } catch (error) {
@@ -122,8 +116,6 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
       provider,
       baseUrl,
       model,
-      temperature,
-      maxTokens,
       clearApiKey,
       ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
     };
@@ -198,14 +190,6 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
             placeholder={settings?.apiKeySet ? 'Để trống để giữ key cũ' : 'Nhập API key'}
           />
         </label>
-        <div className="settings-grid-2">
-          <label>Temperature
-            <input type="number" min="0" max="2" step="0.1" value={temperature} onChange={(event) => setTemperature(Number(event.target.value))} />
-          </label>
-          <label>Max tokens
-            <input type="number" min="256" max="32768" step="256" value={maxTokens} onChange={(event) => setMaxTokens(Number(event.target.value))} />
-          </label>
-        </div>
         <label className="checkbox-row">
           <input type="checkbox" checked={clearApiKey} onChange={(event) => setClearApiKey(event.target.checked)} />
           Xóa API key đang lưu cho tài khoản này

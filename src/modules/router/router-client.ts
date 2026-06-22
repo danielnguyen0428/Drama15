@@ -146,11 +146,13 @@ export class RouterClient {
     const payload: Record<string, unknown> = {
       model: params.model,
       messages: params.messages,
-      temperature: params.temperature ?? runtimeConfig.temperature ?? 0.7,
       stream: true,
       ...(supportsJsonResponseFormat(params.model) ? { response_format: { type: "json_object" } } : {}),
+      ...(runtimeConfig.source === "env"
+        ? { temperature: params.temperature ?? runtimeConfig.temperature ?? 0.7 }
+        : {}),
     };
-    if (runtimeConfig.maxTokens) {
+    if (runtimeConfig.source === "env" && runtimeConfig.maxTokens) {
       payload.max_tokens = runtimeConfig.maxTokens;
     }
     const response = await this.fetchText("/chat/completions", {
