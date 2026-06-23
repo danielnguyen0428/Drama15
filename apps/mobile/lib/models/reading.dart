@@ -26,6 +26,12 @@ enum ReaderTheme { light, sepia, dark }
 /// Họ phông chữ đọc (Req 11.5): có chân ([serif]) và không chân ([sansSerif]).
 enum ReaderFontFamily { serif, sansSerif }
 
+/// Chế độ đọc (`Reading_Mode` — Req 17.1).
+///
+/// [scroll]: cuộn dọc liên tục; [paged]: lật trang ngang kiểu Apple Books.
+/// Mặc định là [paged] (Req 17.1).
+enum ReadingMode { scroll, paged }
+
 /// Các bước cỡ chữ **rời rạc** hợp lệ cho Trình đọc (Req 11.2).
 ///
 /// Ít nhất 5 bước, trải từ cỡ nhỏ nhất 12 đến cỡ lớn nhất 28 (logical pixel).
@@ -43,6 +49,7 @@ class ReadingSettings {
     required this.theme,
     required this.brightness,
     required this.fontFamily,
+    this.mode = ReadingMode.paged,
   });
 
   /// Cỡ chữ đọc (logical px) — phải thuộc [kReaderFontSizeSteps], mặc định 18.
@@ -57,12 +64,16 @@ class ReadingSettings {
   /// Họ phông chữ đọc — mặc định [ReaderFontFamily.serif].
   final ReaderFontFamily fontFamily;
 
-  /// Thiết lập mặc định khi chưa có dữ liệu đã lưu (Req 11.2–11.5, 12.2).
+  /// Chế độ đọc (`Reading_Mode`) — mặc định [ReadingMode.paged] (Req 17.1).
+  final ReadingMode mode;
+
+  /// Thiết lập mặc định khi chưa có dữ liệu đã lưu (Req 11.2–11.5, 12.2, 17.1).
   static const ReadingSettings defaults = ReadingSettings(
     fontSize: 18,
     theme: ReaderTheme.light,
     brightness: 1.0,
     fontFamily: ReaderFontFamily.serif,
+    mode: ReadingMode.paged,
   );
 
   /// Kẹp/khớp một cỡ chữ tùy ý về **bước rời rạc hợp lệ gần nhất**.
@@ -89,12 +100,14 @@ class ReadingSettings {
     ReaderTheme? theme,
     double? brightness,
     ReaderFontFamily? fontFamily,
+    ReadingMode? mode,
   }) {
     return ReadingSettings(
       fontSize: fontSize ?? this.fontSize,
       theme: theme ?? this.theme,
       brightness: brightness ?? this.brightness,
       fontFamily: fontFamily ?? this.fontFamily,
+      mode: mode ?? this.mode,
     );
   }
 
@@ -105,6 +118,7 @@ class ReadingSettings {
       'theme': theme.name,
       'brightness': brightness,
       'fontFamily': fontFamily.name,
+      'mode': mode.name,
     };
   }
 
@@ -112,8 +126,8 @@ class ReadingSettings {
   ///
   /// - `fontSize` được khớp về bước rời rạc hợp lệ gần nhất ([snapFontSize]).
   /// - `brightness` được kẹp về `[0, 1]`.
-  /// - `theme`/`fontFamily` được tra theo tên; tên lạ hoặc thiếu → giá trị mặc
-  ///   định tương ứng.
+  /// - `theme`/`fontFamily`/`mode` được tra theo tên; tên lạ hoặc thiếu → giá
+  ///   trị mặc định tương ứng.
   factory ReadingSettings.fromJson(Map<String, dynamic> json) {
     final rawFontSize =
         (json['fontSize'] as num?)?.toDouble() ?? defaults.fontSize;
@@ -124,6 +138,7 @@ class ReadingSettings {
       theme: _readerThemeFromName(json['theme']),
       brightness: rawBrightness.clamp(0.0, 1.0).toDouble(),
       fontFamily: _fontFamilyFromName(json['fontFamily']),
+      mode: _readingModeFromName(json['mode']),
     );
   }
 
@@ -133,16 +148,18 @@ class ReadingSettings {
         other.fontSize == fontSize &&
         other.theme == theme &&
         other.brightness == brightness &&
-        other.fontFamily == fontFamily;
+        other.fontFamily == fontFamily &&
+        other.mode == mode;
   }
 
   @override
-  int get hashCode => Object.hash(fontSize, theme, brightness, fontFamily);
+  int get hashCode =>
+      Object.hash(fontSize, theme, brightness, fontFamily, mode);
 
   @override
   String toString() {
     return 'ReadingSettings(fontSize: $fontSize, theme: $theme, '
-        'brightness: $brightness, fontFamily: $fontFamily)';
+        'brightness: $brightness, fontFamily: $fontFamily, mode: $mode)';
   }
 }
 
@@ -238,4 +255,16 @@ ReaderFontFamily _fontFamilyFromName(Object? raw) {
     }
   }
   return ReadingSettings.defaults.fontFamily;
+}
+
+/// Tra [ReadingMode] theo tên; tên lạ/thiếu → [ReadingMode.paged] (Req 17.1).
+ReadingMode _readingModeFromName(Object? raw) {
+  if (raw is String) {
+    for (final value in ReadingMode.values) {
+      if (value.name == raw) {
+        return value;
+      }
+    }
+  }
+  return ReadingSettings.defaults.mode;
 }

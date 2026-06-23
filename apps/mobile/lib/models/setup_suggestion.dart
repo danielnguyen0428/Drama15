@@ -1,4 +1,4 @@
-import 'account.dart';
+import 'quota.dart';
 import 'story_config.dart';
 
 /// Bộ điều khiển bản thảo gợi ý kèm theo `setup-suggest` (Req 4.2).
@@ -72,7 +72,7 @@ class SetupSuggestion {
   final DraftControls? draftControls;
 
   /// Hạn mức gợi ý kịch bản còn lại sau lượt này (Req 4.3).
-  final Quota? setupSuggestionQuota;
+  final QuotaSnapshot? setupSuggestionQuota;
 
   factory SetupSuggestion.fromJson(Map<String, dynamic> json) {
     final controls = json['storyControls'];
@@ -89,7 +89,7 @@ class SetupSuggestion {
           ? DraftControls.fromJson(draft.cast<String, dynamic>())
           : null,
       setupSuggestionQuota: quota is Map
-          ? Quota.fromJson(quota.cast<String, dynamic>())
+          ? QuotaSnapshot.fromJson(quota.cast<String, dynamic>())
           : null,
     );
   }

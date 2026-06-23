@@ -110,11 +110,32 @@ class Chapter {
     );
   }
 
+  /// Chuỗi hóa ở dạng client SSE: `{ index, title, content }`.
   Map<String, dynamic> toJson() => {
     'index': index,
     if (title != null) 'title': title,
     'content': content,
   };
+
+  /// Chuỗi hóa ở dạng payload gốc của server: `{ chapterNumber, title, text }`.
+  ///
+  /// Là nghịch đảo của [Chapter.fromServerJson], dùng trong
+  /// [StoryPayload.toJson] để khứ hồi với [StoryPayload.fromJson].
+  Map<String, dynamic> toServerJson() => {
+    'chapterNumber': index,
+    if (title != null) 'title': title,
+    'text': content,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is Chapter &&
+      other.index == index &&
+      other.title == title &&
+      other.content == content;
+
+  @override
+  int get hashCode => Object.hash(index, title, content);
 }
 
 /// Toàn bộ nội dung truyện hiển thị qua các thẻ (Chương / Ý tưởng / Dàn ý /
@@ -185,6 +206,20 @@ class StoryPayload {
       relationshipGraph: normalizeRelationshipGraph(json['relationshipGraph']),
     );
   }
+
+  /// Chuỗi hóa lại payload theo đúng format mà [StoryPayload.fromJson] đọc
+  /// (chương ở dạng server `chapterNumber`/`text`), giữ nguyên thứ tự `index`
+  /// tăng dần của [chapters]. Là nghịch đảo của [fromJson] để bảo đảm tính khứ
+  /// hồi khi lưu/nạp ngoại tuyến (Req 16.11).
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'concept': concept.toJson(),
+    'storyBible': storyBible,
+    'chapterPlan': chapterPlan.map((item) => item.toJson()).toList(),
+    'chapters': chapters.map((chapter) => chapter.toServerJson()).toList(),
+    if (relationshipGraph != null)
+      'relationshipGraph': relationshipGraph!.toJson(),
+  };
 }
 
 String _asString(Object? value) => value is String ? value : '';

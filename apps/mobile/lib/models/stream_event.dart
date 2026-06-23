@@ -1,127 +1,226 @@
+/// Mô hình sự kiện sinh truyện qua SSE (`StreamEvent` — Req 5, 6).
+///
+/// [StreamEvent] là một **sealed union** phân biệt theo trường `stage`. Mỗi
+/// biến thể mang đúng dữ liệu của một loại sự kiện do API phát trong lúc sinh
+/// truyện. Việc phân tích khung dữ liệu thô (`data:`) và lọc `stage` lạ/JSON
+/// lỗi do `SseParser.parseFrame` đảm nhiệm (tác vụ 4.3, Req 6.3, 6.4); tệp này
+/// chỉ định nghĩa kiểu và cách dựng từng biến thể từ JSON đã hợp lệ.
+///
+/// Tên trường **bám sát wire format thực tế** của backend (xem
+/// `apps/api/src/startDev.ts` và type `StreamEvent` của web trong
+/// `apps/web/src/story/StoryWorkspace.tsx`) để tương thích tuyệt đối:
+/// - `progress`: `{ current, total, detail, label }`
+/// - `overview`: `{ title, concept }` (concept là chuỗi đã format)
+/// - `bible`: `{ bible }` (đối tượng story bible, kiểu động)
+/// - `plan`: `{ plan }` (dàn ý ở dạng **chuỗi** đã format)
+/// - `relationshipGraph`: `{ relationshipGraph }` (đối tượng, kiểu động)
+/// - `chapter`: `{ chapter: { index, title, content } }`
+/// - `done`: `{ title }`
+/// - `error`: `{ error }` (thông điệp lỗi)
+library;
+
 import 'story_payload.dart';
 
-/// Các giai đoạn (stage) hợp lệ của luồng sinh truyện qua SSE.
-///
-/// Khớp 1-1 với `StreamPayload.stage` của backend Fastify
-/// (`apps/api/src/startDev.ts`): `progress | overview | bible | plan |
-/// relationshipGraph | chapter | done | error`.
-enum StreamStage {
-  progress,
-  overview,
-  bible,
-  plan,
-  relationshipGraph,
-  chapter,
-  done,
-  error,
+/// Tập `stage` hợp lệ mà [SseParser] chấp nhận (Req 6.2). `stage` ngoài tập này
+/// bị bỏ qua mà không làm dừng luồng (Req 6.4).
+const Set<String> kValidStages = <String>{
+  'progress',
+  'overview',
+  'bible',
+  'plan',
+  'relationshipGraph',
+  'chapter',
+  'done',
+  'error',
+};
+
+/// Sự kiện sinh truyện đã phân tích từ một khung SSE (union theo [stage]).
+sealed class StreamEvent {
+  const StreamEvent(this.stage);
+
+  /// Giá trị `stage` (luôn thuộc [kValidStages]).
+  final String stage;
 }
 
-/// Chuyển một chuỗi `stage` thô từ JSON thành [StreamStage].
-///
-/// Trả về `null` nếu chuỗi không thuộc tập giá trị hợp lệ (Req 6.2, 6.4).
-/// `SseParser` dùng hàm này để loại bỏ các sự kiện có `stage` lạ mà không
-/// làm dừng luồng.
-StreamStage? streamStageFromString(Object? raw) {
-  if (raw is! String) return null;
-  for (final stage in StreamStage.values) {
-    if (stage.name == raw) return stage;
-  }
-  return null;
-}
-
-/// Một sự kiện sinh truyện đã được phân tích từ khung `data:` của SSE.
-///
-/// `stage` luôn hợp lệ — các sự kiện có `stage` lạ đã bị `SseParser` loại bỏ
-/// trước khi dựng [StreamEvent]. Các trường còn lại là tùy theo loại sự kiện
-/// (chỉ một số trường có giá trị tùy `stage`).
-class StreamEvent {
-  const StreamEvent({
-    required this.stage,
-    this.title,
-    this.concept,
-    this.bible,
-    this.relationshipGraph,
-    this.plan,
-    this.chapter,
-    this.label,
+/// `stage: progress` — cập nhật tiến độ theo `current`/`total` và nhãn (Req 5.3).
+class ProgressEvent extends StreamEvent {
+  const ProgressEvent({
+    required this.current,
+    required this.total,
     this.detail,
-    this.current,
-    this.total,
-    this.error,
-  });
+    this.label,
+  }) : super('progress');
 
-  /// Giai đoạn của sự kiện (luôn hợp lệ).
-  final StreamStage stage;
+  final int current;
+  final int total;
 
-  /// Nhan đề truyện — có ở sự kiện `overview` và `done`.
-  final String? title;
-
-  /// Phần "Ý tưởng" đã định dạng — có ở sự kiện `overview`.
-  final String? concept;
-
-  /// Nội dung "Hồ sơ" (story bible) thô — có ở sự kiện `bible`.
-  /// Giữ ở dạng `dynamic` để reducer định dạng/hiển thị sau.
-  final dynamic bible;
-
-  /// Đồ thị quan hệ nhân vật thô — có ở sự kiện `relationshipGraph`.
-  /// Giữ ở dạng `dynamic`; sẽ được chuẩn hóa ở tầng reducer.
-  final dynamic relationshipGraph;
-
-  /// "Dàn ý" chương đã định dạng — có ở sự kiện `plan`.
-  final String? plan;
-
-  /// Chương vừa sinh — có ở sự kiện `chapter`.
-  final Chapter? chapter;
-
-  /// Nhãn tiến độ — có ở sự kiện `progress`.
-  final String? label;
-
-  /// Mô tả chi tiết tiến độ — có ở sự kiện `progress` (ưu tiên hơn [label]).
+  /// Mô tả chi tiết bước hiện tại (ưu tiên hiển thị, Req 5.3).
   final String? detail;
 
-  /// Bước hiện tại của tiến độ — có ở sự kiện `progress`.
-  final int? current;
+  /// Nhãn ngắn của bước hiện tại (dùng khi không có [detail], Req 5.3).
+  final String? label;
 
-  /// Tổng số bước của tiến độ — có ở sự kiện `progress`.
-  final int? total;
-
-  /// Thông điệp lỗi — có ở sự kiện `error`.
-  final String? error;
-
-  /// Phân tích một map JSON thành [StreamEvent].
-  ///
-  /// Ném [FormatException] nếu `stage` thiếu hoặc không hợp lệ. `SseParser`
-  /// nên gọi [streamStageFromString] trước để loại sớm các sự kiện không hợp lệ
-  /// (Req 6.1, 6.2, 6.4).
-  factory StreamEvent.fromJson(Map<String, dynamic> json) {
-    final stage = streamStageFromString(json['stage']);
-    if (stage == null) {
-      throw FormatException('Giá trị stage không hợp lệ: ${json['stage']}');
-    }
-
-    final rawChapter = json['chapter'];
-    return StreamEvent(
-      stage: stage,
-      title: json['title'] as String?,
-      concept: json['concept'] as String?,
-      bible: json['bible'],
-      relationshipGraph: json['relationshipGraph'],
-      plan: json['plan'] as String?,
-      chapter: rawChapter is Map<String, dynamic>
-          ? Chapter.fromJson(rawChapter)
-          : null,
-      label: json['label'] as String?,
-      detail: json['detail'] as String?,
+  factory ProgressEvent.fromJson(Map<String, dynamic> json) {
+    return ProgressEvent(
       current: _asInt(json['current']),
       total: _asInt(json['total']),
-      error: json['error'] as String?,
+      detail: json['detail'] is String ? json['detail'] as String : null,
+      label: json['label'] is String ? json['label'] as String : null,
     );
   }
 
-  static int? _asInt(Object? value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
-    return null;
+  @override
+  bool operator ==(Object other) =>
+      other is ProgressEvent &&
+      other.current == current &&
+      other.total == total &&
+      other.detail == detail &&
+      other.label == label;
+
+  @override
+  int get hashCode => Object.hash(stage, current, total, detail, label);
+}
+
+/// `stage: overview` — nhan đề và phần "Ý tưởng" (concept) (Req 5.4).
+class OverviewEvent extends StreamEvent {
+  const OverviewEvent({required this.title, required this.concept})
+    : super('overview');
+
+  final String title;
+  final String concept;
+
+  factory OverviewEvent.fromJson(Map<String, dynamic> json) {
+    return OverviewEvent(
+      title: _asString(json['title']),
+      concept: _asString(json['concept']),
+    );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is OverviewEvent &&
+      other.title == title &&
+      other.concept == concept;
+
+  @override
+  int get hashCode => Object.hash(stage, title, concept);
+}
+
+/// `stage: bible` — nội dung "Hồ sơ" (story bible), kiểu động (Req 5.5).
+class BibleEvent extends StreamEvent {
+  const BibleEvent(this.bible) : super('bible');
+
+  /// Đối tượng story bible giữ nguyên kiểu động do API trả về.
+  final dynamic bible;
+
+  factory BibleEvent.fromJson(Map<String, dynamic> json) {
+    return BibleEvent(json['bible']);
+  }
+}
+
+/// `stage: plan` — "Dàn ý" chương ở dạng **chuỗi** đã format (Req 5.6).
+class PlanEvent extends StreamEvent {
+  const PlanEvent(this.plan) : super('plan');
+
+  /// Dàn ý đã format thành văn bản (khớp `formatPlan` phía server).
+  final String plan;
+
+  factory PlanEvent.fromJson(Map<String, dynamic> json) {
+    return PlanEvent(_asString(json['plan']));
+  }
+
+  @override
+  bool operator ==(Object other) => other is PlanEvent && other.plan == plan;
+
+  @override
+  int get hashCode => Object.hash(stage, plan);
+}
+
+/// `stage: relationshipGraph` — đồ thị quan hệ nhân vật, kiểu động (Req 5.7).
+class RelationshipGraphEvent extends StreamEvent {
+  const RelationshipGraphEvent(this.relationshipGraph)
+    : super('relationshipGraph');
+
+  /// Đồ thị quan hệ giữ nguyên kiểu động; chuẩn hóa ở tầng hiển thị.
+  final dynamic relationshipGraph;
+
+  factory RelationshipGraphEvent.fromJson(Map<String, dynamic> json) {
+    return RelationshipGraphEvent(json['relationshipGraph']);
+  }
+}
+
+/// `stage: chapter` — thêm/cập nhật một chương theo `index` (Req 5.8).
+class ChapterEvent extends StreamEvent {
+  const ChapterEvent(this.chapter) : super('chapter');
+
+  final Chapter chapter;
+
+  /// Dựng từ JSON `{ chapter: { index, title, content } }` (dạng client SSE).
+  factory ChapterEvent.fromJson(Map<String, dynamic> json) {
+    final raw = json['chapter'];
+    final map = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
+    return ChapterEvent(Chapter.fromJson(map));
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ChapterEvent && other.chapter == chapter;
+
+  @override
+  int get hashCode => Object.hash(stage, chapter);
+}
+
+/// `stage: done` — kết thúc sinh truyện (Req 5.9). Mang nhan đề cuối (tùy chọn).
+class DoneEvent extends StreamEvent {
+  const DoneEvent({this.title}) : super('done');
+
+  final String? title;
+
+  factory DoneEvent.fromJson(Map<String, dynamic> json) {
+    return DoneEvent(
+      title: json['title'] is String ? json['title'] as String : null,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) => other is DoneEvent && other.title == title;
+
+  @override
+  int get hashCode => Object.hash(stage, title);
+}
+
+/// `stage: error` — lỗi trong lúc sinh truyện (Req 6.2, 15.2).
+///
+/// Thông điệp đọc từ khóa `error` của khung (khớp `{ stage:'error', error }`
+/// phía server), dự phòng khóa `message`.
+class StreamErrorEvent extends StreamEvent {
+  const StreamErrorEvent({this.message}) : super('error');
+
+  final String? message;
+
+  factory StreamErrorEvent.fromJson(Map<String, dynamic> json) {
+    final raw = json['error'] ?? json['message'];
+    return StreamErrorEvent(message: raw is String ? raw : null);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is StreamErrorEvent && other.message == message;
+
+  @override
+  int get hashCode => Object.hash(stage, message);
+}
+
+String _asString(Object? value) => value is String ? value : '';
+
+int _asInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return 0;
 }

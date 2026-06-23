@@ -7,6 +7,9 @@ output/
 .env.*
 !.env.example
 !.env.*.example
+
+# Flutter mobile build config (chứa Supabase keys — không commit)
+apps/mobile/env.json
 .learnings/
 
 # Local runtime state

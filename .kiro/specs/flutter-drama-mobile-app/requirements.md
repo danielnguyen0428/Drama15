@@ -2,26 +2,33 @@
 
 ## Introduction
 
-Tài liệu này mô tả yêu cầu cho một ứng dụng di động (mobile) viết bằng Flutter cho nền tảng "Drama 15: Xưởng viết tiểu thuyết ngắn" (NovelKit Studio). Ứng dụng di động phải tái hiện đầy đủ chức năng sáng tác drama của bản web hiện tại, sử dụng lại chính API backend (Fastify) mà bản web đang dùng tại `VITE_API_URL` (môi trường production: `https://drama-api.novelkit.cc`) và Supabase Auth (Google OAuth). Ứng dụng giữ phong cách thị giác (style) tương tự bản web nhưng được tối ưu cho màn hình di động, đồng thời bổ sung hai nhóm tính năng mới: chế độ đọc (Reader) tương tự Apple Books và chức năng chia sẻ qua share sheet của hệ điều hành.
+Tài liệu này mô tả yêu cầu cho ứng dụng di động (mobile) viết bằng Flutter cho nền tảng "Drama 15: Xưởng viết tiểu thuyết ngắn" (NovelKit Studio). Ứng dụng di động tái hiện đầy đủ chức năng sáng tác drama của bản web hiện tại, **sử dụng lại nguyên trạng** backend Fastify mà bản web đang dùng tại `API_BASE_URL` (môi trường production: `https://drama-api.novelkit.cc`) và Supabase Auth (Google OAuth). Ứng dụng **không tạo backend mới**; mọi nghiệp vụ sinh truyện, hạn mức và lưu trữ phía máy chủ vẫn do API và Supabase hiện có đảm nhiệm.
 
-Phạm vi: ứng dụng client di động (Flutter). Không tạo backend mới; mọi nghiệp vụ sinh truyện, hạn mức và lưu trữ vẫn do API và Supabase hiện có đảm nhiệm. Một bản thảo Drama 15 luôn gồm cố định 15 chương.
+Ứng dụng giữ phong cách thị giác của bản web (nền giấy ngà, ngôn ngữ màu nhấn coral, phông chữ có chân cho tiêu đề và nội dung đọc) nhưng tối ưu cho cảm ứng và màn hình nhỏ. Đồng thời ứng dụng bổ sung các nhóm tính năng mới chỉ có trên di động: trình đọc (Reader) kiểu Apple Books gồm chế độ phân trang `paged`, đọc ngoại tuyến bền vững (tải truyện về máy), và chia sẻ qua share sheet của hệ điều hành.
+
+Phạm vi: ứng dụng client di động (Flutter). Một bản thảo Drama 15 luôn gồm cố định 15 chương. Ứng dụng chỉ dùng tiếng Việt.
 
 ## Glossary
 
 - **App**: Ứng dụng di động Flutter được mô tả trong tài liệu này, bao gồm toàn bộ các mô-đun bên dưới.
 - **Auth_Module**: Mô-đun xác thực, xử lý đăng nhập Google OAuth qua Supabase và quản lý phiên (session) trên thiết bị di động.
-- **API_Client**: Mô-đun gọi API backend hiện có qua HTTPS, gắn token xác thực vào mỗi yêu cầu.
+- **API_Client**: Mô-đun gọi API backend hiện có qua HTTPS, gắn token xác thực vào mỗi yêu cầu cần xác thực.
 - **Config_Module**: Mô-đun cấu hình truyện, thu thập các tham số `StoryConfig` từ người dùng.
 - **Suggest_Module**: Mô-đun gọi `POST /story/setup-suggest` để gợi ý nhan đề, kịch bản và story controls.
 - **Generation_Module**: Mô-đun tạo bản thảo, gọi `POST /stories` và nhận sự kiện sinh truyện trực tiếp qua SSE từ `GET /stories/:id/stream`.
-- **Quota_Module**: Mô-đun theo dõi và hiển thị hạn mức truyện (`quota`) và hạn mức gợi ý kịch bản (`setupSuggestionQuota`).
-- **Library_Module**: Mô-đun tủ truyện, quản lý danh sách truyện đã lưu (liệt kê, mở, viết tiếp, đổi tên, xóa).
+- **Quota_Module**: Mô-đun theo dõi và hiển thị hạn mức truyện (`Story_Quota`) và hạn mức gợi ý kịch bản (`Setup_Suggestion_Quota`).
+- **Library_Module**: Mô-đun tủ truyện, quản lý danh sách truyện đã lưu (liệt kê, mở, viết tiếp, đổi tên, xóa, tải về đọc ngoại tuyến).
 - **Rewrite_Module**: Mô-đun viết lại một chương đã hoàn tất, gọi `POST /stories/:id/rewrite`.
-- **Reader**: Trình đọc kiểu Apple Books, hiển thị nội dung chương với điều khiển kiểu chữ, chủ đề, độ sáng, mục lục và lưu vị trí đọc.
+- **Reader**: Trình đọc kiểu Apple Books, hiển thị nội dung chương với điều khiển kiểu chữ, chủ đề, độ sáng, mục lục, tiến độ và lưu vị trí đọc.
 - **Share_Module**: Mô-đun chia sẻ truyện hoặc chương qua share sheet của hệ điều hành.
 - **SSE_Parser**: Thành phần phân tích (parse) các sự kiện Server-Sent Events dạng JSON do API gửi về trong lúc sinh truyện.
-- **Reading_Settings**: Tập thiết lập đọc của người dùng (cỡ chữ, họ phông, chủ đề, độ sáng) được lưu trên thiết bị.
-- **Reading_Position**: Vị trí đọc gần nhất của một truyện (chương hiện tại và tiến độ trong chương) được lưu trên thiết bị.
+- **Reading_Settings**: Tập thiết lập đọc của người dùng (cỡ chữ, họ phông, chủ đề, độ sáng, `Reading_Mode`) được lưu trên thiết bị.
+- **Reading_Position**: Vị trí đọc gần nhất của một truyện (chỉ số chương hiện tại và tiến độ tỉ lệ trong chương) được lưu trên thiết bị.
+- **Reading_Mode**: Chế độ trình bày nội dung của Reader, một trong: `scroll` (cuộn dọc liên tục) và `paged` (phân trang, lật trang ngang kiểu Apple Books).
+- **Page**: Một trang nội dung trong `Reading_Mode` `paged`, là phần nội dung chương vừa khít vùng hiển thị của Reader theo `Reading_Settings` và kích thước màn hình hiện tại.
+- **Offline_Download**: Bản sao bền vững của toàn bộ `StoryPayload` của một truyện (gồm nhan đề và các chương) cùng metadata, được lưu trong bộ nhớ cục bộ để đọc ngoại tuyến lâu dài, tồn tại qua các lần khởi động lại App.
+- **Offline_Download_Status**: Trạng thái tải về của một truyện, một trong: `not_downloaded` (chưa tải), `downloading` (đang tải), `downloaded` (đã tải), `update_available` (đã tải nhưng bản trên server đã thay đổi).
+- **Local_Story_Store**: Thành phần lưu trữ bền vững các `Offline_Download` trong bộ nhớ cục bộ của thiết bị.
 - **StoryConfig**: Cấu hình truyện gồm `niche`, `customNiche`, `title`, `seed`, `outputLanguage`, `intensity`, `dialogueRatio`, `hookDensity`, `stylePreset`, `storyControls` (tùy chọn).
 - **StoryPayload**: Nội dung truyện trả về từ API gồm `title`, `concept`, `storyBible`, `chapterPlan`, `chapters`, `relationshipGraph` (tùy chọn).
 - **SavedStory**: Bản tóm tắt truyện đã lưu gồm `id`, `title`, `status`, `createdAt`, `updatedAt`, `chapterCount`, `canResume`, `error`.
@@ -41,9 +48,9 @@ Phạm vi: ứng dụng client di động (Flutter). Không tạo backend mới;
 
 1. THE App SHALL đọc địa chỉ API cơ sở từ giá trị cấu hình `API_BASE_URL` được nhúng lúc build, với giá trị mặc định `https://drama-api.novelkit.cc` cho bản phát hành production, và `API_BASE_URL` phải là một URL HTTPS hợp lệ.
 2. THE App SHALL đọc `SUPABASE_URL` và `SUPABASE_ANON_KEY` từ cấu hình build để khởi tạo client Supabase, trong đó `SUPABASE_URL` phải là một URL HTTPS hợp lệ.
-3. WHEN App gửi bất kỳ yêu cầu nào tới một endpoint yêu cầu xác thực, THE API_Client SHALL gắn header `Authorization` với giá trị `Bearer <Access_Token>` của access token còn hiệu lực thuộc phiên hiện tại.
+3. WHEN App gửi một yêu cầu tới endpoint yêu cầu xác thực, THE API_Client SHALL gắn header `Authorization` với giá trị `Bearer <Access_Token>` của access token còn hiệu lực thuộc phiên hiện tại.
 4. WHEN App mở luồng SSE tại `GET /stories/:id/stream`, THE API_Client SHALL truyền `Access_Token` còn hiệu lực qua tham số truy vấn `access_token` đã được mã hóa URL.
-5. IF một trong các giá trị `API_BASE_URL`, `SUPABASE_URL` hoặc `SUPABASE_ANON_KEY` bị thiếu hoặc không hợp lệ (rỗng, hoặc không phải URL HTTPS hợp lệ đối với `API_BASE_URL` và `SUPABASE_URL`) lúc chạy, THEN THE App SHALL hiển thị thông báo lỗi cấu hình cho biết giá trị cấu hình nào không sử dụng được.
+5. IF một trong các giá trị `API_BASE_URL`, `SUPABASE_URL` hoặc `SUPABASE_ANON_KEY` bị thiếu hoặc không hợp lệ lúc chạy, THEN THE App SHALL hiển thị thông báo lỗi cấu hình cho biết giá trị cấu hình nào không sử dụng được.
 6. WHEN App phát hiện lỗi cấu hình thiếu hoặc không hợp lệ trong lúc một yêu cầu mạng đang diễn ra, THE App SHALL cho phép yêu cầu đang diễn ra đó hoàn tất.
 7. WHILE cả ba giá trị `API_BASE_URL`, `SUPABASE_URL` và `SUPABASE_ANON_KEY` đều hiện diện và hợp lệ, THE App SHALL cho phép các thao tác mạng tiếp tục.
 8. THE API_Client SHALL gửi mọi yêu cầu tới API qua giao thức HTTPS.
@@ -206,7 +213,7 @@ Phạm vi: ứng dụng client di động (Flutter). Không tạo backend mới;
 
 1. WHEN người dùng thay đổi `Reading_Settings`, THE Reader SHALL lưu thiết lập đó vào bộ nhớ cục bộ của thiết bị.
 2. WHEN App khởi động, THE Reader SHALL nạp `Reading_Settings` đã lưu và áp dụng làm thiết lập mặc định.
-3. WHEN người dùng đọc tới một vị trí trong một truyện, THE Reader SHALL lưu `Reading_Position` (chương hiện tại và tiến độ trong chương) cho truyện đó vào bộ nhớ cục bộ.
+3. WHEN người dùng đọc tới một vị trí trong một truyện, THE Reader SHALL lưu `Reading_Position` (chỉ số chương hiện tại và tiến độ tỉ lệ trong chương) cho truyện đó vào bộ nhớ cục bộ.
 4. WHEN người dùng mở lại một truyện đã có `Reading_Position` đã lưu, THE Reader SHALL khôi phục đúng vị trí đã lưu.
 5. THE Reader SHALL bảo đảm rằng việc lưu rồi nạp lại `Reading_Settings` cho ra một tập thiết lập tương đương với tập đã lưu (thuộc tính khứ hồi lưu/nạp).
 6. THE Reader SHALL bảo đảm rằng việc lưu rồi nạp lại `Reading_Position` cho ra một vị trí tương đương với vị trí đã lưu (thuộc tính khứ hồi lưu/nạp).
@@ -252,12 +259,53 @@ Phạm vi: ứng dụng client di động (Flutter). Không tạo backend mới;
 5. WHILE thiết bị đang ngoại tuyến, THE Reader SHALL vẫn cho phép đọc các truyện đã được nạp nội dung trong phiên hiện tại.
 6. WHEN kết nối mạng được khôi phục sau khi gián đoạn, THE App SHALL cho phép người dùng thử lại thao tác đã thất bại.
 
+### Requirement 16: Đọc ngoại tuyến bền vững
+
+**User Story:** Là độc giả, tôi muốn tải hẳn một truyện về máy, để đọc lại bất cứ lúc nào kể cả khi mất mạng hoàn toàn hoặc sau khi khởi động lại app.
+
+#### Acceptance Criteria
+
+1. WHEN người dùng chọn "Tải về để đọc ngoại tuyến" cho một truyện, THE Library_Module SHALL nạp `StoryPayload` đầy đủ của truyện đó qua `GET /stories/:id` và lưu bản sao `Offline_Download` (nhan đề và toàn bộ các chương) vào `Local_Story_Store`.
+2. WHEN một `Offline_Download` được lưu thành công vào `Local_Story_Store`, THE Library_Module SHALL đặt `Offline_Download_Status` của truyện đó thành `downloaded`.
+3. WHILE một truyện đang được tải về, THE Library_Module SHALL đặt `Offline_Download_Status` của truyện đó thành `downloading` và hiển thị trạng thái đang tải.
+4. IF việc tải `StoryPayload` về để lưu ngoại tuyến thất bại do lỗi mạng, lỗi API hoặc lỗi ghi bộ nhớ cục bộ, THEN THE Library_Module SHALL giữ `Offline_Download_Status` của truyện đó ở giá trị trước khi tải, không lưu bản tải về một phần, và hiển thị thông báo lỗi tải về.
+5. WHEN người dùng mở một truyện có `Offline_Download_Status` bằng `downloaded` trong khi thiết bị đang ngoại tuyến, THE Reader SHALL hiển thị nội dung các chương từ `Offline_Download` trong `Local_Story_Store`.
+6. THE Library_Module SHALL hiển thị `Offline_Download_Status` của mỗi truyện trong tủ truyện.
+7. WHEN người dùng chọn "Xóa bản tải về" cho một truyện đã tải, THE Local_Story_Store SHALL xóa `Offline_Download` của truyện đó khỏi bộ nhớ cục bộ và đặt `Offline_Download_Status` của truyện đó thành `not_downloaded`.
+8. WHEN App khởi động lại, THE Library_Module SHALL nạp các `Offline_Download` đã lưu từ `Local_Story_Store` và đặt `Offline_Download_Status` tương ứng cho từng truyện đã tải.
+9. WHILE thiết bị có kết nối mạng và một truyện đã tải có `updatedAt` từ `GET /stories/:id` mới hơn `updatedAt` của `Offline_Download` đã lưu, THE Library_Module SHALL đặt `Offline_Download_Status` của truyện đó thành `update_available`.
+10. WHEN người dùng chọn "Làm mới bản tải về" cho một truyện có `Offline_Download_Status` bằng `update_available`, THE Library_Module SHALL nạp `StoryPayload` mới nhất qua `GET /stories/:id`, thay thế `Offline_Download` đã lưu bằng bản mới, và đặt `Offline_Download_Status` thành `downloaded`.
+11. THE Local_Story_Store SHALL bảo đảm rằng việc lưu rồi nạp lại một `StoryPayload` cho ra một `StoryPayload` tương đương về nhan đề và toàn bộ các chương theo thứ tự `index` tăng dần (thuộc tính khứ hồi lưu/nạp).
+
+### Requirement 17: Chế độ đọc phân trang kiểu Apple Books
+
+**User Story:** Là độc giả, tôi muốn lật trang ngang giống Apple Books thay vì chỉ cuộn dọc, để có trải nghiệm đọc liền mạch và quen thuộc như đọc sách.
+
+#### Acceptance Criteria
+
+1. THE Reader SHALL cung cấp hai `Reading_Mode`: `scroll` (cuộn dọc) và `paged` (phân trang, lật trang ngang).
+2. WHEN người dùng chuyển đổi `Reading_Mode` giữa `scroll` và `paged`, THE Reader SHALL áp dụng chế độ được chọn cho nội dung đang đọc mà không yêu cầu người dùng rời khỏi Reader.
+3. WHEN `Reading_Mode` thay đổi, THE Reader SHALL lưu `Reading_Mode` đã chọn vào `Reading_Settings` trong bộ nhớ cục bộ của thiết bị.
+4. WHILE `Reading_Mode` bằng `paged`, THE Reader SHALL chia nội dung của chương đang đọc thành các `Page` vừa khít vùng hiển thị theo `Reading_Settings` và kích thước màn hình hiện tại.
+5. WHEN cỡ chữ, họ phông hoặc kích thước vùng hiển thị (do xoay màn hình) thay đổi trong khi `Reading_Mode` bằng `paged`, THE Reader SHALL tính lại các `Page` của chương đang đọc theo giá trị mới.
+6. WHILE `Reading_Mode` bằng `paged`, WHEN người dùng vuốt ngang hoặc chạm cạnh màn hình để sang trang kế tiếp và còn `Page` phía sau trong chương đang đọc, THE Reader SHALL hiển thị `Page` kế tiếp của chương đó.
+7. WHILE `Reading_Mode` bằng `paged`, WHEN người dùng vuốt ngang hoặc chạm cạnh màn hình để về trang trước và còn `Page` phía trước trong chương đang đọc, THE Reader SHALL hiển thị `Page` liền trước của chương đó.
+8. WHILE `Reading_Mode` bằng `paged`, WHEN người dùng sang trang kế tiếp từ `Page` cuối cùng của chương đang đọc và còn chương có `index` lớn hơn, THE Reader SHALL chuyển sang chương kế tiếp và hiển thị `Page` đầu tiên của chương đó.
+9. WHILE `Reading_Mode` bằng `paged`, WHEN người dùng về trang trước từ `Page` đầu tiên của chương đang đọc và còn chương có `index` nhỏ hơn, THE Reader SHALL chuyển sang chương liền trước và hiển thị `Page` cuối cùng của chương đó.
+10. WHILE `Reading_Mode` bằng `paged` và chương đang đọc là chương có `index` lớn nhất, IF người dùng đang ở `Page` cuối cùng của chương đó, THEN THE Reader SHALL vô hiệu hóa thao tác sang trang kế tiếp.
+11. WHILE `Reading_Mode` bằng `paged` và chương đang đọc là chương có `index` nhỏ nhất, IF người dùng đang ở `Page` đầu tiên của chương đó, THEN THE Reader SHALL vô hiệu hóa thao tác về trang trước.
+12. THE Reader SHALL lưu `Reading_Position` dưới dạng chỉ số chương và tiến độ tỉ lệ trong chương (giá trị từ 0 đến 1) độc lập với `Reading_Mode`, để khôi phục đúng vị trí tương đối khi cỡ chữ, họ phông hoặc `Reading_Mode` thay đổi.
+13. WHEN người dùng mở lại một truyện ở `Reading_Mode` bằng `paged`, THE Reader SHALL ánh xạ tiến độ tỉ lệ trong chương của `Reading_Position` đã lưu tới `Page` chứa vị trí tương đối đó và hiển thị `Page` đó.
+
 ## Giả định và quyết định cần xác nhận
 
 Các nội dung dưới đây là giả định ban đầu; cần người dùng xác nhận hoặc điều chỉnh:
 
 1. **Nền tảng mục tiêu**: Giả định hỗ trợ cả iOS và Android. Cần xác nhận có ưu tiên một nền tảng trước không.
 2. **Deep link OAuth**: Giả định dùng deep link/redirect URI riêng cho ứng dụng di động để Supabase trả về sau đăng nhập Google. Cần xác nhận scheme/redirect URI và việc cấu hình tương ứng trong Supabase.
-3. **Đọc ngoại tuyến lâu dài**: Giả định Reader chỉ đọc ngoại tuyến với nội dung đã nạp trong phiên (không lưu trữ bền vững toàn bộ truyện để đọc offline). Cần xác nhận có cần tải truyện về máy để đọc offline về sau không.
+3. **Đọc ngoại tuyến lâu dài**: Đã quyết định hỗ trợ tải truyện về máy để đọc ngoại tuyến bền vững (xem Requirement 16). Phần requirements chỉ mô tả hành vi (lưu/đọc/quản lý/làm mới bản tải về); việc chọn cơ chế lưu trữ cục bộ (ví dụ tệp JSON hay SQLite thay cho `shared_preferences` do `StoryPayload` có thể lớn) để dành cho tài liệu thiết kế. Cần xác nhận có giới hạn số truyện hoặc tổng dung lượng tải về tối đa không.
 4. **Phạm vi chia sẻ**: Giả định chia sẻ ở dạng văn bản/Markdown qua share sheet. Cần xác nhận có cần chia sẻ kèm ảnh bìa, ảnh trích đoạn hoặc liên kết web tới truyện không.
 5. **CORS/whitelist**: Bản web cấu hình `CORS_ORIGINS` cho domain web; ứng dụng di động gọi API trực tiếp (không qua trình duyệt) nên không bị ràng buộc CORS, nhưng cần xác nhận backend không có chặn theo `Origin`/User-Agent với client di động.
+6. **Phát hiện truyện cần làm mới bản tải về**: Giả định việc xác định một `Offline_Download` đã cũ dựa trên so sánh `updatedAt` của truyện (Requirement 16.9). Cần xác nhận thời điểm so sánh (ví dụ tự động khi mở tủ truyện lúc có mạng, hay chỉ khi người dùng chủ động kiểm tra).
+7. **Chế độ đọc mặc định**: Giả định `Reading_Mode` mặc định là `paged` (kiểu Apple Books) để đồng nhất với định hướng trải nghiệm đọc; cần xác nhận có muốn mặc định là `scroll` không.
+8. **Cách phân trang ở chế độ `paged`**: Giả định mỗi `Page` chỉ chứa nội dung của một chương (không gộp nhiều chương vào một trang), và chương mới luôn bắt đầu ở `Page` mới. Cần xác nhận có chấp nhận trang cuối của chương có thể chỉ lấp đầy một phần màn hình không.

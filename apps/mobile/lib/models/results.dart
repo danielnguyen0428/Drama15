@@ -1,4 +1,4 @@
-import 'account.dart';
+import 'quota.dart';
 import 'story.dart';
 
 /// Chuyển một chuỗi `status` thô thành [StoryStatus].
@@ -29,13 +29,13 @@ class CreateStoryResult {
   final StoryStatus status;
 
   /// Hạn mức truyện cập nhật sau khi tiêu thụ một lượt tạo.
-  final Quota quota;
+  final QuotaSnapshot quota;
 
   factory CreateStoryResult.fromJson(Map<String, dynamic> json) {
     return CreateStoryResult(
       storyId: json['storyId'] as String,
       status: _statusFromString(json['status']),
-      quota: Quota.fromJson(json['quota'] as Map<String, dynamic>),
+      quota: QuotaSnapshot.fromJson(json['quota'] as Map<String, dynamic>),
     );
   }
 }

@@ -14,15 +14,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drama15_mobile/theme/app_theme.dart';
 
 void main() {
-  group('AppColors — ánh xạ token màu web (Req 14.1)', () {
-    test('các token màu khớp giá trị CSS của bản web', () {
-      expect(AppColors.pageBg, const Color(0xFFF1E9D8));
-      expect(AppColors.paper, const Color(0xFFFBF7EE));
-      expect(AppColors.canvas, const Color(0xFFFDFAF3));
-      expect(AppColors.ink, const Color(0xFF1A1611));
-      expect(AppColors.muted, const Color(0xFF6B6253));
-      expect(AppColors.coral, const Color(0xFFD7634E));
-      expect(AppColors.coralDark, const Color(0xFFB9452F));
+  group('AppColors — ánh xạ token design system Claude (Req 14.1)', () {
+    test('các token màu khớp tokens.css', () {
+      expect(AppColors.parchment, const Color(0xFFF5F4ED));
+      expect(AppColors.ivory, const Color(0xFFFAF9F5));
+      expect(AppColors.warmSand, const Color(0xFFE8E6DC));
+      expect(AppColors.ink, const Color(0xFF141413));
+      expect(AppColors.muted, const Color(0xFF5E5D59));
+      expect(AppColors.terracotta, const Color(0xFFC96442));
+      expect(AppColors.borderCream, const Color(0xFFF0EEE6));
     });
   });
 
@@ -31,9 +31,10 @@ void main() {
       expect(AppTheme.minTouchTarget, 48.0);
     });
 
-    test('bán kính bo góc khớp token web (--radius 16, --radius-sm 12)', () {
-      expect(AppTheme.radius, 16.0);
-      expect(AppTheme.radiusSmall, 12.0);
+    test('bán kính bo góc khớp token Claude (sm 8 / md 12 / lg 16)', () {
+      expect(AppTheme.radiusSmall, 8.0);
+      expect(AppTheme.radius, 12.0);
+      expect(AppTheme.radiusLarge, 16.0);
     });
   });
 
@@ -48,10 +49,10 @@ void main() {
       }
     });
 
-    test('bảng màu light dùng token web (canvas/ink/coral)', () {
-      expect(ReaderPalette.lightPalette.background, AppColors.canvas);
+    test('bảng màu light dùng token Claude (parchment/ink/terracotta)', () {
+      expect(ReaderPalette.lightPalette.background, AppColors.parchment);
       expect(ReaderPalette.lightPalette.text, AppColors.ink);
-      expect(ReaderPalette.lightPalette.accent, AppColors.coral);
+      expect(ReaderPalette.lightPalette.accent, AppColors.terracotta);
     });
 
     test('tra cứu theo tên biến thể trả đúng bảng màu', () {

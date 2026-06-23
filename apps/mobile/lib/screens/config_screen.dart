@@ -4,10 +4,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/providers.dart';
 import '../controllers/config_controller.dart';
 import '../controllers/generation_controller.dart';
 import '../controllers/quota_controller.dart';
 import '../models/story_config.dart';
+import '../i18n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Thu thập `StoryConfig`, gọi gợi ý kịch bản và viết bản thảo.
@@ -36,15 +38,16 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     final controller = ref.read(configControllerProvider.notifier);
     final quota = ref.watch(quotaControllerProvider);
     final config = state.config;
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Khởi tạo'),
+        title: Text(s.configTitle),
         actions: [
           IconButton(
             key: const Key('draft-controls-button'),
-            tooltip: 'Cường độ & nhịp kể',
-            onPressed: () => _showDraftControlsDialog(context, config, controller),
+            tooltip: s.draftControlsTooltip,
+            onPressed: () => _showDraftControlsDialog(context, config, controller, s),
             icon: const Icon(Icons.tune),
           ),
         ],
@@ -53,19 +56,18 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // ─── SECTION 1: Hạn mức hôm nay (tách rõ khỏi form sáng tác) ───
-          _QuotaSection(quota: quota),
+          _QuotaSection(quota: quota, strings: s),
           const SizedBox(height: 24),
-          // ─── SECTION 2: Gợi ý sáng tác ───
-          Text('Gợi ý sáng tác', style: Theme.of(context).textTheme.titleLarge),
+          Text(s.suggestSectionTitle, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             key: const Key('niche-dropdown'),
             isExpanded: true,
             initialValue: config.niche,
-            decoration: const InputDecoration(labelText: 'Dòng truyện'),
+            decoration: InputDecoration(labelText: s.nicheFieldLabel),
             items: [
               for (final n in kNiches)
-                DropdownMenuItem(value: n.value, child: Text(n.label)),
+                DropdownMenuItem(value: n.value, child: Text(s.nicheLabel(n.value))),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -76,7 +78,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
           if (config.niche == kCustomNiche) ...[
             const SizedBox(height: 12),
             TextField(
-              decoration: const InputDecoration(labelText: 'Nhánh riêng'),
+              decoration: InputDecoration(labelText: s.customNicheLabel),
               onChanged: (v) =>
                   controller.updateConfig(config.copyWith(customNiche: v)),
             ),
@@ -86,7 +88,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             controller: TextEditingController(
               text: config.title,
             )..selection = TextSelection.collapsed(offset: config.title.length),
-            decoration: const InputDecoration(labelText: 'Nhan đề dự kiến'),
+            decoration: InputDecoration(labelText: s.titleLabel),
             onChanged: (v) =>
                 controller.updateConfig(config.copyWith(title: v)),
           ),
@@ -94,8 +96,8 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
           TextField(
             controller: TextEditingController(text: config.seed)
               ..selection = TextSelection.collapsed(offset: config.seed.length),
-            decoration: const InputDecoration(
-              labelText: 'Kịch bản / cốt truyện',
+            decoration: InputDecoration(
+              labelText: s.seedLabel,
             ),
             maxLines: 3,
             onChanged: (v) => controller.updateConfig(config.copyWith(seed: v)),
@@ -106,7 +108,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             initialValue: state.presets.any((p) => p.id == config.stylePreset)
                 ? config.stylePreset
                 : (state.presets.isNotEmpty ? state.presets.first.id : null),
-            decoration: const InputDecoration(labelText: 'Giọng kể'),
+            decoration: InputDecoration(labelText: s.styleLabel),
             items: [
               for (final p in state.presets)
                 DropdownMenuItem(value: p.id, child: Text(p.displayName)),
@@ -121,13 +123,17 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
           DropdownButtonFormField<OutputLanguage>(
             isExpanded: true,
             initialValue: config.outputLanguage,
-            decoration: const InputDecoration(labelText: 'Ngôn ngữ đầu ra'),
+            decoration: InputDecoration(labelText: s.outputLanguageFieldLabel),
             items: [
               for (final l in OutputLanguage.values)
-                DropdownMenuItem(value: l, child: Text(l.label)),
+                DropdownMenuItem(
+                  value: l,
+                  child: Text(s.outputLanguageOption(l)),
+                ),
             ],
             onChanged: (value) {
               if (value != null) {
+                ref.read(uiOutputLanguageProvider.notifier).state = value;
                 controller.updateConfig(config.copyWith(outputLanguage: value));
               }
             },
@@ -138,7 +144,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             onPressed: (quota.canSuggest && !state.suggesting)
                 ? controller.suggest
                 : null,
-            child: Text(state.suggesting ? 'Đang xử lý...' : 'Gợi ý kịch bản'),
+            child: Text(state.suggesting ? s.suggesting : s.suggestButton),
           ),
           const SizedBox(height: 12),
           FilledButton(
@@ -153,13 +159,11 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                     widget.onGenerate?.call();
                   }
                 : null,
-            child: const Text('Viết bản thảo'),
+            child: Text(s.writeDraftButton),
           ),
           if (!quota.canCreateStory) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Đã hết hạn mức trong ngày. Nâng cấp lên Pro hoặc Premium.',
-            ),
+            Text(s.quotaExceeded),
           ],
           if (state.error != null) ...[
             const SizedBox(height: 8),
@@ -178,6 +182,7 @@ Future<void> _showDraftControlsDialog(
   BuildContext context,
   StoryConfig config,
   ConfigController controller,
+  AppStrings s,
 ) async {
   var draft = config;
 
@@ -187,13 +192,13 @@ Future<void> _showDraftControlsDialog(
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Cường độ & nhịp kể'),
+            title: Text(s.draftControlsTitle),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _Slider(
-                    label: 'Cường độ cảm xúc',
+                    label: s.intensityLabel,
                     value: draft.intensity,
                     min: 0,
                     max: 1,
@@ -203,7 +208,7 @@ Future<void> _showDraftControlsDialog(
                     },
                   ),
                   _Slider(
-                    label: 'Tỷ lệ thoại',
+                    label: s.dialogueRatioLabel,
                     value: draft.dialogueRatio,
                     min: 0.2,
                     max: 0.85,
@@ -213,7 +218,7 @@ Future<void> _showDraftControlsDialog(
                     },
                   ),
                   _Slider(
-                    label: 'Mật độ móc câu',
+                    label: s.hookDensityLabel,
                     value: draft.hookDensity,
                     min: 0,
                     max: 1,
@@ -228,7 +233,7 @@ Future<void> _showDraftControlsDialog(
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Đóng'),
+                child: Text(s.close),
               ),
             ],
           );
@@ -239,9 +244,10 @@ Future<void> _showDraftControlsDialog(
 }
 
 class _QuotaSection extends StatelessWidget {
-  const _QuotaSection({required this.quota});
+  const _QuotaSection({required this.quota, required this.strings});
 
   final QuotaState quota;
+  final AppStrings strings;
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +263,7 @@ class _QuotaSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hạn mức hôm nay',
+              strings.quotaTodayTitle,
               style: AppFonts.mono(
                 fontSize: 11,
                 color: AppColors.terracotta,
@@ -267,17 +273,17 @@ class _QuotaSection extends StatelessWidget {
             const SizedBox(height: 12),
             _QuotaRow(
               icon: Icons.auto_stories,
-              label: 'Bản thảo truyện',
-              value: 'Hôm nay còn $storyRemaining/$storyLimit',
+              label: strings.quotaStoryLabel,
+              value: strings.quotaStoryValue(storyRemaining, storyLimit),
               highlight: storyRemaining <= 0,
             ),
             const Divider(height: 20),
             _QuotaRow(
               icon: Icons.lightbulb_outline,
-              label: 'Gợi ý kịch bản',
+              label: strings.quotaSuggestLabel,
               value: suggestRemaining != null
-                  ? 'Còn $suggestRemaining/$suggestLimit lượt/ngày'
-                  : '10 lượt gợi ý kịch bản/ngày',
+                  ? strings.quotaSuggestValue(suggestRemaining, suggestLimit!)
+                  : strings.quotaSuggestFallback,
               highlight: suggestRemaining != null && suggestRemaining <= 0,
             ),
           ],

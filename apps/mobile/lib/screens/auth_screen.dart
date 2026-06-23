@@ -4,7 +4,9 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/providers.dart';
 import '../controllers/auth_controller.dart';
+import '../i18n/app_strings.dart';
 import '../models/account.dart';
 import '../theme/app_theme.dart';
 
@@ -17,6 +19,7 @@ class AuthScreen extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
     final controller = ref.read(authControllerProvider.notifier);
     final theme = Theme.of(context);
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -30,16 +33,16 @@ class AuthScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (auth.isSignedIn && auth.account != null) ...[
-                    _AccountCard(account: auth.account!),
+                    _AccountCard(account: auth.account!, strings: s),
                     const SizedBox(height: 20),
                     OutlinedButton.icon(
                       onPressed: controller.signOut,
                       icon: const Icon(Icons.logout, size: 18),
-                      label: const Text('Đăng xuất'),
+                      label: Text(s.signOut),
                     ),
                   ] else ...[
                     Text(
-                      'TRỢ LÝ AI SÁNG TÁC TIỂU THUYẾT DRAMA',
+                      s.authKicker,
                       style: AppFonts.mono(
                         fontSize: 11,
                         color: AppColors.terracotta,
@@ -55,7 +58,7 @@ class AuthScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Sáng tác trọn bộ 15 chương, đọc như một cuốn sách thật. Đăng nhập để gợi ý kịch bản, viết bản thảo và giữ tủ truyện của bạn.',
+                      s.authSubtitle,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: AppColors.muted,
                       ),
@@ -68,9 +71,7 @@ class AuthScreen extends ConsumerWidget {
                           : controller.signInWithGoogle,
                       icon: const Icon(Icons.login, size: 18),
                       label: Text(
-                        auth.signingIn
-                            ? 'Đang đăng nhập...'
-                            : 'Đăng nhập bằng Google',
+                        auth.signingIn ? s.signingIn : s.signInGoogle,
                       ),
                     ),
                     if (auth.signInError != null) ...[
@@ -91,7 +92,7 @@ class AuthScreen extends ConsumerWidget {
                     ),
                     TextButton(
                       onPressed: controller.retryLoadProfile,
-                      child: const Text('Thử lại'),
+                      child: Text(s.retry),
                     ),
                   ],
                 ],
@@ -106,9 +107,10 @@ class AuthScreen extends ConsumerWidget {
 
 /// Thẻ hồ sơ tài khoản (tên/email + nhãn gói) kiểu editorial.
 class _AccountCard extends StatelessWidget {
-  const _AccountCard({required this.account});
+  const _AccountCard({required this.account, required this.strings});
 
   final AccountSnapshot account;
+  final AppStrings strings;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +153,7 @@ class _AccountCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                account.plan.label,
+                strings.planTierLabel(account.plan),
                 style: AppFonts.sans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
