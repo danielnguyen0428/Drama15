@@ -11,10 +11,6 @@ import { z } from 'zod';
 import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
 import type { EffectiveLlmSettings, LlmSettingsSpec } from './llm-settings/spec.js';
 import {
-  consumeSetupSuggestionQuota,
-  consumeStoryQuota,
-  getQuotaSnapshot,
-  getSetupSuggestionQuotaSnapshot,
   getSupabaseAdmin,
   isAdminRequest,
   requireUser,
@@ -262,9 +258,7 @@ app.get('/auth/me', async (request, reply) => {
   if (!user) return reply;
 
   try {
-    const quota = await getQuotaSnapshot(user);
-    const setupSuggestionQuota = await getSetupSuggestionQuotaSnapshot(user);
-    return reply.send({ user, quota, setupSuggestionQuota });
+    return reply.send({ user, quota: null, setupSuggestionQuota: null });
   } catch (error) {
     return sendError(reply, error);
   }
@@ -277,16 +271,6 @@ app.post('/story/setup-suggest', async (request, reply) => {
   try {
     const config = StoryConfigSchema.parse(request.body);
     const llmSettings = await requireLlmSettings(user.id);
-    const setupSuggestionQuota = await consumeSetupSuggestionQuota(user);
-    if (setupSuggestionQuota && !setupSuggestionQuota.allowed) {
-      return reply.code(429).send({
-        error: {
-          code: 'setup_suggestion_quota_exceeded',
-          message: `Bạn đã dùng hết ${setupSuggestionQuota.limit} lượt gợi ý kịch bản hôm nay. Hãy viết tiếp từ ý tưởng hiện có hoặc quay lại vào ngày mai.`,
-        },
-        setupSuggestionQuota,
-      });
-    }
 
     const suggestionRequest = normalizeOutlineRequest(config);
     const result = await createUserOrchestrator(
@@ -300,7 +284,6 @@ app.post('/story/setup-suggest', async (request, reply) => {
       linePreset: result.seedPackage.linePreset,
       storyControls: result.seedPackage.storyControls,
       draftControls: result.seedPackage.draftControls,
-      ...(setupSuggestionQuota ? { setupSuggestionQuota } : {}),
     });
   } catch (error) {
     return sendError(reply, error);
@@ -327,16 +310,6 @@ app.post('/stories', async (request, reply) => {
     const config = StoryConfigSchema.parse(request.body);
     const storyRequest = normalizeFullRequest(config);
     const llmSettings = await requireLlmSettings(user.id);
-    const quota = await consumeStoryQuota(user);
-    if (!quota.allowed) {
-      return reply.code(429).send({
-        error: {
-          code: 'quota_exceeded',
-          message: `Bạn đã dùng hết ${quota.limit} bản thảo truyện hôm nay. Nâng cấp Pro hoặc Premium để viết thêm bản thảo.`,
-        },
-        quota,
-      });
-    }
 
     const id = randomUUID();
     const job: StoryJob = {
@@ -360,7 +333,7 @@ app.post('/stories', async (request, reply) => {
     });
     jobs.set(id, job);
 
-    return reply.code(201).send({ storyId: id, status: job.status, quota });
+    return reply.code(201).send({ storyId: id, status: job.status });
   } catch (error) {
     return sendError(reply, error);
   }

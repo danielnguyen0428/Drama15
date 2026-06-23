@@ -39,7 +39,6 @@ type StylePreset = { id: string; displayName: string; description: string };
 type Chapter = { index: number; title?: string; content: string };
 type StoryResult = { concept: string; plan: string; bible?: unknown; relationshipGraph?: RelationshipGraphView; quality?: QualityReportView; chapters: Chapter[] };
 type AppUser = { id: string; email: string; displayName: string; avatarUrl?: string; tier: 'free' | 'pro' | 'premium' };
-type Quota = { usageDate: string; used: number; limit: number; remaining: number };
 type SavedStory = {
   id: string;
   title: string;
@@ -154,8 +153,6 @@ export function StoryWorkspace(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
-  const [quota, setQuota] = useState<Quota | null>(null);
-  const [setupSuggestionQuota, setSetupSuggestionQuota] = useState<Quota | null>(null);
   const [llmSettings, setLlmSettings] = useState<LlmSettings | null>(null);
   const [showLlmSettings, setShowLlmSettings] = useState(false);
   const [showDraftControls, setShowDraftControls] = useState(false);
@@ -197,18 +194,10 @@ export function StoryWorkspace(): JSX.Element {
   const streaming = phase === 'creating' || phase === 'streaming';
   const writing = streaming || typewriter.active;
   const isSignedIn = Boolean(session && user);
-  const outOfQuota = Boolean(quota && quota.remaining <= 0);
-  const outOfSetupSuggestionQuota = Boolean(setupSuggestionQuota && setupSuggestionQuota.remaining <= 0);
   const llmConfigured = Boolean(llmSettings?.configured);
   const canResumeCurrentStory = Boolean(
     storyId && phase !== 'completed' && (currentSavedStory ? canResumeStory(currentSavedStory) : result.chapters.length > 0 && result.chapters.length < TOTAL_CHAPTERS),
   );
-  const setupSuggestionQuotaCopy = setupSuggestionQuota
-    ? outOfSetupSuggestionQuota
-      ? t('account.setup_quota_used', { limit: setupSuggestionQuota.limit })
-      : t('account.setup_quota_remaining', { remaining: setupSuggestionQuota.remaining, limit: setupSuggestionQuota.limit })
-    : t('account.setup_quota_free');
-
   useEffect(() => {
     if (!busy) {
       setStageElapsed(0);
@@ -265,8 +254,6 @@ export function StoryWorkspace(): JSX.Element {
           void loadSavedStories();
         } else {
           setUser(null);
-          setQuota(null);
-          setSetupSuggestionQuota(null);
           setLlmSettings(null);
           setSavedStories([]);
         }
@@ -303,10 +290,8 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const response = await httpFetch('/auth/me');
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { user: AppUser; quota: Quota; setupSuggestionQuota?: Quota | null };
+      const data = (await response.json()) as { user: AppUser };
       setUser(data.user);
-      setQuota(data.quota);
-      setSetupSuggestionQuota(data.setupSuggestionQuota ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('error.account'));
     }
@@ -352,8 +337,7 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const response = await httpFetch('/story/setup-suggest', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { title?: string; seed?: string; storyControls?: StoryControls; setupSuggestionQuota?: Quota };
-      if (data.setupSuggestionQuota) setSetupSuggestionQuota(data.setupSuggestionQuota);
+      const data = (await response.json()) as { title?: string; seed?: string; storyControls?: StoryControls };
       setConfig((current) => ({
         ...current,
         title: data.title || current.title,
@@ -370,10 +354,6 @@ export function StoryWorkspace(): JSX.Element {
 
   async function createStory() {
     if (!requireLogin()) return;
-    if (outOfQuota) {
-      setError(t('error.out_of_quota'));
-      return;
-    }
 
     focusStoryPanel();
     streamRef.current?.close();
@@ -390,8 +370,7 @@ export function StoryWorkspace(): JSX.Element {
     try {
       const response = await httpFetch('/stories', postJson(config));
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { storyId: string; quota?: Quota };
-      if (data.quota) setQuota(data.quota);
+      const data = (await response.json()) as { storyId: string };
       setStoryId(data.storyId);
       await loadSavedStories();
       await connectStream(data.storyId);
@@ -611,10 +590,6 @@ export function StoryWorkspace(): JSX.Element {
             </div>
           </div>
         ) : <p>{t('account.login_prompt')}</p>}
-        <div className="account-usage">
-          {quota && <div className={outOfQuota ? 'account-quota blocked' : 'account-quota'}><strong>{t('account.quota_today', { remaining: quota.remaining, limit: quota.limit })}</strong><span>{outOfQuota ? t('account.quota_out') : t('account.quota_info')}</span></div>}
-          <div className={outOfSetupSuggestionQuota ? 'account-quota blocked' : 'account-quota'}><strong>{setupSuggestionQuotaCopy}</strong></div>
-        </div>
         <div className="account-actions">
           {user ? <>{resumableStory && <button type="button" className="primary-button" disabled={busy || !llmConfigured} onClick={() => void resumeStory(resumableStory.id)}>{t('account.resume_btn')}</button>}<button type="button" className={llmConfigured ? 'secondary-button' : 'primary-button'} onClick={() => setShowLlmSettings(true)}>{llmConfigured ? llmSettings?.model : 'Cấu hình LLM'}</button><button type="button" className="secondary-button" onClick={() => void signOut()}>{t('account.sign_out')}</button></> : <button type="button" className="primary-button" onClick={() => void signInWithGoogle()}>{t('account.sign_in')}</button>}
           <button type="button" className="secondary-button lang-switch-btn" onClick={toggleLocale} aria-label="Switch language" title={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}>🌐 {t('lang_switch.label')}</button>
@@ -650,7 +625,7 @@ export function StoryWorkspace(): JSX.Element {
           <label>{t('setup.seed_label')}<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder={t('setup.seed_placeholder')} rows={6} /></label>
           <label>{t('setup.style_label')}<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
           <label>{t('setup.language_label')}<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTION_KEYS.map((key) => <option key={key} value={key}>{t(`lang.${key}`)}</option>)}</select></label>
-          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>{t('setup.suggest_btn')}</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfQuota || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>{t('setup.write_btn')}</button></div>
+          <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || !llmConfigured} onClick={() => void suggestSetup()}>{t('setup.suggest_btn')}</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || !llmConfigured || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>{t('setup.write_btn')}</button></div>
         </aside>
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>

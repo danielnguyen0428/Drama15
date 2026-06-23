@@ -25,3 +25,11 @@ test('workspace footer is separated by a quiet top line', () => {
   assert.match(css, /\.workspace-footer\s*\{[^}]*border-top:\s*1px\s+solid\s+#f2f2f2;/);
   assert.doesNotMatch(css, /\.workspace-footer\s*\{[^}]*background\s*:/);
 });
+
+test('CTA and button typography stays readable across desktop and mobile', () => {
+  assert.match(css, /button\s*\{[^}]*font-size:\s*14px;/);
+  assert.match(css, /\.provider-tabbar button\s*\{[^}]*font-size:\s*13px;/);
+  assert.match(css, /\.panel-tabs button\s*\{[^}]*font-size:\s*13px;/);
+  assert.match(css, /\.story-list-item div button\s*\{[^}]*font-size:\s*13px;/);
+  assert.doesNotMatch(css, /\.panel-tabs button\s*\{[^}]*font-size:\s*11px;/);
+});

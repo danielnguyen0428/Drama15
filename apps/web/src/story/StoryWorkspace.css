@@ -39,7 +39,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: var(--page-bg); }
 button, input, select, textarea { font: inherit; }
-button { cursor: pointer; }
+button { cursor: pointer; font-size: 14px; }
 button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 .workspace-shell {
@@ -245,7 +245,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 /* ---- Account bar ------------------------------------------------------- */
 .account-bar {
   display: grid;
-  grid-template-columns: minmax(220px, 0.7fr) minmax(280px, 1fr) auto;
+  grid-template-columns: minmax(220px, 1fr) auto;
   align-items: center;
   gap: 20px;
   max-width: 1600px;
@@ -269,18 +269,6 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.account-usage { display: grid; gap: 10px; min-width: 0; }
-.account-quota {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding-left: 16px;
-  border-left: 2px solid var(--coral);
-}
-.account-quota strong { color: var(--ink); font-size: 13px; font-weight: 600; }
-.account-quota span { color: var(--muted); font-size: 12px; line-height: 1.5; }
-.account-quota.blocked { border-left-color: var(--coral-dark); }
-.account-quota.blocked strong { color: var(--coral-dark); }
 .account-actions { display: flex; gap: 10px; justify-self: end; flex-shrink: 0; }
 .account-actions button { padding: 0 16px; }
 
@@ -359,7 +347,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   background: transparent;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -471,7 +459,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   background: var(--paper);
   color: var(--ink-soft);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -618,7 +606,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   color: var(--muted);
   border-bottom: 2px solid transparent;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -814,7 +802,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .workspace-shell { padding: 16px; }
   .workspace-grid { grid-template-columns: 1fr; }
   .account-bar { grid-template-columns: 1fr; align-items: stretch; }
-  .account-quota { padding-left: 0; padding-top: 12px; border-left: 0; border-top: 2px solid var(--coral); }
   .account-actions button { width: 100%; }
   .setup-panel,
   .saved-panel { position: static; }
@@ -1103,7 +1090,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 @media (max-width: 480px) {
   .workspace-shell { padding: 12px; }
   .chapter-list button { flex: 0 0 132px; min-height: 52px; }
-  .panel-tabs button { padding: 0 12px; font-size: 11px; }
+  .panel-tabs button { padding: 0 12px; font-size: 13px; }
   .text-panel pre { font-size: 14px; }
   .prose { font-size: 16px; line-height: 1.85; }
   .prose p:first-of-type::first-letter { font-size: 48px; }

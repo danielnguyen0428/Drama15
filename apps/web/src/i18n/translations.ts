@@ -22,15 +22,9 @@ const vi = {
   // Account
   'account.avatar_alt': 'Ảnh đại diện',
   'account.login_prompt': 'Đăng nhập Google để gợi ý kịch bản, viết bản thảo và giữ lại tủ truyện của bạn.',
-  'account.quota_today': 'Hôm nay còn {remaining}/{limit} bản thảo truyện có thể viết',
-  'account.quota_out': 'Nâng cấp Pro hoặc Premium để viết thêm bản thảo.',
-  'account.quota_info': 'Mỗi bản thảo gồm ý tưởng, nhân vật, dàn ý, quan hệ và toàn bộ chương.',
   'account.resume_btn': 'Viết tiếp truyện',
   'account.sign_out': 'Đăng xuất',
   'account.sign_in': 'Đăng nhập bằng Google',
-  'account.setup_quota_free': 'Free: 10 lượt gợi ý kịch bản/ngày.',
-  'account.setup_quota_used': 'Đã dùng hết {limit} lượt gợi ý kịch bản hôm nay.',
-  'account.setup_quota_remaining': 'Còn {remaining}/{limit} lượt gợi ý kịch bản hôm nay.',
 
   // Tier
   'tier.free': 'Miễn phí',
@@ -182,7 +176,6 @@ const vi = {
   'error.account': 'Không thể nạp tài khoản.',
   'error.stories': 'Không thể nạp danh sách truyện.',
   'error.require_login': 'Vui lòng đăng nhập bằng Google để dùng tính năng này.',
-  'error.out_of_quota': 'Bạn đã hết số bản thảo truyện có thể viết hôm nay. Nâng cấp Pro hoặc Premium để viết thêm bản thảo.',
   'error.suggest': 'Không thể gợi ý thiết lập truyện.',
   'error.create': 'Không thể bắt đầu viết truyện.',
   'error.stream_disconnect': 'Phiên viết bị ngắt kết nối. Bấm "Viết tiếp truyện" để nối lại các chương còn thiếu.',
@@ -248,15 +241,9 @@ const en: Record<keyof typeof vi, string> = {
   // Account
   'account.avatar_alt': 'Avatar',
   'account.login_prompt': 'Sign in with Google to get plot suggestions, write manuscripts, and keep your story library.',
-  'account.quota_today': 'Today: {remaining}/{limit} manuscripts remaining',
-  'account.quota_out': 'Upgrade to Pro or Premium to write more manuscripts.',
-  'account.quota_info': 'Each manuscript includes concept, characters, outline, relationships, and all chapters.',
   'account.resume_btn': 'Continue Writing',
   'account.sign_out': 'Sign Out',
   'account.sign_in': 'Sign in with Google',
-  'account.setup_quota_free': 'Free: 10 plot suggestions/day.',
-  'account.setup_quota_used': 'Used all {limit} plot suggestions for today.',
-  'account.setup_quota_remaining': '{remaining}/{limit} plot suggestions remaining today.',
 
   // Tier
   'tier.free': 'Free',
@@ -408,7 +395,6 @@ const en: Record<keyof typeof vi, string> = {
   'error.account': 'Unable to load account.',
   'error.stories': 'Unable to load story list.',
   'error.require_login': 'Please sign in with Google to use this feature.',
-  'error.out_of_quota': 'You have used all your manuscript quota for today. Upgrade to Pro or Premium to write more.',
   'error.suggest': 'Unable to suggest plot setup.',
   'error.create': 'Unable to start writing.',
   'error.stream_disconnect': 'Writing session disconnected. Click "Continue Writing" to resume missing chapters.',

@@ -4,14 +4,13 @@ import test from 'node:test';
 
 const API_SOURCE = readFileSync(new URL('./startDev.ts', import.meta.url), 'utf8');
 const WEB_SOURCE = readFileSync(new URL('../../web/src/story/StoryWorkspace.tsx', import.meta.url), 'utf8');
+const TRANSLATIONS_SOURCE = readFileSync(new URL('../../web/src/i18n/translations.ts', import.meta.url), 'utf8');
 
-test('quota copy describes daily draft creation and setup suggestions in novel language', () => {
-  const quotaCopy = `${API_SOURCE}\n${WEB_SOURCE}`;
+test('daily quota copy and runtime enforcement are removed for user-funded providers', () => {
+  const quotaCopy = `${API_SOURCE}\n${WEB_SOURCE}\n${TRANSLATIONS_SOURCE}`;
 
-  assert.match(quotaCopy, /bản thảo truyện có thể viết/i);
-  assert.match(quotaCopy, /lượt gợi ý kịch bản hôm nay/i);
-  assert.doesNotMatch(quotaCopy, /Gợi ý mầm truyện/i);
-  assert.doesNotMatch(quotaCopy, /lượt gợi ý mầm truyện/i);
-  assert.doesNotMatch(quotaCopy, /bộ drama/i);
-  assert.doesNotMatch(quotaCopy, /lượt viết truyện/i);
+  assert.doesNotMatch(quotaCopy, /bản thảo truyện có thể viết/i);
+  assert.doesNotMatch(quotaCopy, /Mỗi bản thảo gồm ý tưởng, nhân vật, dàn ý, quan hệ và toàn bộ chương/i);
+  assert.doesNotMatch(quotaCopy, /lượt gợi ý kịch bản hôm nay/i);
+  assert.doesNotMatch(quotaCopy, /consumeStoryQuota|consumeSetupSuggestionQuota|quota_exceeded/);
 });
