@@ -57,7 +57,7 @@ import {
   validateOutlineGeneration,
   validateStoryPayload,
 } from "../validators/story-validator";
-import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, getOrCreatePhraseReuseIndex, resetPhraseReuseIndex, indexChapter } from "../validators/chapter-quality";
+import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, getOrCreatePhraseReuseIndex, resetPhraseReuseIndex, indexChapter, type ChapterQualityMetrics } from "../validators/chapter-quality";
 // ─── Character Consistency (shared core-pipeline) ────────────────────────────
 import {
   createEmptyMemoryStore,
@@ -70,8 +70,16 @@ import {
 import {
   validateConsistency,
   hasCriticalViolations,
+  buildIdiolectRepairInstruction,
+  buildAddressRegisterDriftRepairInstruction,
   type DriftReport,
 } from "../core-pipeline/character-consistency";
+import {
+  enrichStoryBibleAddressRegisters,
+  collectAddressRegistersFromBible,
+  collectSpeechPatternsFromBible,
+  buildAddressRegisterRepairInstruction,
+} from "../core-pipeline/address-register";
 import {
   ContinuityTracker,
   type MinimalChapterRef,
@@ -300,7 +308,10 @@ export class StoryOrchestrator {
         });
 
         return {
-          storyBible: parseStoryBible(unwrapEnvelope(bibleResult.data, "storyBible")),
+          storyBible: enrichStoryBibleAddressRegisters(
+            parseStoryBible(unwrapEnvelope(bibleResult.data, "storyBible")),
+            request.outputLanguage,
+          ),
           modelUsed: bibleResult.modelUsed,
         };
       },
@@ -809,6 +820,10 @@ export class StoryOrchestrator {
   ) {
     const parsed = GenerateChapterRequestSchema.parse(request);
     ensureChapterPlanIntegrity(parsed.chapterPlan);
+    parsed.storyBible = enrichStoryBibleAddressRegisters(
+      parsed.storyBible,
+      parsed.outputLanguage ?? "english",
+    );
 
     const chapterPlanItem = parsed.chapterPlan.find((chapter: ChapterPlanItem) => chapter.chapterNumber === parsed.chapterNumber);
     if (!chapterPlanItem) {
@@ -901,24 +916,28 @@ export class StoryOrchestrator {
             contextLabel: `chapter ${parsed.chapterNumber}`,
           },
         );
+        const outputLanguage = parsed.outputLanguage ?? "english";
+        const addressRegisters = collectAddressRegistersFromBible(parsed.storyBible);
         let metrics = analyzeChapterQuality(
           chapter.text,
           draftControls,
-          parsed.outputLanguage ?? "english",
+          outputLanguage,
           parsed.chapterNumber,
           parsed.userIntensity,
+          addressRegisters,
         );
 
         // ─── Character Consistency Check ──────────────────────────────────
         let driftReport: DriftReport | null = null;
-        if (memoryStore && memoryStore.chapters.size > 0) {
+        if (outputLanguage === "vietnamese" || (memoryStore && memoryStore.chapters.size > 0)) {
           driftReport = await validateConsistency(
             chapter.text,
             parsed.chapterNumber,
             parsed.storyBible,
-            memoryStore,
+            memoryStore ?? createEmptyMemoryStore(),
             this.routerClient,
           );
+          driftReport = normalizeAddressDriftSeverity(driftReport);
         }
 
         const needsRepair = needsChapterRetry(metrics) || (driftReport && hasCriticalViolations(driftReport));
@@ -946,9 +965,16 @@ export class StoryOrchestrator {
         }
 
         let repairedChapter = chapter;
-        const maxAttempts = driftReport ? MAX_CHAPTER_REPAIR_ATTEMPTS + 1 : MAX_CHAPTER_REPAIR_ATTEMPTS;
+        const maxAttempts = metrics.addressRegister.needsRepair || (driftReport && hasCriticalViolations(driftReport))
+          ? MAX_CHAPTER_REPAIR_ATTEMPTS + 1
+          : MAX_CHAPTER_REPAIR_ATTEMPTS;
 
         for (let repairAttempt = 1; repairAttempt <= maxAttempts; repairAttempt += 1) {
+          const repairExtras = buildChapterRepairExtras({
+            metrics,
+            driftReport,
+            storyBible: parsed.storyBible,
+          });
           const repairPrompt = buildChapterRepairPrompt({
             previousDraft: repairedChapter.text,
             failures: metrics.failures,
@@ -967,7 +993,10 @@ export class StoryOrchestrator {
               excerpt: v.excerpt,
               description: v.contradictedFact,
             })),
-            outputLanguage: parsed.outputLanguage ?? "english",
+            addressRegisterViolations: repairExtras.addressRegisterViolations,
+            addressRegisterRepairInstruction: repairExtras.addressRegisterRepairInstruction,
+            idiolectRepairInstruction: repairExtras.idiolectRepairInstruction,
+            outputLanguage,
             prosePolishConfig: this.prosePolishConfig,
           });
           const repairedResult = await this.routerClient.generateJson<unknown>({
@@ -994,20 +1023,22 @@ export class StoryOrchestrator {
           metrics = analyzeChapterQuality(
             repairedChapter.text,
             draftControls,
-            parsed.outputLanguage ?? "english",
+            outputLanguage,
             parsed.chapterNumber,
             parsed.userIntensity,
+            addressRegisters,
           );
 
           // Re-check consistency after repair
-          if (memoryStore) {
+          if (outputLanguage === "vietnamese" || memoryStore) {
             driftReport = await validateConsistency(
               repairedChapter.text,
               parsed.chapterNumber,
               parsed.storyBible,
-              memoryStore,
+              memoryStore ?? createEmptyMemoryStore(),
               this.routerClient,
             );
+            driftReport = normalizeAddressDriftSeverity(driftReport);
           }
 
           const stillNeedsRepair = needsChapterRetry(metrics) || (driftReport && hasCriticalViolations(driftReport));
@@ -1104,6 +1135,7 @@ export class StoryOrchestrator {
           parsed.outputLanguage ?? "english",
           parsed.chapterNumber,
           parsed.userIntensity,
+          collectAddressRegistersFromBible(parsed.storyBible),
         );
         if (needsChapterRetry(finalMetrics) && !hasOnlySoftChapterQualityFailures(finalMetrics)) {
           throw new AppError(
@@ -1845,6 +1877,42 @@ function alignChapterTitleWithPlan(chapter: Chapter, plannedTitle: string): Chap
   return {
     ...chapter,
     title: plannedTitle,
+  };
+}
+
+function normalizeAddressDriftSeverity(report: DriftReport): DriftReport {
+  return {
+    ...report,
+    violations: report.violations.map((violation) =>
+      violation.type === "address_register_drift"
+        ? { ...violation, severity: "critical" as const }
+        : violation,
+    ),
+  };
+}
+
+function buildChapterRepairExtras(params: {
+  metrics: ChapterQualityMetrics;
+  driftReport: DriftReport | null;
+  storyBible: StoryPayload["storyBible"];
+}) {
+  const addressRegisters = collectAddressRegistersFromBible(params.storyBible);
+  const speechPatterns = collectSpeechPatternsFromBible(params.storyBible);
+  const idiolectWarnings = params.driftReport?.violations.filter((violation) => violation.type === "speech_idiolect") ?? [];
+  const addressDrift = params.driftReport?.violations.filter((violation) => violation.type === "address_register_drift") ?? [];
+
+  const addressRegisterRepairInstruction = params.metrics.addressRegister.needsRepair
+    ? buildAddressRegisterRepairInstruction(params.metrics.addressRegister.violations, addressRegisters)
+    : addressDrift.length > 0
+      ? buildAddressRegisterDriftRepairInstruction(addressDrift, addressRegisters)
+      : undefined;
+
+  return {
+    addressRegisterViolations: params.metrics.addressRegister.violations,
+    addressRegisterRepairInstruction,
+    idiolectRepairInstruction: idiolectWarnings.length > 0
+      ? buildIdiolectRepairInstruction(idiolectWarnings, speechPatterns)
+      : undefined,
   };
 }
 

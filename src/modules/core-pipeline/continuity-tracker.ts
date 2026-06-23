@@ -11,6 +11,12 @@
 import type { StoryBible, ChapterPlanItem, ContinuityLite } from "./pipeline-types";
 import type { CharacterFactSheet } from "./character-memory-store";
 import { DRAMA15_KEY_CHAPTERS } from "../prompts/drama15-chapter-architecture";
+import {
+  collectAddressRegistersFromBible,
+  collectSpeechPatternsFromBible,
+  extractEstablishedAddressUsage,
+  type EstablishedAddressUsage,
+} from "./address-register";
 
 export interface ForeshadowItem {
   plantedInChapter: number;
@@ -40,6 +46,7 @@ export interface MinimalChapterRef {
 }
 
 export class ContinuityTracker {
+  private storyBible: StoryBible;
   private heroineName: string;
   private betrayerName: string;
   private rivalName: string;
@@ -50,8 +57,10 @@ export class ContinuityTracker {
   private characterFacts: Map<number, CharacterFactSheet> = new Map();
   private chapterStates: Map<number, { heroineAgency: number; emotionalTemperature: string }> = new Map();
   private canonFacts: string[] = [];
+  private establishedAddressUsage: EstablishedAddressUsage[] = [];
 
   constructor(options: ContinuityTrackerOptions) {
+    this.storyBible = options.storyBible;
     this.heroineName = options.storyBible.heroine.name;
     this.betrayerName = options.storyBible.betrayer.name;
     this.rivalName = options.storyBible.rival.name;
@@ -110,6 +119,21 @@ export class ContinuityTracker {
         }
       }
     }
+
+    const addressRegisters = collectAddressRegistersFromBible(this.storyBible);
+    const chapterUsage = extractEstablishedAddressUsage(chapter.text, addressRegisters);
+    this.mergeEstablishedAddressUsage(chapterUsage);
+  }
+
+  private mergeEstablishedAddressUsage(chapterUsage: EstablishedAddressUsage[]): void {
+    const merged = new Map<string, EstablishedAddressUsage>();
+    for (const usage of [...this.establishedAddressUsage, ...chapterUsage]) {
+      const key = `${usage.speaker}::${usage.target}::${usage.term}`;
+      const existing = merged.get(key) ?? { ...usage, count: 0 };
+      existing.count += usage.count;
+      merged.set(key, existing);
+    }
+    this.establishedAddressUsage = [...merged.values()].sort((a, b) => b.count - a.count);
   }
 
   getContinuityContext(_nextChapterNumber: number): ContinuityLite {
@@ -120,6 +144,8 @@ export class ContinuityTracker {
       coreReveal: this.coreReveal,
       endingMode: this.endingMode,
       speechPatterns: this.buildSpeechPatterns(),
+      addressRegisters: collectAddressRegistersFromBible(this.storyBible),
+      establishedAddressUsage: this.establishedAddressUsage,
       canonFacts: this.canonFacts,
       chapterState: Array.from(this.chapterStates.entries())
         .sort((a, b) => a[0] - b[0])
@@ -256,14 +282,6 @@ export class ContinuityTracker {
     vocabularyBand: string;
     avoidedPhrases: string[];
   }> {
-    const patterns: Record<string, {
-      fillers: string[];
-      syntaxQuirk: string;
-      vocabularyBand: string;
-      avoidedPhrases: string[];
-    }> = {};
-    // Note: Speech patterns come from the StoryBible, which the caller should provide
-    // This is a simplified version — the actual implementation should receive speechPatterns
-    return patterns;
+    return collectSpeechPatternsFromBible(this.storyBible);
   }
 }

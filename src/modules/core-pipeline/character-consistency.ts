@@ -22,7 +22,8 @@ export type ViolationType =
   | "relationship_violation"
   | "social_position_drift"
   | "emotional_discontinuity"
-  | "speech_idiolect";
+  | "speech_idiolect"
+  | "address_register_drift";
 
 export type ViolationSeverity = "critical" | "warning";
 
@@ -54,11 +55,13 @@ export function buildValidationSystemPrompt(): string {
     "4. SOCIAL POSITION: Acting outside established hierarchy or role.",
     "5. EMOTIONAL CONTINUITY: Abrupt emotional shifts contradicting trajectory.",
     "6. SPEECH IDIOLECT: Using phrases from avoidedPhrases list, or violating vocabularyBand.",
+    "7. ADDRESS REGISTER (Vietnamese xưng hô): Inconsistent self-reference (e.g. 'Tôi' then 'Anh' for same speaker) or mixed vocatives (e.g. 'anh' then 'cậu' for same addressee).",
     "",
     "Severity rules:",
-    "- CRITICAL: Contradicts Story Bible core facts (names, core traits, established engines).",
+    "- CRITICAL: Contradicts Story Bible core facts (names, core traits, established engines) OR address_register_drift.",
     "- WARNING: Contradicts Character Memory Store accumulated state.",
     "- speech_idiolect violations are ALWAYS classified as WARNING.",
+    "- address_register_drift violations are ALWAYS classified as CRITICAL when output is Vietnamese.",
     "",
     "Return JSON: { \"violations\": [{ \"type\", \"severity\", \"excerpt\", \"contradictedFact\", \"characterName\" }] }",
     "If no violations: { \"violations\": [] }",
@@ -109,6 +112,26 @@ export function buildValidationUserPrompt(opts: {
       "=== SPEECH PATTERNS (Idiolect Reference) ===",
       JSON.stringify(speechPatterns, null, 2),
       "=== END SPEECH PATTERNS ===",
+    );
+  }
+
+  const addressRegisters: Record<string, unknown> = {};
+  if (opts.storyBible.heroine.addressRegister) {
+    addressRegisters[opts.storyBible.heroine.name] = opts.storyBible.heroine.addressRegister;
+  }
+  if (opts.storyBible.betrayer.addressRegister) {
+    addressRegisters[opts.storyBible.betrayer.name] = opts.storyBible.betrayer.addressRegister;
+  }
+  if (opts.storyBible.rival.addressRegister) {
+    addressRegisters[opts.storyBible.rival.name] = opts.storyBible.rival.addressRegister;
+  }
+
+  if (Object.keys(addressRegisters).length > 0) {
+    sections.push(
+      "",
+      "=== ADDRESS REGISTERS (Vietnamese xưng hô — hard lock) ===",
+      JSON.stringify(addressRegisters, null, 2),
+      "=== END ADDRESS REGISTERS ===",
     );
   }
 
@@ -180,6 +203,7 @@ export function parseDriftReport(raw: unknown, chapterNumber: number): DriftRepo
       "social_position_drift",
       "emotional_discontinuity",
       "speech_idiolect",
+      "address_register_drift",
     ];
     const validSeverities: ViolationSeverity[] = ["critical", "warning"];
 
@@ -226,7 +250,7 @@ export function classifyViolationSeverity(
   violation: { type: ViolationType; contradictedFact: string },
   storyBibleFacts: string[],
 ): ViolationSeverity {
-  // speech_idiolect is always a warning
+  if (violation.type === "address_register_drift") return "critical";
   if (violation.type === "speech_idiolect") return "warning";
 
   const isStoryBibleFact = storyBibleFacts.some(
@@ -294,5 +318,39 @@ export function buildIdiolectRepairInstruction(
   lines.push("- Keep all plot facts, character actions, and narrative beats identical.");
   lines.push("- Return the full chapter text with corrections applied.");
 
+  return lines.join("\n");
+}
+
+export function buildAddressRegisterDriftRepairInstruction(
+  driftViolations: Violation[],
+  addressRegisters?: Record<string, {
+    selfReference: string;
+    toOthers: Record<string, { call: string; notes?: string }>;
+    forbiddenTerms: string[];
+    narratorThirdPerson?: string;
+  }>,
+): string {
+  const lines: string[] = [
+    "ADDRESS REGISTER DRIFT REPAIR",
+    "",
+    "Fix Vietnamese xưng hô inconsistencies. Rewrite ONLY affected dialogue.",
+    "",
+  ];
+
+  for (const violation of driftViolations) {
+    lines.push(`CHARACTER: ${violation.characterName}`);
+    lines.push(`  Violation: ${violation.excerpt}`);
+    lines.push(`  Required: ${violation.contradictedFact}`);
+    const register = addressRegisters?.[violation.characterName];
+    if (register) {
+      lines.push(`  Locked self-reference: "${register.selfReference}"`);
+      for (const [target, targetRegister] of Object.entries(register.toOthers)) {
+        lines.push(`  Calls ${target}: "${targetRegister.call}"`);
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push("Return the full chapter text with corrections applied.");
   return lines.join("\n");
 }

@@ -17,6 +17,12 @@ import {
   type PhraseReuseIndex,
   type PhraseReuseReport,
 } from "../core-pipeline/validators/phrase-reuse-tracker";
+import {
+  analyzeAddressRegister,
+  ADDRESS_REGISTER_FAILURE,
+  type AddressRegisterViolation,
+} from "../core-pipeline/validators/address-register-validator";
+import type { AddressRegisterMap } from "../core-pipeline/address-register";
 
 export { indexChapter };
 
@@ -64,6 +70,10 @@ export type ChapterQualityMetrics = {
   sentenceVariance: SentenceVarianceMetrics;
   structuralSlop: StructuralSlopReport;
   phraseReuse: PhraseReuseReport;
+  addressRegister: {
+    violations: AddressRegisterViolation[];
+    needsRepair: boolean;
+  };
   failures: string[];
 };
 
@@ -73,6 +83,7 @@ export function analyzeChapterQuality(
   outputLanguage?: OutputLanguage,
   chapterNumber?: number,
   userIntensity?: number,
+  addressRegisters?: AddressRegisterMap,
 ): ChapterQualityMetrics {
   const wordCount = countWordLikeUnits(text, outputLanguage);
   const paragraphs = text.split(/\n\s*\n/).filter((value) => value.trim().length > 0);
@@ -118,6 +129,7 @@ export function analyzeChapterQuality(
         hookType: "tension" as const,
       };
   const hookDensity = analyzeHookDensity(text, effectiveTargets.hookDensity);
+  const addressRegister = analyzeAddressRegister(text, addressRegisters ?? {}, outputLanguage);
 
   const metrics: ChapterQualityMetrics = {
     wordCount,
@@ -130,6 +142,7 @@ export function analyzeChapterQuality(
     sentenceVariance,
     structuralSlop,
     phraseReuse,
+    addressRegister,
     failures: [],
   };
 
@@ -156,6 +169,10 @@ export function analyzeChapterQuality(
 
   if (phraseReuse.needsRepair) {
     metrics.failures.push(PHRASE_REUSE_FAILURE);
+  }
+
+  if (addressRegister.needsRepair) {
+    metrics.failures.push(ADDRESS_REGISTER_FAILURE);
   }
 
   return metrics;

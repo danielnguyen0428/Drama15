@@ -110,6 +110,12 @@ export interface StoryBible {
       vocabularyBand: "formal" | "neutral" | "casual" | "crude";
       avoidedPhrases: string[];
     };
+    addressRegister?: {
+      selfReference: string;
+      toOthers: Record<string, { call: string; notes?: string }>;
+      forbiddenTerms: string[];
+      narratorThirdPerson?: string;
+    };
   };
   betrayer: {
     name: string;
@@ -121,6 +127,12 @@ export interface StoryBible {
       vocabularyBand: "formal" | "neutral" | "casual" | "crude";
       avoidedPhrases: string[];
     };
+    addressRegister?: {
+      selfReference: string;
+      toOthers: Record<string, { call: string; notes?: string }>;
+      forbiddenTerms: string[];
+      narratorThirdPerson?: string;
+    };
   };
   rival: {
     name: string;
@@ -131,6 +143,12 @@ export interface StoryBible {
       syntaxQuirk: string;
       vocabularyBand: "formal" | "neutral" | "casual" | "crude";
       avoidedPhrases: string[];
+    };
+    addressRegister?: {
+      selfReference: string;
+      toOthers: Record<string, { call: string; notes?: string }>;
+      forbiddenTerms: string[];
+      narratorThirdPerson?: string;
     };
   };
   classHierarchy: string[];
@@ -179,6 +197,18 @@ export interface ContinuityLite {
     syntaxQuirk: string;
     vocabularyBand: string;
     avoidedPhrases: string[];
+  }>;
+  addressRegisters: Record<string, {
+    selfReference: string;
+    toOthers: Record<string, { call: string; notes?: string }>;
+    forbiddenTerms: string[];
+    narratorThirdPerson?: string;
+  }>;
+  establishedAddressUsage: Array<{
+    speaker: string;
+    target: string;
+    term: string;
+    count: number;
   }>;
   chapterState: Array<{
     chapter: number;

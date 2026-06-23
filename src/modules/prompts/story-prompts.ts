@@ -48,6 +48,12 @@ import {
   renderTrendAwareSeedEngineForPrompt,
 } from "./drama15-seed-engine";
 import {
+  renderAddressRegisterBibleInstructions,
+  renderAddressRegisterPromptBlock,
+  renderSpeechPatternPromptBlock,
+  collectAddressRegistersFromBible,
+} from "../core-pipeline/address-register";
+import {
   renderRecentCharacterNamesForPrompt,
   renderRecentSeedHistoryForPrompt,
   renderSeedBlueprintForPrompt,
@@ -542,6 +548,7 @@ export function buildStoryBiblePrompt(params: {
       "Heroine must include: name, wound, strengths, blindSpots.",
       "Betrayer must include: name, wound, cowardiceVector.",
       "Rival must include: name, socialPower, demeanor.",
+      ...renderAddressRegisterBibleInstructions(request.outputLanguage),
       "IMPORTANT: If the Concept (logline, promise, conflictEngine) or the Request seed already specifies or implies names for the characters (e.g. heroine, betrayer, rival, or main male character), you MUST preserve and reuse those exact names in the story bible instead of generating new ones.",
       renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock, request.outputLanguage),
       "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 11.",
@@ -739,6 +746,7 @@ export function buildChapterDraftPrompt(params: {
   const effectiveTargets = resolveEffectiveChapterDraftTargets(chapterPlanItem.chapterNumber, scaling);
   const effectiveChapterDialogueRatio = effectiveTargets.dialogueRatio;
   const targetChapterArchitecture = chapterArchitectureBlock(chapterPlanItem.chapterNumber, scaling);
+  const addressRegisters = collectAddressRegistersFromBible(storyBible);
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -777,6 +785,12 @@ export function buildChapterDraftPrompt(params: {
       "Keep the prose sharp and readable. Avoid padded description.",
       prosePolishBlock(params.prosePolishConfig, "chapter", outputLanguage),
       ...(voiceLock ? [voiceLock] : []),
+      ...renderSpeechPatternPromptBlock(storyBible),
+      ...renderAddressRegisterPromptBlock(
+        addressRegisters,
+        outputLanguage,
+        continuityLite?.establishedAddressUsage,
+      ),
       ...(storyTitle ? [block("Story title", { title: storyTitle })] : []),
       block("Story bible", storyBible),
       block("Target chapter plan item", chapterPlanItem),
@@ -806,6 +820,9 @@ export function buildChapterRepairPrompt(params: {
     dialogueRatio: number;
   };
   driftViolations?: Array<{ type: string; character: string; excerpt: string; description: string }>;
+  addressRegisterViolations?: Array<{ character: string; kind: string; terms: string[]; expected: string; excerpt: string }>;
+  addressRegisterRepairInstruction?: string;
+  idiolectRepairInstruction?: string;
   outputLanguage?: OutputLanguage;
   prosePolishConfig?: LocalProsePolishConfig;
 }) {
@@ -848,6 +865,13 @@ export function buildChapterRepairPrompt(params: {
     ...(params.driftViolations && params.driftViolations.length > 0
       ? [
           `CHARACTER CONSISTENCY VIOLATIONS — fix these drifts:\n${params.driftViolations.map((v) => `- [${v.type}] "${v.character}" ${v.description} (excerpt: "${v.excerpt.substring(0, 120)}...")`).join("\n")}`,
+        ]
+      : []),
+    ...(params.addressRegisterRepairInstruction ? [params.addressRegisterRepairInstruction] : []),
+    ...(params.idiolectRepairInstruction ? [params.idiolectRepairInstruction] : []),
+    ...(params.addressRegisterViolations && params.addressRegisterViolations.length > 0 && !params.addressRegisterRepairInstruction
+      ? [
+          `ADDRESS REGISTER VIOLATIONS — fix Vietnamese xưng hô:\n${params.addressRegisterViolations.map((v) => `- ${v.character}: ${v.kind} [${v.terms.join(", ")}] expected "${v.expected}" in "${v.excerpt.substring(0, 120)}..."`).join("\n")}`,
         ]
       : []),
     "Use smart dialogue quotation marks (U+201C and U+201D) for spoken dialogue inside chapter text. Do not use raw ASCII double quotes for speech inside JSON strings, em-dash dialogue, or unquoted speech.",

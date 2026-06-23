@@ -13,6 +13,10 @@ import {
   StoryPayloadSchema,
 } from "../../schemas/story";
 import { normalizeBranchScopedStylePresetId, normalizeLinePresetId } from "../presets/legacy-preset-migrations";
+import {
+  collectAddressRegistersFromBible,
+  collectSpeechPatternsFromBible,
+} from "../core-pipeline/address-register";
 import type {
   Chapter,
   ChapterPlanItem,
@@ -96,16 +100,22 @@ export function parseStoryBible(rawStoryBible: unknown): StoryBible {
       wound: coerceText(heroine.wound),
       strengths: coerceStringArray(heroine.strengths, "intelligent"),
       blindSpots: coerceStringArray(heroine.blindSpots, "accepts emotional crumbs too long"),
+      speechPattern: heroine.speechPattern,
+      addressRegister: heroine.addressRegister,
     },
     betrayer: {
       name: coerceText(betrayer.name),
       wound: coerceText(betrayer.wound),
       cowardiceVector: coerceText(betrayer.cowardiceVector),
+      speechPattern: betrayer.speechPattern,
+      addressRegister: betrayer.addressRegister,
     },
     rival: {
       name: coerceText(rival.name),
       socialPower: coerceText(rival.socialPower),
       demeanor: coerceText(rival.demeanor),
+      speechPattern: rival.speechPattern,
+      addressRegister: rival.addressRegister,
     },
     classHierarchy: coerceStringArray(source.classHierarchy, "elite hierarchy"),
     betrayalEngine: coerceText(source.betrayalEngine),
@@ -213,6 +223,9 @@ export function createContinuityLite(storyBible: StoryBible, chapterPlan: Chapte
     rivalName: storyBible.rival.name,
     coreReveal: storyBible.betrayalEngine,
     endingMode: storyBible.endingMode,
+    speechPatterns: collectSpeechPatternsFromBible(storyBible),
+    addressRegisters: collectAddressRegistersFromBible(storyBible),
+    establishedAddressUsage: [],
     chapterState: chapterPlan.map((chapter, index) => ({
       chapter: chapter.chapterNumber,
       heroineAgency: Math.min(100, 18 + index * 5),

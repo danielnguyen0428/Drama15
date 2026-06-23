@@ -119,22 +119,37 @@ export const SpeechPatternSchema = z.object({
   avoidedPhrases: z.array(z.string().min(1)),
 });
 
+export const AddressTargetSchema = z.object({
+  call: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+export const AddressRegisterSchema = z.object({
+  selfReference: z.string().min(1),
+  toOthers: z.record(z.string(), AddressTargetSchema).default({}),
+  forbiddenTerms: z.array(z.string().min(1)).default([]),
+  narratorThirdPerson: z.string().optional(),
+});
+
 export const StoryBibleSchema = z.object({
   premise: z.string().min(1),
   heroine: StoryBibleCharacterSchema.extend({
     speechPattern: SpeechPatternSchema.optional(),
+    addressRegister: AddressRegisterSchema.optional(),
   }),
   betrayer: z.object({
     name: z.string().min(1),
     wound: z.string().min(1),
     cowardiceVector: z.string().min(1),
     speechPattern: SpeechPatternSchema.optional(),
+    addressRegister: AddressRegisterSchema.optional(),
   }),
   rival: z.object({
     name: z.string().min(1),
     socialPower: z.string().min(1),
     demeanor: z.string().min(1),
     speechPattern: SpeechPatternSchema.optional(),
+    addressRegister: AddressRegisterSchema.optional(),
   }),
   classHierarchy: z.array(z.string().min(1)).min(1).default(["elite family circles", "startup capital gatekeepers"]),
   betrayalEngine: z.string().min(1),
@@ -171,6 +186,13 @@ export const ChapterStateSchema = z.object({
   emotionalTemperature: z.string().optional(),
 });
 
+export const EstablishedAddressUsageSchema = z.object({
+  speaker: z.string().min(1),
+  target: z.string().min(1),
+  term: z.string().min(1),
+  count: z.number().int().min(1),
+});
+
 export const ContinuityLiteSchema = z.object({
   heroineName: z.string().min(1),
   betrayerName: z.string().min(1),
@@ -178,6 +200,8 @@ export const ContinuityLiteSchema = z.object({
   coreReveal: z.string().min(1),
   endingMode: z.string().min(1),
   speechPatterns: z.record(z.string(), SpeechPatternSchema).default({}),
+  addressRegisters: z.record(z.string(), AddressRegisterSchema).default({}),
+  establishedAddressUsage: z.array(EstablishedAddressUsageSchema).default([]),
   chapterState: z.array(ChapterStateSchema).default([]),
   canonFacts: z.array(z.string().min(1)).default([]),
 });

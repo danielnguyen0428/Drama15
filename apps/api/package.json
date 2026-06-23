@@ -30,7 +30,8 @@
     "test:propagation-ledger": "tsx --test src/propagationLedger.test.ts",
     "test:foundation-gate": "tsx --test src/foundationGate.test.ts",
     "test:canon-facts": "tsx --test src/canonFacts.test.ts",
-    "test:draft-controls-scaling": "tsx --test src/draftControlsScaling.test.ts"
+    "test:draft-controls-scaling": "tsx --test src/draftControlsScaling.test.ts",
+    "test:address-register": "tsx --test src/addressRegister.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
