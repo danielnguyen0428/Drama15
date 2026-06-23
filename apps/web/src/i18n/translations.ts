@@ -15,7 +15,12 @@ const vi = {
 
   // Announcement
   'announcement.kicker': 'Thông báo từ Admin',
-  'announcement.body': 'Hệ thống vận hành miễn phí hoàn toàn. Người dùng có thể nhập API key từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) cá nhân hoặc các Provider khác được cung cấp từ admin.',
+  'announcement.item_free_label': 'Miễn phí hoàn toàn',
+  'announcement.item_free': 'Hệ thống vận hành miễn phí hoàn toàn.',
+  'announcement.item_keys_label': 'API key cá nhân',
+  'announcement.item_keys': 'Nhập API key từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) cá nhân.',
+  'announcement.item_admin_provider_label': 'Provider từ admin',
+  'announcement.item_admin_provider': 'Hoặc dùng các Provider khác được cung cấp từ admin.',
 
   // Account
   'account.avatar_alt': 'Ảnh đại diện',
@@ -236,7 +241,12 @@ const en: Record<keyof typeof vi, string> = {
 
   // Announcement
   'announcement.kicker': 'Admin Announcement',
-  'announcement.body': 'The system is completely free to use. Users can enter personal API keys from OpenAI, OpenRouter, Gemini (OpenAI-compatible), or other providers supplied by the admin.',
+  'announcement.item_free_label': 'Completely free',
+  'announcement.item_free': 'The system is completely free to use.',
+  'announcement.item_keys_label': 'Personal API key',
+  'announcement.item_keys': 'Enter personal API keys from OpenAI, OpenRouter, or Gemini (OpenAI-compatible).',
+  'announcement.item_admin_provider_label': 'Admin providers',
+  'announcement.item_admin_provider': 'Or use other providers supplied by the admin.',
 
   // Account
   'account.avatar_alt': 'Avatar',

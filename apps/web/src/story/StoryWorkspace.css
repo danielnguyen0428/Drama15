@@ -809,15 +809,15 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   bottom: 24px;
   right: 24px;
   z-index: 890;
-  width: 340px;
+  width: 380px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: 0 10px 30px rgba(26, 22, 17, 0.15);
-  padding: 18px 20px;
+  padding: 18px;
   display: grid;
   align-content: center;
-  gap: 8px;
+  gap: 12px;
 }
 .announcement-header {
   display: flex;
@@ -869,11 +869,44 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   background: var(--coral);
 }
 
-.announcement-card p {
+.announcement-list {
+  display: grid;
+  gap: 10px;
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.announcement-list li {
+  display: grid;
+  grid-template-columns: 9px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding-top: 10px;
+  border-top: 1px solid rgba(139, 99, 80, 0.16);
   color: var(--ink-soft);
-  line-height: 1.55;
+  line-height: 1.5;
   font-size: 14px;
+}
+
+.announcement-list li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.announcement-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.announcement-list strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 13px;
 }
 
 /* ---- Progress block moved into the draft panel ------------------------ */
@@ -923,7 +956,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 
 .fb-float-btn.with-announcement {
-  bottom: 190px;
+  bottom: 250px;
 }
 
 .fb-float-btn:hover {
@@ -1060,7 +1093,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .status-card strong { font-size: 28px; }
   /* Keep the floating chat button from covering primary actions. */
   .fb-float-btn { bottom: 24px; right: 12px; width: 48px; height: 48px; }
-  .fb-float-btn.with-announcement { bottom: 190px; }
+  .fb-float-btn.with-announcement { bottom: 278px; }
   .announcement-card {
     width: calc(100% - 24px);
     bottom: 12px;

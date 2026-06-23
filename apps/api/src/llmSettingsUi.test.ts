@@ -29,14 +29,15 @@ test('LLM provider presets render as one responsive tab bar', () => {
   assert.match(workspaceCss, /\.provider-tabbar button\.active\s*\{[^}]*border-bottom-color:\s*var\(--coral\);/);
 });
 
-test('admin announcement uses the new personal API key message without the old item list', () => {
-  assert.match(
-    translationsSource,
-    /Hệ thống vận hành miễn phí hoàn toàn\. Người dùng có thể nhập API key từ OpenAI, OpenRouter, Gemini \(OpenAI-compatible\) cá nhân hoặc các Provider khác được cung cấp từ admin\./,
-  );
-  assert.match(workspaceSource, /t\('announcement\.body'\)/);
+test('admin announcement presents the personal API key message as a clear list', () => {
+  assert.match(translationsSource, /announcement\.item_free/);
+  assert.match(translationsSource, /announcement\.item_keys/);
+  assert.match(translationsSource, /announcement\.item_admin_provider/);
+  assert.match(translationsSource, /OpenAI, OpenRouter, Gemini \(OpenAI-compatible\)/);
+  assert.match(workspaceSource, /className="announcement-list"/);
+  assert.match(workspaceSource, /<li>/);
   assert.match(workspaceSource, /showAnnouncement && !showLlmSettings/);
   assert.match(workspaceSource, /!showLlmSettings && \(\s*<a className=\{`fb-float-btn/);
-  assert.doesNotMatch(workspaceSource, /announcement-list/);
+  assert.doesNotMatch(workspaceSource, /t\('announcement\.body'\)/);
   assert.doesNotMatch(translationsSource, /announcement\.line[123]|Deepseek Flash 4|📢|🎉|🤖|😢/);
 });

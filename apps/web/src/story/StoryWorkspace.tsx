@@ -694,7 +694,20 @@ export function StoryWorkspace(): JSX.Element {
               </svg>
             </button>
           </div>
-          <p className="announcement-copy">{t('announcement.body')}</p>
+          <ul className="announcement-list">
+            <li>
+              <span className="announcement-dot" aria-hidden="true" />
+              <span><strong>{t('announcement.item_free_label')}</strong>{t('announcement.item_free')}</span>
+            </li>
+            <li>
+              <span className="announcement-dot" aria-hidden="true" />
+              <span><strong>{t('announcement.item_keys_label')}</strong>{t('announcement.item_keys')}</span>
+            </li>
+            <li>
+              <span className="announcement-dot" aria-hidden="true" />
+              <span><strong>{t('announcement.item_admin_provider_label')}</strong>{t('announcement.item_admin_provider')}</span>
+            </li>
+          </ul>
         </aside>
       )}
       {!showLlmSettings && (
