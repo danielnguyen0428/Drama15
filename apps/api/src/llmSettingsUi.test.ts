@@ -38,6 +38,7 @@ test('admin announcement presents the personal API key message as a clear list',
   assert.match(workspaceSource, /<li>/);
   assert.match(workspaceSource, /showAnnouncement && !showLlmSettings/);
   assert.match(workspaceSource, /!showLlmSettings && \(\s*<a className=\{`fb-float-btn/);
+  assert.match(workspaceCss, /\.fb-float-btn\.with-announcement\s*\{[^}]*right:\s*428px;[^}]*bottom:\s*24px;/);
   assert.doesNotMatch(workspaceSource, /t\('announcement\.body'\)/);
   assert.doesNotMatch(translationsSource, /announcement\.line[123]|Deepseek Flash 4|📢|🎉|🤖|😢/);
 });

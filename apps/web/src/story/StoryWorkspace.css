@@ -951,12 +951,13 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(24, 119, 242, 0.45);
-  transition: transform 160ms ease, box-shadow 160ms ease, bottom 200ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, right 200ms ease, bottom 200ms ease;
   text-decoration: none;
 }
 
 .fb-float-btn.with-announcement {
-  bottom: 250px;
+  right: 428px;
+  bottom: 24px;
 }
 
 .fb-float-btn:hover {
