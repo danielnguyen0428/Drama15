@@ -685,6 +685,19 @@ export function StoryWorkspace(): JSX.Element {
           <a href="https://meowsolo.com">meowsolo.com</a>
           <a href="https://beta.novelkit.cc">beta.novelkit.cc</a>
         </nav>
+        <a
+          className="startupbase-badge"
+          href="https://startupbase.io/products/drama15-write-15-chapter-drama-fiction?utm_source=startupbase&utm_medium=badge&utm_campaign=launch-badge-light"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://statics.startupbase.io/site/badges/launched-on-sb.svg"
+            alt="Launched on StartupBase"
+            height={55}
+            style={{ height: '55px', width: 'auto' }}
+          />
+        </a>
         <span>{t('footer.tagline')}</span>
       </footer>
       {showAnnouncement && !showLlmSettings && (

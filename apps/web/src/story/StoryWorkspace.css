@@ -786,6 +786,8 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 .workspace-footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
 .workspace-footer a { color: var(--ink-soft); text-decoration: none; }
 .workspace-footer a:hover { color: var(--coral-dark); }
+.workspace-footer a.startupbase-badge { display: inline-flex; line-height: 0; }
+.workspace-footer a.startupbase-badge:hover { color: inherit; opacity: 0.88; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
