@@ -19,6 +19,7 @@ type LlmPreset = {
   label: string;
   provider: LlmProvider;
   baseUrl?: string;
+  model?: string;
 };
 
 type LlmCatalog = {
@@ -26,7 +27,7 @@ type LlmCatalog = {
 };
 
 const FALLBACK_PRESETS: LlmPreset[] = [
-  { id: 'c', label: 'C-PROVIDER', provider: 'c' },
+  { id: 'c', label: 'C-PROVIDER', provider: 'c', model: 'mainnewnol/deepseek-v4-flash' },
   { id: 's', label: 'S-PROVIDER', provider: 's' },
   { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
   { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },
@@ -47,9 +48,9 @@ type Props = {
 export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element | null {
   const [settings, setSettings] = useState<LlmSettings | null>(null);
   const [catalog, setCatalog] = useState<LlmCatalog | null>(null);
-  const [provider, setProvider] = useState<LlmProvider>('other');
-  const [baseUrl, setBaseUrl] = useState('https://api.openai.com/v1');
-  const [model, setModel] = useState('gpt-4o-mini');
+  const [provider, setProvider] = useState<LlmProvider>('c');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [model, setModel] = useState('mainnewnol/deepseek-v4-flash');
   const [apiKey, setApiKey] = useState('');
   const [clearApiKey, setClearApiKey] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -141,6 +142,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
     const nextBaseUrl = preset.baseUrl ?? '';
     setProvider(preset.provider);
     setBaseUrl(nextBaseUrl);
+    if (preset.model) setModel(preset.model);
     setClearApiKey(Boolean(
       settings?.apiKeySet
         && (preset.provider !== settings.provider
@@ -211,7 +213,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
           </label>
         )}
         <label className="settings-field">Model
-          <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="gpt-4o-mini" />
+          <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="mainnewnol/deepseek-v4-flash" />
           <small>Nhập chính xác model ID do provider cung cấp.</small>
         </label>
         <label className="settings-field">API key {settings?.apiKeySet && <span className="muted-inline">đã đặt: {settings.apiKeyFingerprint}</span>}
@@ -222,8 +224,17 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
               setApiKey(event.target.value);
               if (event.target.value.trim()) setClearApiKey(false);
             }}
-            placeholder={settings?.apiKeySet ? 'Để trống để giữ key cũ' : 'Nhập API key'}
+            placeholder={
+              provider === 'c' && !settings?.apiKeySet
+                ? 'Để trống để dùng model miễn phí Deepseek 4 Flash'
+                : settings?.apiKeySet
+                  ? 'Để trống để giữ key cũ'
+                  : 'Nhập API key'
+            }
           />
+          {provider === 'c' && !settings?.apiKeySet && (
+            <small>C-PROVIDER mặc định dùng model miễn phí; bạn có thể nhập key riêng nếu muốn.</small>
+          )}
         </label>
         <label className="checkbox-row">
           <input type="checkbox" checked={clearApiKey} onChange={(event) => setClearApiKey(event.target.checked)} />

@@ -23,6 +23,18 @@ const cipher: LlmSecretCipher = {
   decrypt: (value) => value.replace(/^encrypted:/, ''),
 };
 
+const managedProviders = {
+  c: {
+    baseUrl: 'https://api.xah.io/v1',
+    apiKey: 'managed-c-secret',
+    model: 'mainnewnol/deepseek-v4-flash',
+  },
+};
+
+function createHandler(repository: LlmSettingsRepository) {
+  return new LlmSettingsHandler(repository, cipher, { managedProviders });
+}
+
 test('public health response never exposes the server router base URL', () => {
   const startSource = readFileSync(new URL('./startDev.ts', import.meta.url), 'utf8');
   const healthRoute = startSource.match(/app\.get\('\/healthz'[\s\S]*?\n\}\)\);/)?.[0] ?? '';
@@ -34,7 +46,7 @@ test('public health response never exposes the server router base URL', () => {
 test('provider catalog never exposes managed provider base URLs', async () => {
   const app = fastify();
   registerLlmSettingsRoutes(app, {
-    handler: new LlmSettingsHandler(new MemoryRepository(), cipher),
+    handler: createHandler(new MemoryRepository()),
     authenticate: async () => 'alice',
     testConnection: async () => ({ ok: true, detail: 'OK' }),
   });
@@ -54,7 +66,7 @@ test('provider catalog never exposes managed provider base URLs', async () => {
 test('settings API never serializes a managed provider base URL', async () => {
   const app = fastify();
   registerLlmSettingsRoutes(app, {
-    handler: new LlmSettingsHandler(new MemoryRepository(), cipher),
+    handler: createHandler(new MemoryRepository()),
     authenticate: async () => 'alice',
     testConnection: async () => ({ ok: true, detail: 'OK' }),
   });
@@ -78,10 +90,29 @@ test('settings API never serializes a managed provider base URL', async () => {
   await app.close();
 });
 
+test('settings API exposes managed defaults without serializing the server API key', async () => {
+  const app = fastify();
+  registerLlmSettingsRoutes(app, {
+    handler: createHandler(new MemoryRepository()),
+    authenticate: async () => 'alice',
+    testConnection: async () => ({ ok: true, detail: 'OK' }),
+  });
+
+  const loaded = await app.inject({ method: 'GET', url: '/llm/settings' });
+
+  assert.equal(loaded.statusCode, 200);
+  assert.equal(loaded.json().provider, 'c');
+  assert.equal(loaded.json().model, 'mainnewnol/deepseek-v4-flash');
+  assert.equal(loaded.json().configured, true);
+  assert.equal(loaded.json().apiKeySet, false);
+  assert.doesNotMatch(loaded.body, /managed-c-secret|sk-/);
+  await app.close();
+});
+
 test('settings API keeps two authenticated users isolated and never returns plaintext keys', async () => {
   const app = fastify();
   registerLlmSettingsRoutes(app, {
-    handler: new LlmSettingsHandler(new MemoryRepository(), cipher),
+    handler: createHandler(new MemoryRepository()),
     authenticate: async (request, reply) => {
       const userId = request.headers['x-test-user'];
       if (typeof userId === 'string') return userId;
@@ -132,7 +163,7 @@ test('settings API keeps two authenticated users isolated and never returns plai
 
 test('connection test uses draft values without persisting them', async () => {
   const repository = new MemoryRepository();
-  const handler = new LlmSettingsHandler(repository, cipher);
+  const handler = createHandler(repository);
   await handler.save('alice', {
     provider: 'other',
     baseUrl: 'https://api.openai.com/v1',

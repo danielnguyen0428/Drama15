@@ -28,6 +28,52 @@ const testCipher: LlmSecretCipher = {
   decrypt: (ciphertext) => ciphertext.replace(/^encrypted:/, ''),
 };
 
+const testManagedProviders = {
+  c: {
+    baseUrl: 'https://api.xah.io/v1',
+    apiKey: 'managed-c-secret',
+    model: 'mainnewnol/deepseek-v4-flash',
+  },
+};
+
+test('users without saved settings can use the managed C-PROVIDER default', async () => {
+  const repository = new MemorySettingsRepository();
+  const handler = new LlmSettingsHandler(repository, testCipher, {
+    managedProviders: testManagedProviders,
+  });
+
+  const resolved = await handler.resolve('alice');
+  const published = await handler.getPublic('alice');
+
+  assert.equal(resolved.success, true);
+  if (!resolved.success) return;
+  assert.equal(resolved.data.provider, 'c');
+  assert.equal(resolved.data.model, 'mainnewnol/deepseek-v4-flash');
+  assert.equal(resolved.data.apiKey, 'managed-c-secret');
+
+  assert.equal(published.success, true);
+  if (!published.success) return;
+  assert.equal(published.data.configured, true);
+  assert.equal(published.data.apiKeySet, false);
+});
+
+test('managed C-PROVIDER works without a personal API key after save', async () => {
+  const repository = new MemorySettingsRepository();
+  const handler = new LlmSettingsHandler(repository, testCipher, {
+    managedProviders: testManagedProviders,
+  });
+
+  await handler.save('alice', {
+    provider: 'c',
+    model: 'mainnewnol/deepseek-v4-flash',
+  });
+  const resolved = await handler.resolve('alice');
+
+  assert.equal(resolved.success, true);
+  if (!resolved.success) return;
+  assert.equal(resolved.data.apiKey, 'managed-c-secret');
+});
+
 test('LLM settings and secrets are isolated by authenticated user id', async () => {
   const repository = new MemorySettingsRepository();
   const handler = new LlmSettingsHandler(repository, testCipher);
@@ -98,7 +144,9 @@ test('managed providers resolve their base URL server-side and never expose it p
 
 test('changing provider scope without a new key clears the previous secret', async () => {
   const repository = new MemorySettingsRepository();
-  const handler = new LlmSettingsHandler(repository, testCipher);
+  const handler = new LlmSettingsHandler(repository, testCipher, {
+    managedProviders: testManagedProviders,
+  });
   await handler.save('alice', {
     provider: 'c',
     baseUrl: 'https://api.xah.io/v1',

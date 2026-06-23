@@ -141,6 +141,13 @@ function getLlmSettingsHandler() {
     {
       additionalAllowedHosts: env.llmAllowedHosts,
       allowInsecureLocalhost: env.llmAllowInsecureLocalhost,
+      managedProviders: {
+        c: {
+          baseUrl: env.routerBaseUrl,
+          apiKey: env.routerApiKey,
+          model: env.managedCProviderModel,
+        },
+      },
     },
   );
   return cachedLlmSettingsHandler;

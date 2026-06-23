@@ -13,9 +13,21 @@ import {
 import { validateLlmBaseUrl } from './urlPolicy.js';
 
 const DEFAULT_SETTINGS = {
-  provider: 'other' as const,
-  baseUrl: 'https://api.openai.com/v1',
-  model: 'gpt-4o-mini',
+  provider: 'c' as const,
+  baseUrl: 'https://api.xah.io/v1',
+  model: 'mainnewnol/deepseek-v4-flash',
+};
+
+export type ManagedProviderConfig = {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+};
+
+export type LlmSettingsHandlerOptions = {
+  additionalAllowedHosts?: string[];
+  allowInsecureLocalhost?: boolean;
+  managedProviders?: Partial<Record<'c' | 's', ManagedProviderConfig>>;
 };
 
 const MANAGED_PROVIDER_BASE_URLS = {
@@ -23,17 +35,25 @@ const MANAGED_PROVIDER_BASE_URLS = {
   s: 'https://api.shopaikey.com/v1',
 } as const;
 
-type LlmSettingsHandlerOptions = {
-  additionalAllowedHosts?: readonly string[];
-  allowInsecureLocalhost?: boolean;
-};
-
 export class LlmSettingsHandler implements LlmSettingsSpec {
+  private readonly managedProviders: Partial<Record<'c' | 's', ManagedProviderConfig>>;
+
   constructor(
     private readonly repository: LlmSettingsRepository,
     private readonly cipher: LlmSecretCipher,
-    private readonly options: LlmSettingsHandlerOptions = {},
-  ) {}
+    options: LlmSettingsHandlerOptions = {},
+  ) {
+    this.managedProviders = options.managedProviders ?? {};
+    this.urlPolicyOptions = {
+      additionalAllowedHosts: options.additionalAllowedHosts ?? [],
+      allowInsecureLocalhost: options.allowInsecureLocalhost ?? false,
+    };
+  }
+
+  private readonly urlPolicyOptions: {
+    additionalAllowedHosts: string[];
+    allowInsecureLocalhost: boolean;
+  };
 
   async getPublic(userId: string): Promise<LlmSettingsResult<PublicLlmSettings>> {
     try {
@@ -80,8 +100,8 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
       const validatedUrl = validateLlmBaseUrl({
         provider,
         baseUrl: requestedBaseUrl,
-        additionalHosts: this.options.additionalAllowedHosts,
-        allowInsecureLocalhost: this.options.allowInsecureLocalhost,
+        additionalHosts: this.urlPolicyOptions.additionalAllowedHosts,
+        allowInsecureLocalhost: this.urlPolicyOptions.allowInsecureLocalhost,
       });
       if (validatedUrl.success === false) {
         return {
@@ -124,38 +144,47 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
     } catch {
       return storageFailure();
     }
-    if (!row?.apiKeyCiphertext) {
-      return {
-        success: false,
-        error: {
-          code: 'NOT_CONFIGURED',
-          message: 'Bạn chưa cấu hình LLM.',
-          recoverable: true,
-        },
-      };
+
+    if (!row) {
+      return this.resolveManagedDefault('c', DEFAULT_SETTINGS.model);
     }
 
-    try {
-      return {
-        success: true,
-        data: {
-          provider: row.provider,
-          baseUrl: row.baseUrl,
-          model: row.model,
-          apiKey: this.cipher.decrypt(row.apiKeyCiphertext),
-          updatedAt: row.updatedAt,
-        },
-      };
-    } catch {
-      return {
-        success: false,
-        error: {
-          code: 'SECRET_DECRYPT_FAILED',
-          message: 'Không thể đọc API key đã mã hóa.',
-          recoverable: false,
-        },
-      };
+    if (row.apiKeyCiphertext) {
+      try {
+        return {
+          success: true,
+          data: {
+            provider: row.provider,
+            baseUrl: row.baseUrl,
+            model: row.model,
+            apiKey: this.cipher.decrypt(row.apiKeyCiphertext),
+            updatedAt: row.updatedAt,
+          },
+        };
+      } catch {
+        return {
+          success: false,
+          error: {
+            code: 'SECRET_DECRYPT_FAILED',
+            message: 'Không thể đọc API key đã mã hóa.',
+            recoverable: false,
+          },
+        };
+      }
     }
+
+    if (row.provider === 'c' || row.provider === 's') {
+      return this.resolveManagedDefault(row.provider, row.model);
+    }
+
+    return {
+      success: false,
+      error: {
+        code: 'NOT_CONFIGURED',
+        message: 'Bạn chưa cấu hình LLM.',
+        recoverable: true,
+      },
+    };
   }
 
   async resolveDraft(
@@ -187,8 +216,8 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
     const validatedUrl = validateLlmBaseUrl({
       provider,
       baseUrl: requestedBaseUrl,
-      additionalHosts: this.options.additionalAllowedHosts,
-      allowInsecureLocalhost: this.options.allowInsecureLocalhost,
+      additionalHosts: this.urlPolicyOptions.additionalAllowedHosts,
+      allowInsecureLocalhost: this.urlPolicyOptions.allowInsecureLocalhost,
     });
     if (validatedUrl.success === false) {
       return {
@@ -206,7 +235,7 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
         && (provider !== current.provider
           || new URL(validatedUrl.baseUrl).hostname !== new URL(current.baseUrl).hostname),
     );
-    let apiKey = value.clearApiKey || scopeChanged ? '' : '';
+    let apiKey = '';
     if (value.apiKey) {
       apiKey = value.apiKey;
     } else if (!value.clearApiKey && !scopeChanged && current?.apiKeyCiphertext) {
@@ -224,6 +253,12 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
       }
     }
     if (!apiKey) {
+      if (provider === 'c' || provider === 's') {
+        return this.resolveManagedDefault(
+          provider,
+          value.model ?? current?.model ?? DEFAULT_SETTINGS.model,
+        );
+      }
       return {
         success: false,
         error: {
@@ -249,14 +284,49 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
   private toPublic(row: StoredLlmSettings): PublicLlmSettings {
     let apiKey = '';
     if (row.apiKeyCiphertext) apiKey = this.decryptPublicKey(row.apiKeyCiphertext);
+    const managed = row.provider === 'c' || row.provider === 's'
+      ? this.managedProviders[row.provider]
+      : undefined;
+    const configured = Boolean(
+      apiKey
+        || (managed && isManagedProviderReady(managed)),
+    );
     return {
       provider: row.provider,
       model: row.model,
       updatedAt: row.updatedAt,
       apiKeySet: Boolean(apiKey),
       apiKeyFingerprint: fingerprint(apiKey),
-      configured: Boolean(apiKey && row.baseUrl && row.model),
+      configured,
       ...(row.provider === 'other' ? { baseUrl: row.baseUrl } : {}),
+    };
+  }
+
+  private resolveManagedDefault(
+    provider: 'c' | 's',
+    model: string,
+  ): LlmSettingsResult<EffectiveLlmSettings> {
+    const managed = this.managedProviders[provider];
+    if (!managed || !isManagedProviderReady(managed)) {
+      return {
+        success: false,
+        error: {
+          code: 'NOT_CONFIGURED',
+          message: 'Bạn chưa cấu hình LLM.',
+          recoverable: true,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        provider,
+        baseUrl: managed.baseUrl,
+        model: model.trim() || managed.model,
+        apiKey: managed.apiKey,
+        updatedAt: '',
+      },
     };
   }
 
@@ -309,4 +379,9 @@ function resolveBaseUrl(
   }
   if (requestedBaseUrl) return requestedBaseUrl;
   return current?.provider === 'other' ? current.baseUrl : DEFAULT_SETTINGS.baseUrl;
+}
+
+function isManagedProviderReady(config: ManagedProviderConfig) {
+  const apiKey = config.apiKey.trim();
+  return apiKey.length > 0 && apiKey !== 'dummy';
 }

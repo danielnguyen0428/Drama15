@@ -29,7 +29,7 @@ services:
       - key: MODEL_PRESET_PREMIUM
         value: premium
       - key: AUXILIARY_ANALYSIS_MODEL
-        value: deepseek-v4-flash
+        value: mainnewnol/deepseek-v4-flash
       - key: ROUTER_DEFAULT_TIMEOUT_MS
         value: "300000"
       - key: ROUTER_PLANNING_TIMEOUT_MS
