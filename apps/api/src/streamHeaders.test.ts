@@ -20,3 +20,9 @@ test('buildStreamHeaders allows auth headers for signed-in browser requests', ()
   assert.match(headers['Access-Control-Allow-Headers'], /authorization/i);
   assert.match(headers['Access-Control-Allow-Headers'], /content-type/i);
 });
+
+test('buildStreamHeaders allows PUT requests used to save LLM settings', () => {
+  const headers = buildStreamHeaders('https://drama.novelkit.cc', ['https://drama.novelkit.cc']);
+
+  assert.match(headers['Access-Control-Allow-Methods'], /(?:^|,)PUT(?:,|$)/);
+});
