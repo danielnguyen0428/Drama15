@@ -1094,7 +1094,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .status-card strong { font-size: 28px; }
   /* Keep the floating chat button from covering primary actions. */
   .fb-float-btn { bottom: 24px; right: 12px; width: 48px; height: 48px; }
-  .fb-float-btn.with-announcement { bottom: 278px; }
+  .fb-float-btn.with-announcement { right: 12px; bottom: 310px; }
   .announcement-card {
     width: calc(100% - 24px);
     bottom: 12px;
