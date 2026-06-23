@@ -902,13 +902,6 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   background: var(--coral);
 }
 
-.announcement-list strong {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--ink);
-  font-size: 13px;
-}
-
 /* ---- Progress block moved into the draft panel ------------------------ */
 .story-status-card {
   margin-top: 16px;
@@ -1094,7 +1087,7 @@ button:not(:disabled):hover { transform: translateY(-1px); }
   .status-card strong { font-size: 28px; }
   /* Keep the floating chat button from covering primary actions. */
   .fb-float-btn { bottom: 24px; right: 12px; width: 48px; height: 48px; }
-  .fb-float-btn.with-announcement { right: 12px; bottom: 310px; }
+  .fb-float-btn.with-announcement { right: 12px; bottom: 260px; }
   .announcement-card {
     width: calc(100% - 24px);
     bottom: 12px;

@@ -19,6 +19,11 @@ const translationsSource = readFileSync(
   'utf8',
 );
 
+test('studio title omits the duplicated Drama 15 prefix', () => {
+  assert.match(translationsSource, /'header\.title': 'Trợ lý AI Sáng tác Tiểu thuyết Drama 15 Chương'/);
+  assert.doesNotMatch(translationsSource, /'header\.title': 'Drama 15:/);
+});
+
 test('LLM provider presets render as one responsive tab bar', () => {
   assert.match(modalSource, /className="provider-tabbar"/);
   assert.match(modalSource, /role="tab"/);
@@ -36,10 +41,12 @@ test('admin announcement presents the personal API key message as a clear list',
   assert.match(translationsSource, /OpenAI, OpenRouter, Gemini \(OpenAI-compatible\)/);
   assert.match(workspaceSource, /className="announcement-list"/);
   assert.match(workspaceSource, /<li>/);
+  assert.doesNotMatch(workspaceSource, /announcement\.item_(free|keys|admin_provider)_label/);
+  assert.doesNotMatch(translationsSource, /announcement\.item_(free|keys|admin_provider)_label/);
   assert.match(workspaceSource, /showAnnouncement && !showLlmSettings/);
   assert.match(workspaceSource, /!showLlmSettings && \(\s*<a className=\{`fb-float-btn/);
   assert.match(workspaceCss, /\.fb-float-btn\.with-announcement\s*\{[^}]*right:\s*428px;[^}]*bottom:\s*24px;/);
-  assert.match(workspaceCss, /\.fb-float-btn\.with-announcement\s*\{[^}]*right:\s*12px;[^}]*bottom:\s*310px;/);
+  assert.match(workspaceCss, /\.fb-float-btn\.with-announcement\s*\{[^}]*right:\s*12px;[^}]*bottom:\s*260px;/);
   assert.doesNotMatch(workspaceSource, /t\('announcement\.body'\)/);
   assert.doesNotMatch(translationsSource, /announcement\.line[123]|Deepseek Flash 4|📢|🎉|🤖|😢/);
 });

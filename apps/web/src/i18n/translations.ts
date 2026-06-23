@@ -5,7 +5,7 @@ export type TranslationKeys = typeof vi;
 const vi = {
   // Header
   'header.kicker': 'Bản thảo 15 chương',
-  'header.title': 'Drama 15: Trợ lý AI Sáng tác Tiểu thuyết Drama 15 Chương',
+  'header.title': 'Trợ lý AI Sáng tác Tiểu thuyết Drama 15 Chương',
   'header.subtitle': 'Ươm ý tưởng, dựng nhân vật, lập dàn ý và viết từng chương trong một không gian gọn gàng cho người viết truyện.',
   'header.meta.idea': 'Ý tưởng',
   'header.meta.character': 'Nhân vật',
@@ -15,11 +15,8 @@ const vi = {
 
   // Announcement
   'announcement.kicker': 'Thông báo từ Admin',
-  'announcement.item_free_label': 'Miễn phí hoàn toàn',
   'announcement.item_free': 'Hệ thống vận hành miễn phí hoàn toàn.',
-  'announcement.item_keys_label': 'API key cá nhân',
   'announcement.item_keys': 'Nhập API key từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) cá nhân.',
-  'announcement.item_admin_provider_label': 'Provider từ admin',
   'announcement.item_admin_provider': 'Hoặc dùng các Provider khác được cung cấp từ admin.',
 
   // Account
@@ -231,7 +228,7 @@ const vi = {
 const en: Record<keyof typeof vi, string> = {
   // Header
   'header.kicker': '15-Chapter Manuscript',
-  'header.title': 'Drama 15: AI 15-Chapter Drama Novel Assistant',
+  'header.title': 'AI 15-Chapter Drama Novel Assistant',
   'header.subtitle': 'Brainstorm ideas, build characters, create outlines, and write each chapter in one seamless workspace for storytellers.',
   'header.meta.idea': 'Idea',
   'header.meta.character': 'Characters',
@@ -241,11 +238,8 @@ const en: Record<keyof typeof vi, string> = {
 
   // Announcement
   'announcement.kicker': 'Admin Announcement',
-  'announcement.item_free_label': 'Completely free',
   'announcement.item_free': 'The system is completely free to use.',
-  'announcement.item_keys_label': 'Personal API key',
   'announcement.item_keys': 'Enter personal API keys from OpenAI, OpenRouter, or Gemini (OpenAI-compatible).',
-  'announcement.item_admin_provider_label': 'Admin providers',
   'announcement.item_admin_provider': 'Or use other providers supplied by the admin.',
 
   // Account
