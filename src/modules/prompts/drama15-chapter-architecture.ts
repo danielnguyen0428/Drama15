@@ -479,7 +479,7 @@ const PROMPT_TEMPLATE_STYLE_LOCKS: Record<number, string> = {
   15: `chapter ${K.resolution} is a short aftershock under 2,000 words; no new plot thread, no second climax, and agency stays with the heroine.`,
 };
 
-function renderIntensityInstruction(intensity: number) {
+export function renderIntensityInstruction(intensity: number) {
   if (intensity >= 0.9) {
     return `Intensity ${intensity}: very short sentences, no exterior decoration, no spare adjectives, and no explanatory interior monologue.`;
   }
@@ -547,19 +547,34 @@ export function renderDrama15ArchitectureOverview() {
   ].join("\n");
 }
 
-export function renderChapterArchitectureForPrompt(chapterNumber: number) {
+export function renderChapterArchitectureForPrompt(
+  chapterNumber: number,
+  effectiveTargets?: {
+    intensity: number;
+    dialogueRatio: number;
+    hookDensity: "low" | "medium" | "high";
+    hookDensityInstruction?: string;
+  },
+) {
   const architecture = getDrama15ChapterArchitecture(chapterNumber);
   if (!architecture) {
     return "";
   }
 
+  const intensity = effectiveTargets?.intensity ?? architecture.intensity;
+  const dialogueRatio = effectiveTargets?.dialogueRatio ?? architecture.dialogueRatio;
+  const hookDensityLine = effectiveTargets?.hookDensityInstruction
+    ? `User hook density (${effectiveTargets.hookDensity}): ${effectiveTargets.hookDensityInstruction}`
+    : "";
+
   return [
     `Chapter ${architecture.chapterNumber} architecture: ${architecture.functionName} (${architecture.arc}).`,
-    `Recommended target: ${architecture.wordCountTarget} words, range ${architecture.wordCountRange[0]}-${architecture.wordCountRange[1]}, intensity ${architecture.intensity}, dialogue ratio ${architecture.dialogueRatio}, hook ${architecture.hookType}.`,
+    `Recommended target: ${architecture.wordCountTarget} words, range ${architecture.wordCountRange[0]}-${architecture.wordCountRange[1]}, intensity ${intensity}, dialogue ratio ${dialogueRatio}, hook ${architecture.hookType}.`,
     `Prose profile: ${ARC_PROSE_PROFILES[architecture.arc]}.`,
-    renderIntensityInstruction(architecture.intensity),
-    renderDialogueExecution(architecture.dialogueRatio),
+    renderIntensityInstruction(intensity),
+    renderDialogueExecution(dialogueRatio),
     renderHookExecution(architecture.hookType),
+    ...(hookDensityLine ? [hookDensityLine] : []),
     `Template style lock: ${PROMPT_TEMPLATE_STYLE_LOCKS[architecture.chapterNumber]}`,
     `Mandatory elements: ${architecture.mandatoryElements.join("; ")}.`,
     `Forbidden elements: ${architecture.forbiddenElements.join("; ")}.`,

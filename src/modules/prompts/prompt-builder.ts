@@ -24,6 +24,11 @@ import {
   renderDrama15ArchitectureOverview,
 } from "./drama15-chapter-architecture";
 import {
+  buildUserDraftScaling,
+  renderHookDensityInstruction,
+  resolveEffectiveChapterDraftTargets,
+} from "./draft-controls-scaling";
+import {
   renderTrendAwareSeedEngineForPrompt,
   renderNicheAwareTitleGrammarForPrompt,
 } from "./drama15-seed-engine";
@@ -251,6 +256,7 @@ export function buildChapterDraftPrompt(params: {
   previousChapterSummaries: string[];
   continuityLite?: ContinuityLite;
   draftControls?: DraftControls;
+  userIntensity?: number;
   outputLanguage?: OutputLanguage;
   stylePreset?: StylePreset;
   linePreset?: LinePreset;
@@ -260,8 +266,18 @@ export function buildChapterDraftPrompt(params: {
   const outputLang = params.outputLanguage ?? "english";
   const chapterArch = getDrama15ChapterArchitecture(params.chapterPlanItem.chapterNumber);
   const wordRange = chapterArch ? getDrama15ChapterOperationalWordCountRange(chapterArch.chapterNumber) : [1500, 3000];
-  const dialogueFloor = chapterArch?.dialogueRatio ?? params.draftControls?.dialogueRatio ?? 0.45;
-  const chapterArchText = chapterArch ? renderChapterArchitectureForPrompt(chapterArch.chapterNumber) : "";
+  const draftControls = params.draftControls ?? { dialogueRatio: 0.56, hookDensity: "high" as const };
+  const scaling = buildUserDraftScaling(draftControls, params.userIntensity);
+  const effectiveTargets = resolveEffectiveChapterDraftTargets(params.chapterPlanItem.chapterNumber, scaling);
+  const dialogueFloor = effectiveTargets.dialogueRatio * 0.5;
+  const chapterArchText = chapterArch
+    ? renderChapterArchitectureForPrompt(chapterArch.chapterNumber, {
+        intensity: effectiveTargets.intensity,
+        dialogueRatio: effectiveTargets.dialogueRatio,
+        hookDensity: effectiveTargets.hookDensity,
+        hookDensityInstruction: renderHookDensityInstruction(effectiveTargets.hookDensity),
+      })
+    : "";
 
   const userPrompt = [
     `Write Chapter ${params.chapterPlanItem.chapterNumber} of "${params.storyTitle}".`,
@@ -271,6 +287,7 @@ export function buildChapterDraftPrompt(params: {
     chapterArchText ? `Chapter architecture: ${chapterArchText}` : "",
     wordRange ? `Target word range: ${wordRange[0]}-${wordRange[1]} words.` : "",
     `Minimum dialogue ratio: ${(dialogueFloor * 100).toFixed(0)}%.`,
+    `Hook density: ${effectiveTargets.hookDensity}. ${renderHookDensityInstruction(effectiveTargets.hookDensity)}`,
     "",
     // Previous chapter context
     params.previousChapterSummaries.length > 0
@@ -311,6 +328,7 @@ export function buildChapterRepairPrompt(params: {
   failures: string[];
   draftControls?: DraftControls;
   chapterPlanItem?: ChapterPlanItem;
+  userIntensity?: number;
   repairAttempt: number;
   maxRepairAttempts: number;
   previousMetrics: {
@@ -325,15 +343,26 @@ export function buildChapterRepairPrompt(params: {
   const systemPrompt = buildChapterRepairSystemPrompt();
 
   const failureInstructions: string[] = [];
+  const draftControls = params.draftControls ?? { dialogueRatio: 0.56, hookDensity: "high" as const };
+  const effectiveTargets = params.chapterPlanItem
+    ? resolveEffectiveChapterDraftTargets(
+        params.chapterPlanItem.chapterNumber,
+        buildUserDraftScaling(draftControls, params.userIntensity),
+      )
+    : { dialogueRatio: draftControls.dialogueRatio, hookDensity: draftControls.hookDensity };
 
   // Map each failure type to a specific repair instruction
   for (const failure of params.failures) {
     if (failure.includes("dialogue ratio")) {
-      const targetDialogueRatio = params.draftControls?.dialogueRatio ?? 0.55;
       failureInstructions.push(
         `DIALOGUE REPAIR: Current dialogue ratio is ${(params.previousMetrics.dialogueRatio * 100).toFixed(0)}%. ` +
-        `Target is ${(targetDialogueRatio * 100).toFixed(0)}%. ` +
+        `Target is ${(effectiveTargets.dialogueRatio * 100).toFixed(0)}%. ` +
         `Convert some narration into character dialogue while preserving plot beats.`
+      );
+    }
+    if (failure.includes("hook density")) {
+      failureInstructions.push(
+        `HOOK DENSITY REPAIR (${effectiveTargets.hookDensity}): ${renderHookDensityInstruction(effectiveTargets.hookDensity)}`
       );
     }
     if (failure.includes("AI-tell")) {

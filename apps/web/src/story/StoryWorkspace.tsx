@@ -6,6 +6,7 @@ import { httpFetch } from '../api/httpClient';
 import { getAccessToken, supabase } from '../api/supabaseClient';
 import { useI18n } from '../i18n/useI18n';
 import { LlmSettingsModal, type LlmSettings } from './LlmSettingsModal';
+import { DraftControlsModal } from './DraftControlsModal';
 import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
 import './StoryWorkspace.css';
 
@@ -157,6 +158,7 @@ export function StoryWorkspace(): JSX.Element {
   const [setupSuggestionQuota, setSetupSuggestionQuota] = useState<Quota | null>(null);
   const [llmSettings, setLlmSettings] = useState<LlmSettings | null>(null);
   const [showLlmSettings, setShowLlmSettings] = useState(false);
+  const [showDraftControls, setShowDraftControls] = useState(false);
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [storyListBusy, setStoryListBusy] = useState(false);
   const streamRef = useRef<EventSource | null>(null);
@@ -637,16 +639,17 @@ export function StoryWorkspace(): JSX.Element {
 
       <section className="workspace-grid">
         <aside className="setup-panel">
-          <PanelHeading label={t('setup.heading_label')} value={t('setup.heading_value')} />
+          <SetupPanelHeading
+            label={t('setup.heading_label')}
+            settingsAria={t('setup.draft_controls_aria')}
+            onOpenSettings={() => setShowDraftControls(true)}
+          />
           <label>{t('setup.niche_label')}<select value={config.niche} onChange={(event) => updateConfig('niche', event.target.value)}>{NICHE_KEYS.map((key) => <option key={key} value={key}>{t(`niche.${key}`)}</option>)}</select></label>
           {config.niche === 'custom' && <label>{t('setup.custom_label')}<input value={config.customNiche} onChange={(event) => updateConfig('customNiche', event.target.value)} placeholder={t('setup.custom_placeholder')} /></label>}
           <label>{t('setup.title_label')}<input value={config.title} onChange={(event) => updateConfig('title', event.target.value)} placeholder={t('setup.title_placeholder')} /></label>
           <label>{t('setup.seed_label')}<textarea value={config.seed} onChange={(event) => updateConfig('seed', event.target.value)} placeholder={t('setup.seed_placeholder')} rows={6} /></label>
           <label>{t('setup.style_label')}<select value={config.stylePreset} onChange={(event) => updateConfig('stylePreset', event.target.value)}>{(styles.length ? styles : [FALLBACK_STYLE]).map((style) => <option key={style.id} value={style.id}>{style.displayName}</option>)}</select></label>
           <label>{t('setup.language_label')}<select value={config.outputLanguage} onChange={(event) => updateConfig('outputLanguage', event.target.value)}>{LANGUAGE_OPTION_KEYS.map((key) => <option key={key} value={key}>{t(`lang.${key}`)}</option>)}</select></label>
-          <Range label={t('setup.intensity')} value={config.intensity} onChange={(value) => updateConfig('intensity', value)} />
-          <Range label={t('setup.dialogue_ratio')} value={config.dialogueRatio} min={0.2} max={0.85} onChange={(value) => updateConfig('dialogueRatio', value)} />
-          <Range label={t('setup.hook_density')} value={config.hookDensity} onChange={(value) => updateConfig('hookDensity', value)} />
           <div className="setup-actions"><button type="button" className="secondary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfSetupSuggestionQuota} onClick={() => void suggestSetup()}>{t('setup.suggest_btn')}</button><button type="button" className="primary-button" disabled={busy || !isSignedIn || !llmConfigured || outOfQuota || !config.title.trim() || !config.seed.trim()} onClick={() => void createStory()}>{t('setup.write_btn')}</button></div>
         </aside>
 
@@ -715,6 +718,13 @@ export function StoryWorkspace(): JSX.Element {
           <svg viewBox="0 0 36 36" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M18 2C9.163 2 2 8.636 2 16.7c0 4.592 2.268 8.694 5.812 11.396V34l5.592-3.072A17.838 17.838 0 0 0 18 31.4c8.837 0 16-6.636 16-14.7S26.837 2 18 2Zm1.588 19.79-4.074-4.346-7.95 4.346 8.744-9.28 4.178 4.345 7.846-4.345-8.744 9.28Z" /></svg>
         </a>
       )}
+      <DraftControlsModal
+        open={showDraftControls}
+        config={config}
+        onClose={() => setShowDraftControls(false)}
+        onChange={updateConfig}
+        t={t}
+      />
       <LlmSettingsModal
         open={showLlmSettings}
         onClose={() => setShowLlmSettings(false)}
@@ -773,6 +783,33 @@ function RelationshipGraphPanel({ graph, t }: { graph?: RelationshipGraphView; t
   const hiddenCount = graphPreview.hiddenNodeCount + graphPreview.hiddenEdgeCount;
 
   return <article className="relationship-panel"><h3>{t('relationship.title')}</h3>{hiddenCount > 0 && <p className="relationship-note">{t('relationship.showing', { nodes: graphPreview.nodes.length, edges: graphPreview.edges.length })}</p>}<div className="relationship-canvas"><svg viewBox="0 0 520 420" role="img" aria-label={t('relationship.aria')}>{graphPreview.edges.map((edge, index) => { const source = byId.get(edge.source); const target = byId.get(edge.target); if (!source || !target) return null; const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2; return <g key={`${edge.source}-${edge.target}-${index}`}><line x1={source.x} y1={source.y} x2={target.x} y2={target.y} /><text x={midX} y={midY}>{edge.chapterNumber ? `Ch.${edge.chapterNumber}` : edge.type}</text></g>; })}{positions.map(({ node, x, y }) => <g key={node.id} className="relationship-node"><circle cx={x} cy={y} r="38" /><text x={x} y={y - 4}>{node.name}</text><text x={x} y={y + 14}>{node.role}</text></g>)}</svg></div><div className="relationship-list">{graphPreview.edges.map((edge, index) => { const source = byId.get(edge.source)?.node.name ?? edge.source; const target = byId.get(edge.target)?.node.name ?? edge.target; return <p key={index}><strong>{source} → {target}</strong><span>{edge.label}</span></p>; })}</div></article>;
+}
+
+function SetupPanelHeading({
+  label,
+  settingsAria,
+  onOpenSettings,
+}: {
+  label: string;
+  settingsAria: string;
+  onOpenSettings: () => void;
+}) {
+  return (
+    <div className="panel-heading">
+      <span>{label}</span>
+      <button
+        type="button"
+        className="panel-settings-button"
+        onClick={onOpenSettings}
+        aria-label={settingsAria}
+        title={settingsAria}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm8.94 4.88.96-.83a.75.75 0 0 0 .18-.97l-.92-1.59a.75.75 0 0 0-.9-.33l-1.14.41a7.35 7.35 0 0 0-1.12-.65l-.17-1.2a.75.75 0 0 0-.74-.64h-1.84a.75.75 0 0 0-.74.64l-.17 1.2c-.4.16-.77.37-1.12.65l-1.14-.41a.75.75 0 0 0-.9.33l-.92 1.59a.75.75 0 0 0 .18.97l.96.83a7.2 7.2 0 0 0 0 1.3l-.96.83a.75.75 0 0 0-.18.97l.92 1.59c.2.34.6.46.9.33l1.14-.41c.35.28.72.49 1.12.65l.17 1.2c.08.36.38.64.74.64h1.84c.36 0 .66-.28.74-.64l.17-1.2c.4-.16.77-.37 1.12-.65l1.14.41c.3.13.7.01.9-.33l.92-1.59a.75.75 0 0 0-.18-.97l-.96-.83a7.2 7.2 0 0 0 0-1.3Z" />
+        </svg>
+      </button>
+    </div>
+  );
 }
 
 function PanelHeading({ label, value }: { label: string; value: string }) {
@@ -962,10 +999,6 @@ function useTypewriterQueue({ onSectionStart }: { onSectionStart: (job: RevealJo
   }, [reset]);
 
   return { revealed, activeKey, active, enqueue, complete, reset, prime };
-}
-
-function Range({ label, value, onChange, min = 0, max = 1, step = 0.01 }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number }) {
-  return <label className="range-row"><span>{label}</span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /><strong>{Math.round(value * 100)}</strong></label>;
 }
 
 function postJson(value: unknown): RequestInit {

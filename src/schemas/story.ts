@@ -316,6 +316,7 @@ export const GenerateChapterRequestSchema = z
     chapterNumber: z.number().int().min(1).max(15),
     previousChapterSummaries: z.array(z.string().min(1)).default([]),
     draftControls: DraftControlsSchema.optional(),
+    userIntensity: z.number().min(0).max(1).optional(),
     stylePreset: z.string().trim().min(1).optional(),
     continuityLite: ContinuityLiteSchema.optional(),
     // ─── Voice lock (optional, derived from earlier chapters) ─────────────

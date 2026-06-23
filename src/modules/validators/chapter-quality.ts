@@ -1,6 +1,12 @@
 import type { DraftControls } from "../../types/story";
 import type { OutputLanguage } from "../../types/story";
-import { getDrama15ChapterArchitecture } from "../prompts/drama15-chapter-architecture";
+import {
+  analyzeHookDensity,
+  buildUserDraftScaling,
+  HOOK_DENSITY_FAILURE,
+  resolveEffectiveChapterDraftTargets,
+  type HookDensityMetrics,
+} from "../prompts/draft-controls-scaling";
 import { detectAiTells, type AiTellReport } from "../core-pipeline/validators/ai-tell-detector";
 import { analyzeSentenceVariance, type SentenceVarianceMetrics } from "../core-pipeline/validators/sentence-variance";
 import { detectStructuralSlop, type StructuralSlopReport } from "../core-pipeline/validators/structural-slop";
@@ -40,6 +46,7 @@ const PHRASE_REUSE_FAILURE = "phrase reuse across chapters exceeds threshold";
 const STRUCTURAL_SLOP_FAILURE = "structural slop patterns exceed acceptable threshold";
 const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   DIALOGUE_RATIO_FAILURE,
+  HOOK_DENSITY_FAILURE,
   AI_TELL_FAILURE,
   SENTENCE_VARIANCE_FAILURE,
   PHRASE_REUSE_FAILURE,
@@ -51,6 +58,7 @@ export type ChapterQualityMetrics = {
   dialogueRatio: number;
   paragraphCount: number;
   maxShortParagraphStreak: number;
+  hookDensity: HookDensityMetrics;
   aiTellScore: number;
   aiTellReport: AiTellReport;
   sentenceVariance: SentenceVarianceMetrics;
@@ -64,6 +72,7 @@ export function analyzeChapterQuality(
   controls: DraftControls,
   outputLanguage?: OutputLanguage,
   chapterNumber?: number,
+  userIntensity?: number,
 ): ChapterQualityMetrics {
   const wordCount = countWordLikeUnits(text, outputLanguage);
   const paragraphs = text.split(/\n\s*\n/).filter((value) => value.trim().length > 0);
@@ -99,11 +108,23 @@ export function analyzeChapterQuality(
     ? scoreCandidate(phraseReuseIndex, text, chapterNumber)
     : { reuseScore: 0, topRepeats: [], needsRepair: false };
 
+  const scaling = buildUserDraftScaling(controls, userIntensity);
+  const effectiveTargets = chapterNumber !== undefined
+    ? resolveEffectiveChapterDraftTargets(chapterNumber, scaling)
+    : {
+        intensity: userIntensity ?? scaling.userIntensity ?? 0.84,
+        dialogueRatio: controls.dialogueRatio,
+        hookDensity: controls.hookDensity,
+        hookType: "tension" as const,
+      };
+  const hookDensity = analyzeHookDensity(text, effectiveTargets.hookDensity);
+
   const metrics: ChapterQualityMetrics = {
     wordCount,
     dialogueRatio: wordCount === 0 ? 0 : quotedWordCount / wordCount,
     paragraphCount: paragraphs.length,
     maxShortParagraphStreak: maxStreak,
+    hookDensity,
     aiTellScore: aiTellReport.score,
     aiTellReport,
     sentenceVariance,
@@ -112,9 +133,13 @@ export function analyzeChapterQuality(
     failures: [],
   };
 
-  const minimumDialogueRatio = getMinimumAcceptedDialogueRatio(controls.dialogueRatio, chapterNumber);
+  const minimumDialogueRatio = effectiveTargets.dialogueRatio * 0.5;
   if (metrics.dialogueRatio < minimumDialogueRatio) {
     metrics.failures.push(DIALOGUE_RATIO_FAILURE);
+  }
+
+  if (!hookDensity.meetsTarget) {
+    metrics.failures.push(HOOK_DENSITY_FAILURE);
   }
 
   if (aiTellReport.needsRepair) {
@@ -142,11 +167,6 @@ export function needsChapterRetry(metrics: ChapterQualityMetrics) {
 
 export function hasOnlySoftChapterQualityFailures(metrics: ChapterQualityMetrics) {
   return metrics.failures.length > 0 && metrics.failures.every((failure) => SOFT_CHAPTER_QUALITY_FAILURES.has(failure));
-}
-
-function getMinimumAcceptedDialogueRatio(targetDialogueRatio: number, chapterNumber?: number) {
-  const architecture = chapterNumber ? getDrama15ChapterArchitecture(chapterNumber) : null;
-  return (architecture?.dialogueRatio ?? targetDialogueRatio) * 0.5;
 }
 
 function countWordLikeUnits(text: string, outputLanguage?: OutputLanguage) {

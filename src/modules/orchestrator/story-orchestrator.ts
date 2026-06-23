@@ -519,6 +519,7 @@ export class StoryOrchestrator {
               chapterNumber: chapterPlanItem.chapterNumber,
               previousChapterSummaries: chapters.map(summarizeChapter),
               draftControls: request.draftControls,
+              userIntensity: request.storyControls.intensity,
               outputLanguage: request.outputLanguage,
               storyTitle: outline.title,
               voiceLock: this.computeVoiceLock(chapters),
@@ -691,6 +692,7 @@ export class StoryOrchestrator {
                 .filter((item) => item.chapterNumber < chapterPlanItem.chapterNumber)
                 .map(summarizeChapter),
               draftControls: storyPayload.request.draftControls,
+              userIntensity: storyPayload.request.storyControls.intensity,
               outputLanguage: storyPayload.request.outputLanguage,
               storyTitle: storyPayload.title,
               voiceLock: this.computeVoiceLock(chapters),
@@ -845,6 +847,7 @@ export class StoryOrchestrator {
       previousChapterSummaries: parsed.previousChapterSummaries,
       continuityLite: enhancedContinuity,
       draftControls,
+      userIntensity: parsed.userIntensity,
       outputLanguage: parsed.outputLanguage ?? "english",
       stylePreset: context.stylePreset,
       prosePolishConfig: this.prosePolishConfig,
@@ -898,7 +901,13 @@ export class StoryOrchestrator {
             contextLabel: `chapter ${parsed.chapterNumber}`,
           },
         );
-        let metrics = analyzeChapterQuality(chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+        let metrics = analyzeChapterQuality(
+          chapter.text,
+          draftControls,
+          parsed.outputLanguage ?? "english",
+          parsed.chapterNumber,
+          parsed.userIntensity,
+        );
 
         // ─── Character Consistency Check ──────────────────────────────────
         let driftReport: DriftReport | null = null;
@@ -945,6 +954,7 @@ export class StoryOrchestrator {
             failures: metrics.failures,
             draftControls,
             chapterPlanItem,
+            userIntensity: parsed.userIntensity,
             repairAttempt,
             maxRepairAttempts: maxAttempts,
             previousMetrics: {
@@ -981,7 +991,13 @@ export class StoryOrchestrator {
               contextLabel: `chapter ${parsed.chapterNumber} repair ${repairAttempt}`,
             },
           );
-          metrics = analyzeChapterQuality(repairedChapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+          metrics = analyzeChapterQuality(
+            repairedChapter.text,
+            draftControls,
+            parsed.outputLanguage ?? "english",
+            parsed.chapterNumber,
+            parsed.userIntensity,
+          );
 
           // Re-check consistency after repair
           if (memoryStore) {
@@ -1077,11 +1093,18 @@ export class StoryOrchestrator {
             outputLanguage: parsed.outputLanguage ?? "english",
             models: context.models,
             chapterNumber: parsed.chapterNumber,
+            userIntensity: parsed.userIntensity,
             timeoutMs: env.routerChapterTimeoutMs,
           });
         }
 
-        const finalMetrics = analyzeChapterQuality(draftedChapter.chapter.text, draftControls, parsed.outputLanguage ?? "english", parsed.chapterNumber);
+        const finalMetrics = analyzeChapterQuality(
+          draftedChapter.chapter.text,
+          draftControls,
+          parsed.outputLanguage ?? "english",
+          parsed.chapterNumber,
+          parsed.userIntensity,
+        );
         if (needsChapterRetry(finalMetrics) && !hasOnlySoftChapterQualityFailures(finalMetrics)) {
           throw new AppError(
             "MODEL_OUTPUT_INVALID",
@@ -1100,6 +1123,7 @@ export class StoryOrchestrator {
           outputLanguage: parsed.outputLanguage ?? "english",
           models: context.models,
           chapterNumber: parsed.chapterNumber,
+          userIntensity: parsed.userIntensity,
           timeoutMs: env.routerChapterTimeoutMs,
         });
       },
@@ -1401,6 +1425,7 @@ export class StoryOrchestrator {
       outputLanguage: OutputLanguage;
       models: PostProcessModels;
       chapterNumber: number;
+      userIntensity?: number;
       timeoutMs?: number;
     },
   ): Promise<Chapter> {
@@ -1424,7 +1449,13 @@ export class StoryOrchestrator {
         return chapter;
       }
 
-      const metrics = analyzeChapterQuality(tightened, options.draftControls, options.outputLanguage, options.chapterNumber);
+      const metrics = analyzeChapterQuality(
+        tightened,
+        options.draftControls,
+        options.outputLanguage,
+        options.chapterNumber,
+        options.userIntensity,
+      );
       if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
         // Cut broke a hard rule (e.g. word count floor) — keep the original.
         return chapter;
@@ -1622,7 +1653,13 @@ export class StoryOrchestrator {
             validateChapterDraft(unwrapEnvelope(result.data, "chapter"), current.chapterNumber),
             chapterPlanItem.title,
           );
-          const metrics = analyzeChapterQuality(candidate.text, draftControls, outputLanguage, current.chapterNumber);
+          const metrics = analyzeChapterQuality(
+            candidate.text,
+            draftControls,
+            outputLanguage,
+            current.chapterNumber,
+            storyPayload.request.storyControls.intensity,
+          );
           if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
             continue; // keep original — revision broke a hard rule
           }

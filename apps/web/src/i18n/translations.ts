@@ -66,6 +66,9 @@ const vi = {
   'setup.intensity': 'Cường độ cảm xúc',
   'setup.dialogue_ratio': 'Tỷ lệ thoại',
   'setup.hook_density': 'Mật độ móc câu',
+  'setup.draft_controls_title': 'Cường độ & nhịp kể',
+  'setup.draft_controls_aria': 'Mở cài đặt cường độ cảm xúc, tỷ lệ thoại và mật độ móc câu',
+  'setup.draft_controls_close': 'Đóng',
   'setup.suggest_btn': 'Gợi ý kịch bản',
   'setup.write_btn': 'Viết bản thảo',
 
@@ -289,6 +292,9 @@ const en: Record<keyof typeof vi, string> = {
   'setup.intensity': 'Emotional Intensity',
   'setup.dialogue_ratio': 'Dialogue Ratio',
   'setup.hook_density': 'Hook Density',
+  'setup.draft_controls_title': 'Intensity & pacing',
+  'setup.draft_controls_aria': 'Open emotional intensity, dialogue ratio, and hook density settings',
+  'setup.draft_controls_close': 'Close',
   'setup.suggest_btn': 'Suggest Plot',
   'setup.write_btn': 'Write Manuscript',
 

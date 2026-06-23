@@ -26,7 +26,14 @@ import {
   renderChapterArchitectureForPrompt,
   renderChapterPlanArchitectureForPrompt,
   renderDrama15ArchitectureOverview,
+  renderIntensityInstruction,
 } from "./drama15-chapter-architecture";
+import {
+  buildUserDraftScaling,
+  renderHookDensityInstruction,
+  resolveEffectiveChapterDraftTargets,
+  type UserDraftScalingInput,
+} from "./draft-controls-scaling";
 import {
   CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT,
   CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT,
@@ -413,9 +420,35 @@ function minimumDialogueFloorPercent(targetRatio: number) {
   return Math.round(minimumDialogueFloor(targetRatio) * 100);
 }
 
-function effectiveDialogueRatio(targetRatio: number, chapterNumber?: number) {
-  const architecture = chapterNumber ? getDrama15ChapterArchitecture(chapterNumber) : null;
-  return architecture?.dialogueRatio ?? targetRatio;
+function effectiveDialogueRatio(targetRatio: number, chapterNumber?: number, userIntensity?: number) {
+  if (!chapterNumber) {
+    return targetRatio;
+  }
+
+  return resolveEffectiveChapterDraftTargets(
+    chapterNumber,
+    buildUserDraftScaling({ dialogueRatio: targetRatio, hookDensity: "medium" }, userIntensity),
+  ).dialogueRatio;
+}
+
+function chapterScalingInput(draftControls: DraftControls, userIntensity?: number): UserDraftScalingInput {
+  return buildUserDraftScaling(draftControls, userIntensity);
+}
+
+function chapterArchitectureBlock(chapterNumber: number, scaling?: UserDraftScalingInput) {
+  const targets = scaling ? resolveEffectiveChapterDraftTargets(chapterNumber, scaling) : undefined;
+  const architecture = renderChapterArchitectureForPrompt(
+    chapterNumber,
+    targets
+      ? {
+          intensity: targets.intensity,
+          dialogueRatio: targets.dialogueRatio,
+          hookDensity: targets.hookDensity,
+          hookDensityInstruction: renderHookDensityInstruction(targets.hookDensity),
+        }
+      : undefined,
+  );
+  return architecture ? block("Target chapter architecture", architecture) : "";
 }
 
 function formatWordCountRange(min: number, max: number) {
@@ -436,11 +469,6 @@ function buildDialogueRepairInstruction(currentWordCount: number, currentDialogu
 
 function architectureBlock() {
   return block("Drama 15-chapter architecture", renderDrama15ArchitectureOverview());
-}
-
-function chapterArchitectureBlock(chapterNumber: number) {
-  const architecture = renderChapterArchitectureForPrompt(chapterNumber);
-  return architecture ? block("Target chapter architecture", architecture) : "";
 }
 
 function prosePolishBlock(
@@ -688,6 +716,7 @@ export function buildChapterDraftPrompt(params: {
   previousChapterSummaries: string[];
   continuityLite?: ContinuityLite;
   draftControls: DraftControls;
+  userIntensity?: number;
   outputLanguage: OutputLanguage;
   stylePreset: StylePreset;
   prosePolishConfig?: LocalProsePolishConfig;
@@ -700,13 +729,16 @@ export function buildChapterDraftPrompt(params: {
     previousChapterSummaries,
     continuityLite,
     draftControls,
+    userIntensity,
     outputLanguage,
     stylePreset,
     voiceLock,
   } = params;
   const targetWords = resolveLegacyTargetWords(draftControls);
-  const effectiveChapterDialogueRatio = effectiveDialogueRatio(draftControls.dialogueRatio, chapterPlanItem.chapterNumber);
-  const targetChapterArchitecture = chapterArchitectureBlock(chapterPlanItem.chapterNumber);
+  const scaling = chapterScalingInput(draftControls, userIntensity);
+  const effectiveTargets = resolveEffectiveChapterDraftTargets(chapterPlanItem.chapterNumber, scaling);
+  const effectiveChapterDialogueRatio = effectiveTargets.dialogueRatio;
+  const targetChapterArchitecture = chapterArchitectureBlock(chapterPlanItem.chapterNumber, scaling);
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -731,7 +763,8 @@ export function buildChapterDraftPrompt(params: {
       `Operational target: ${operatingWordCountRange(targetWords, chapterPlanItem.chapterNumber)} so the draft lands safely inside the allowed range.`,
       `Dialogue target: ${dialogueRatioRange(effectiveChapterDialogueRatio)}.`,
       `Minimum quoted-dialogue floor: ${minimumDialogueFloorPercent(effectiveChapterDialogueRatio)}% of total words, but aim above that floor.`,
-      `Hook density: ${draftControls.hookDensity}.`,
+      `Intensity target: ${effectiveTargets.intensity}. ${renderIntensityInstruction(effectiveTargets.intensity)}`,
+      `Hook density: ${draftControls.hookDensity}. ${renderHookDensityInstruction(draftControls.hookDensity)}`,
       "If you reach the ending beat early, stop instead of extending aftermath.",
       "Use smart dialogue quotation marks (U+201C and U+201D) for spoken dialogue inside chapter text. Do not use raw ASCII double quotes for speech inside JSON strings, em-dash dialogue, or unquoted speech.",
       "Do not use banned empty drama phrases such as \"her heart clenched\" or \"the world collapsed\".",
@@ -765,6 +798,7 @@ export function buildChapterRepairPrompt(params: {
   failures: string[];
   draftControls: DraftControls;
   chapterPlanItem: ChapterPlanItem;
+  userIntensity?: number;
   repairAttempt?: number;
   maxRepairAttempts?: number;
   previousMetrics: {
@@ -776,9 +810,12 @@ export function buildChapterRepairPrompt(params: {
   prosePolishConfig?: LocalProsePolishConfig;
 }) {
   const targetWords = resolveLegacyTargetWords(params.draftControls);
-  const effectiveChapterDialogueRatio = effectiveDialogueRatio(params.draftControls.dialogueRatio, params.chapterPlanItem.chapterNumber);
-  const targetChapterArchitecture = chapterArchitectureBlock(params.chapterPlanItem.chapterNumber);
+  const scaling = chapterScalingInput(params.draftControls, params.userIntensity);
+  const effectiveTargets = resolveEffectiveChapterDraftTargets(params.chapterPlanItem.chapterNumber, scaling);
+  const effectiveChapterDialogueRatio = effectiveTargets.dialogueRatio;
+  const targetChapterArchitecture = chapterArchitectureBlock(params.chapterPlanItem.chapterNumber, scaling);
   const needsDialogueRepair = params.failures.some((failure) => /dialogue ratio/i.test(failure));
+  const needsHookRepair = params.failures.some((failure) => /hook density/i.test(failure));
 
   return [
     "The previous draft missed quality targets and must be rewritten to pass them.",
@@ -799,6 +836,12 @@ export function buildChapterRepairPrompt(params: {
             params.previousMetrics.dialogueRatio,
             effectiveChapterDialogueRatio,
           ),
+        ]
+      : []),
+    ...(needsHookRepair
+      ? [
+          `Hook density repair (${params.draftControls.hookDensity}): ${renderHookDensityInstruction(params.draftControls.hookDensity)}`,
+          "Add short tension paragraphs and sharpen the closing beat without changing plot facts.",
         ]
       : []),
     // Character consistency drift violations
