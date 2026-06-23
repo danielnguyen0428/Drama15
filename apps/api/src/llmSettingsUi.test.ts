@@ -34,6 +34,12 @@ test('LLM provider presets render as one responsive tab bar', () => {
   assert.match(workspaceCss, /\.provider-tabbar button\.active\s*\{[^}]*border-bottom-color:\s*var\(--coral\);/);
 });
 
+test('managed provider base URLs stay out of the browser bundle and UI', () => {
+  assert.doesNotMatch(modalSource, /api\.xah\.io|shopaikey\.com/);
+  assert.match(modalSource, /provider === 'other' && \(\s*<label className="settings-field">Base URL/);
+  assert.match(modalSource, /\.\.\.\(provider === 'other' \? \{ baseUrl \} : \{\}\)/);
+});
+
 test('admin announcement presents the personal API key message as a clear list', () => {
   assert.match(translationsSource, /announcement\.item_free/);
   assert.match(translationsSource, /announcement\.item_keys/);

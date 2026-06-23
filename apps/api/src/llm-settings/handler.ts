@@ -18,6 +18,11 @@ const DEFAULT_SETTINGS = {
   model: 'gpt-4o-mini',
 };
 
+const MANAGED_PROVIDER_BASE_URLS = {
+  c: 'https://api.xah.io/v1',
+  s: 'https://api.shopaikey.com/v1',
+} as const;
+
 type LlmSettingsHandlerOptions = {
   additionalAllowedHosts?: readonly string[];
   allowInsecureLocalhost?: boolean;
@@ -71,7 +76,7 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
       const current = await this.repository.findByUserId(userId);
       const value = parsed.data;
       const provider = value.provider ?? current?.provider ?? DEFAULT_SETTINGS.provider;
-      const requestedBaseUrl = value.baseUrl ?? current?.baseUrl ?? DEFAULT_SETTINGS.baseUrl;
+      const requestedBaseUrl = resolveBaseUrl(provider, value.baseUrl, current);
       const validatedUrl = validateLlmBaseUrl({
         provider,
         baseUrl: requestedBaseUrl,
@@ -178,7 +183,7 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
 
     const value = parsed.data;
     const provider = value.provider ?? current?.provider ?? DEFAULT_SETTINGS.provider;
-    const requestedBaseUrl = value.baseUrl ?? current?.baseUrl ?? DEFAULT_SETTINGS.baseUrl;
+    const requestedBaseUrl = resolveBaseUrl(provider, value.baseUrl, current);
     const validatedUrl = validateLlmBaseUrl({
       provider,
       baseUrl: requestedBaseUrl,
@@ -246,12 +251,12 @@ export class LlmSettingsHandler implements LlmSettingsSpec {
     if (row.apiKeyCiphertext) apiKey = this.decryptPublicKey(row.apiKeyCiphertext);
     return {
       provider: row.provider,
-      baseUrl: row.baseUrl,
       model: row.model,
       updatedAt: row.updatedAt,
       apiKeySet: Boolean(apiKey),
       apiKeyFingerprint: fingerprint(apiKey),
       configured: Boolean(apiKey && row.baseUrl && row.model),
+      ...(row.provider === 'other' ? { baseUrl: row.baseUrl } : {}),
     };
   }
 
@@ -293,3 +298,15 @@ function secretDecryptFailure(): LlmSettingsFailure {
 }
 
 class SecretDecryptError extends Error {}
+
+function resolveBaseUrl(
+  provider: StoredLlmSettings['provider'],
+  requestedBaseUrl: string | undefined,
+  current: StoredLlmSettings | null,
+) {
+  if (provider === 'c' || provider === 's') {
+    return MANAGED_PROVIDER_BASE_URLS[provider];
+  }
+  if (requestedBaseUrl) return requestedBaseUrl;
+  return current?.provider === 'other' ? current.baseUrl : DEFAULT_SETTINGS.baseUrl;
+}

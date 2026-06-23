@@ -30,8 +30,8 @@ export const LLM_PROVIDER_CATALOG = {
     { id: 'other', label: 'OTHER' },
   ],
   presets: [
-    { id: 'c', label: 'C-PROVIDER', provider: 'c', baseUrl: 'https://api.xah.io/v1' },
-    { id: 's', label: 'S-PROVIDER', provider: 's', baseUrl: 'https://api.shopaikey.com/v1' },
+    { id: 'c', label: 'C-PROVIDER', provider: 'c' },
+    { id: 's', label: 'S-PROVIDER', provider: 's' },
     { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
     { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },
     {

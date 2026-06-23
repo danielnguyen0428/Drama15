@@ -6,7 +6,7 @@ type LlmProvider = 'c' | 's' | 'other';
 
 export type LlmSettings = {
   provider: LlmProvider;
-  baseUrl: string;
+  baseUrl?: string;
   model: string;
   updatedAt: string;
   apiKeySet: boolean;
@@ -18,7 +18,7 @@ type LlmPreset = {
   id: string;
   label: string;
   provider: LlmProvider;
-  baseUrl: string;
+  baseUrl?: string;
 };
 
 type LlmCatalog = {
@@ -26,8 +26,8 @@ type LlmCatalog = {
 };
 
 const FALLBACK_PRESETS: LlmPreset[] = [
-  { id: 'c', label: 'C-PROVIDER', provider: 'c', baseUrl: 'https://api.xah.io/v1' },
-  { id: 's', label: 'S-PROVIDER', provider: 's', baseUrl: 'https://api.shopaikey.com/v1' },
+  { id: 'c', label: 'C-PROVIDER', provider: 'c' },
+  { id: 's', label: 'S-PROVIDER', provider: 's' },
   { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
   { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },
   {
@@ -73,7 +73,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
         setSettings(nextSettings);
         setCatalog(nextCatalog);
         setProvider(nextSettings.provider);
-        setBaseUrl(nextSettings.baseUrl);
+        setBaseUrl(nextSettings.baseUrl ?? '');
         setModel(nextSettings.model);
         setApiKey('');
         setClearApiKey(false);
@@ -88,7 +88,8 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
 
   const providerOptions = catalog?.presets.length ? catalog.presets : FALLBACK_PRESETS;
   const activePresetId = providerOptions.find((preset) =>
-    preset.provider === provider && normalizeBaseUrl(preset.baseUrl) === normalizeBaseUrl(baseUrl),
+    preset.provider === provider
+      && (provider !== 'other' || normalizeBaseUrl(preset.baseUrl ?? '') === normalizeBaseUrl(baseUrl)),
   )?.id ?? 'custom';
 
   async function saveSettings() {
@@ -129,17 +130,23 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
   function buildRequestBody() {
     return {
       provider,
-      baseUrl,
       model,
       clearApiKey,
+      ...(provider === 'other' ? { baseUrl } : {}),
       ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
     };
   }
 
   function applyPreset(preset: LlmPreset) {
+    const nextBaseUrl = preset.baseUrl ?? '';
     setProvider(preset.provider);
-    setBaseUrl(preset.baseUrl);
-    setClearApiKey(Boolean(settings?.apiKeySet && preset.baseUrl !== settings.baseUrl));
+    setBaseUrl(nextBaseUrl);
+    setClearApiKey(Boolean(
+      settings?.apiKeySet
+        && (preset.provider !== settings.provider
+          || (preset.provider === 'other'
+            && normalizeBaseUrl(nextBaseUrl) !== normalizeBaseUrl(settings.baseUrl ?? ''))),
+    ));
   }
 
   function useCustomProvider() {
@@ -197,10 +204,12 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
           </div>
         </div>
 
-        <label className="settings-field">Base URL
-          <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://api.openai.com/v1" />
-          <small>Endpoint API tương thích chuẩn OpenAI.</small>
-        </label>
+        {provider === 'other' && (
+          <label className="settings-field">Base URL
+            <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://api.openai.com/v1" />
+            <small>Endpoint API tương thích chuẩn OpenAI.</small>
+          </label>
+        )}
         <label className="settings-field">Model
           <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="gpt-4o-mini" />
           <small>Nhập chính xác model ID do provider cung cấp.</small>
@@ -223,7 +232,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
 
         <div className="settings-modal-actions">
           <button type="button" className="secondary-button" disabled={busy} onClick={() => void testSettings()}>Test connection</button>
-          <button type="button" className="primary-button" disabled={busy || !baseUrl.trim() || !model.trim()} onClick={() => void saveSettings()}>Save</button>
+          <button type="button" className="primary-button" disabled={busy || !model.trim() || (provider === 'other' && !baseUrl.trim())} onClick={() => void saveSettings()}>Save</button>
         </div>
         {message && <p className="settings-message">{message}</p>}
       </section>

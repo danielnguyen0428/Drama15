@@ -77,6 +77,25 @@ test('URL policy blocks loopback provider endpoints', () => {
   assert.equal(result.error.code, 'BASE_URL_NOT_ALLOWED');
 });
 
+test('managed providers resolve their base URL server-side and never expose it publicly', async () => {
+  const repository = new MemorySettingsRepository();
+  const handler = new LlmSettingsHandler(repository, testCipher);
+
+  const saved = await handler.save('alice', {
+    provider: 'c',
+    model: 'model-a',
+    apiKey: 'provider-a-secret',
+  });
+  const resolved = await handler.resolve('alice');
+
+  assert.equal(saved.success, true);
+  if (!saved.success) return;
+  assert.equal('baseUrl' in saved.data, false);
+  assert.equal(resolved.success, true);
+  if (!resolved.success) return;
+  assert.equal(resolved.data.baseUrl, 'https://api.xah.io/v1');
+});
+
 test('changing provider scope without a new key clears the previous secret', async () => {
   const repository = new MemorySettingsRepository();
   const handler = new LlmSettingsHandler(repository, testCipher);

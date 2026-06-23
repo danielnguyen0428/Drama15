@@ -21,7 +21,11 @@ export type StoredLlmSettings = {
   updatedAt: string;
 };
 
-export type PublicLlmSettings = Omit<StoredLlmSettings, 'userId' | 'apiKeyCiphertext'> & {
+export type PublicLlmSettings = Omit<
+  StoredLlmSettings,
+  'userId' | 'apiKeyCiphertext' | 'baseUrl'
+> & {
+  baseUrl?: string;
   apiKeySet: boolean;
   apiKeyFingerprint: string;
   configured: boolean;

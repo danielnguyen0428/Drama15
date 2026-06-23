@@ -224,7 +224,6 @@ registerLlmSettingsRoutes(app, {
 app.get('/healthz', async () => ({
   ok: true,
   service: 'drama15-local-api',
-  routerBaseUrl: env.routerBaseUrl,
 }));
 
 app.get('/status', async (request, reply) => {

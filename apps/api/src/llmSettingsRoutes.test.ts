@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import fastify from 'fastify';
@@ -21,6 +22,61 @@ const cipher: LlmSecretCipher = {
   encrypt: (value) => `encrypted:${value}`,
   decrypt: (value) => value.replace(/^encrypted:/, ''),
 };
+
+test('public health response never exposes the server router base URL', () => {
+  const startSource = readFileSync(new URL('./startDev.ts', import.meta.url), 'utf8');
+  const healthRoute = startSource.match(/app\.get\('\/healthz'[\s\S]*?\n\}\)\);/)?.[0] ?? '';
+
+  assert.notEqual(healthRoute, '');
+  assert.doesNotMatch(healthRoute, /routerBaseUrl/);
+});
+
+test('provider catalog never exposes managed provider base URLs', async () => {
+  const app = fastify();
+  registerLlmSettingsRoutes(app, {
+    handler: new LlmSettingsHandler(new MemoryRepository(), cipher),
+    authenticate: async () => 'alice',
+    testConnection: async () => ({ ok: true, detail: 'OK' }),
+  });
+
+  const response = await app.inject({ method: 'GET', url: '/llm/providers' });
+  const catalog = response.json() as {
+    presets: Array<{ provider: string; baseUrl?: string }>;
+  };
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(catalog.presets.find((preset) => preset.provider === 'c')?.baseUrl, undefined);
+  assert.equal(catalog.presets.find((preset) => preset.provider === 's')?.baseUrl, undefined);
+  assert.doesNotMatch(response.body, /api\.xah\.io|shopaikey\.com/);
+  await app.close();
+});
+
+test('settings API never serializes a managed provider base URL', async () => {
+  const app = fastify();
+  registerLlmSettingsRoutes(app, {
+    handler: new LlmSettingsHandler(new MemoryRepository(), cipher),
+    authenticate: async () => 'alice',
+    testConnection: async () => ({ ok: true, detail: 'OK' }),
+  });
+
+  const saved = await app.inject({
+    method: 'PUT',
+    url: '/llm/settings',
+    payload: {
+      provider: 'c',
+      model: 'model-a',
+      apiKey: 'provider-a-secret',
+    },
+  });
+  const loaded = await app.inject({ method: 'GET', url: '/llm/settings' });
+
+  assert.equal(saved.statusCode, 200);
+  assert.equal(loaded.statusCode, 200);
+  assert.equal('baseUrl' in saved.json(), false);
+  assert.equal('baseUrl' in loaded.json(), false);
+  assert.doesNotMatch(`${saved.body}${loaded.body}`, /api\.xah\.io|shopaikey\.com/);
+  await app.close();
+});
 
 test('settings API keeps two authenticated users isolated and never returns plaintext keys', async () => {
   const app = fastify();
