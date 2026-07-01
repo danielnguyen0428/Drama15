@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu chấm cho logic", "chấm than khi nguy hiểm thật", "dấu lửng giữa hai người hiểu nhau"],
   "chapterCadence": ["mở bằng manh mối hoặc nguy cơ", "giữa chương lật giả thuyết", "kết bằng phát hiện kéo tình cảm gần hơn"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không phá án bằng may mắn", "không để romance làm hỏng logic"],
+  "voiceExemplars": [
+    "“Camera góc đông chết đúng bốn phút. Không nhiều hơn, không ít hơn.” Cô khoanh vùng thời gian trên bảng trắng. “Kẻ này biết chính xác mình cần bao lâu.” Anh nhìn con số, rồi nhìn cô. Cả hai cùng hiểu điều đó nghĩa là gì.",
+    "Xong việc, hai người ngồi trong xe, đèn đường loang trên kính. Anh đưa cho cô ly cà phê đã nguội. “Lần sau đừng lao vào trước khi tôi kịp yểm trợ.” Đó là cách anh nói rằng anh đã sợ."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

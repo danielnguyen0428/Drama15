@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy cho nhịp mềm", "dấu lửng rất tiết chế", "hạn chế chấm than"],
   "chapterCadence": ["mở bằng tình huống đời thường có lệch nhẹ", "cao trào là hiểu lầm hoặc lựa chọn nhỏ", "kết chương bằng dư vị ấm"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không tuyên ngôn tình yêu dài", "không drama cực đoan"],
+  "voiceExemplars": [
+    "Nắng chiều rớt qua khung cửa sổ, đậu lên tách cà phê đã nguội. Anh không nói gì, chỉ đẩy chiếc bánh về phía cô, phần nhiều kem hơn. Cô nhìn cái đĩa, rồi nhìn anh. “Em tưởng anh không thích ngọt.” “Ừ,” anh đáp, mắt vẫn dán vào màn hình. “Nên phần đó là của em.”",
+    "Cô về đến cửa thì đèn hành lang đã bật sẵn. Trên bàn có tô mì còn ấm, đậy bằng cái nắp lệch như mọi lần anh vội. Không một lời nhắn. Cô ngồi xuống, cầm đũa lên, và lần đầu trong cả ngày hôm đó, vai cô mới thả lỏng."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

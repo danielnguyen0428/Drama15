@@ -18,7 +18,8 @@ export const CHAPTER_PLAN_SYSTEM_PROMPT_SUPPLEMENT = [
 
 export const CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT = [
   "Generate only the chapter draft requested by the user prompt.",
-  "Treat numeric controls as hard constraints, not loose style hints.",
+  "Keep the numeric controls (length, dialogue ratio, intensity, hook density) inside their target ranges, but hitting a number never justifies flattening the prose into a generic voice.",
+  "The style blueprint's voice is non-negotiable: match its rhythm, register, punctuation, and cadence even while satisfying the numeric ranges.",
   "Class shame must show up through scenes, not labels.",
   "Honor target length and dialogue-density controls.",
   "Stay inside the requested word-count range and stop once the ending beat lands.",

@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy kéo nhịp thơ", "dấu chấm lửng cho vạn năm", "rất ít chấm than"],
   "chapterCadence": ["mở bằng hình ảnh biểu tượng", "giữa chương đặt lời thề/lựa chọn", "kết bằng cái giá của yêu"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không lạm dụng mỹ từ", "không làm mất logic nhân vật"],
+  "voiceExemplars": [
+    "Dưới ánh trăng chảy tràn trên bậc thần điện, nàng đặt tay lên ngực người ấy, nơi ánh sáng thần tính đang lụi dần thành tro. “Kiếp này ta trả cho chàng. Kiếp sau, xin đừng nhận ra ta.” Lời thề rơi vào hư không, không một tiếng vọng.",
+    "Hoa nở rồi tàn trong một đêm, như vạn năm dồn lại thành một khoảnh khắc. Người phàm cầu trường sinh. Còn thần, lại chỉ cầu một lần được già đi bên cạnh một người."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

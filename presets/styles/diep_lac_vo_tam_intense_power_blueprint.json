@@ -16,5 +16,9 @@
   "punctuationRhythm": ["nhiều câu chấm ngắn", "chấm than chỉ khi bùng nổ", "dấu lửng cho đối đầu nghẹt thở"],
   "chapterCadence": ["mở bằng xung đột trực diện", "leo thang bằng đấu trí/đấu lực", "kết bằng thế cờ đảo chiều"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không biến chiếm hữu thành mất agency", "không ủy mị"],
+  "voiceExemplars": [
+    "Neon đỏ hắt qua màn mưa. Anh chặn cửa xe, một tay tì lên nóc. “Xuống.” Cô không nhúc nhích. “Anh ra lệnh cho tất cả mọi người, hay chỉ cho những người anh sợ mất?”",
+    "Cửa phòng đóng lại sau lưng. Anh siết chặt nắm tay, khớp ngón trắng bệch, nhưng giọng vẫn phẳng như mặt bàn. Bên ngoài anh lạnh. Bên trong, mọi thứ đang cháy."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

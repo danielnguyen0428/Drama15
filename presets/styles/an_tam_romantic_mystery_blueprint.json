@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu hỏi có chức năng", "câu chấm ngắn ở phát hiện", "dấu lửng cho thông tin bị giấu"],
   "chapterCadence": ["mở bằng chi tiết bất thường", "giữa chương sai lệch lớn dần", "kết bằng manh mối mới hoặc niềm tin lung lay"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không giải thích bí ẩn quá sớm", "không làm tình cảm lấn mất logic"],
+  "voiceExemplars": [
+    "Ổ khóa đã bị thay. Cùng hãng, cùng màu, nhưng rãnh chìa mới hơn phần còn lại của cánh cửa. Cô đứng lặng trong hành lang tối, nghe mùi mưa hắt vào từ khe cửa sổ. “Ai vào đây sau tôi?” Anh không đáp ngay, chỉ đưa mắt xuống vết xước nhỏ dưới tay nắm.",
+    "Trong tập hồ sơ thiếu đúng một tờ. Không phải tờ quan trọng nhất — mà là tờ vô hại nhất. Cô lật lại lần thứ ba dưới ánh đèn lạnh. Chính chỗ trống đó mới là thứ đáng sợ…"
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

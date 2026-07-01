@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu chấm cho punchline", "dấu lửng khi đổi sang đau", "chấm than vừa phải"],
   "chapterCadence": ["mở bằng tình huống lệch hài", "giữa chương thành nguy hiểm thật", "kết bằng cười mà đau hoặc bảo vệ nhau"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không hài phá logic", "không bi chuyển gắt vô cớ"],
+  "voiceExemplars": [
+    "“Ta là tiên nhân ngàn năm, không phải cái giá treo áo!” Hắn phủi tay áo, cố tỏ ra uy nghiêm, trong khi con yêu thú vẫn ngậm chặt vạt áo không chịu nhả. Nàng ôm bụng cười. Cười đến khi thấy máu đang loang dưới chân hắn.",
+    "“Không sao đâu,” hắn nói, giọng vẫn cợt nhả như mọi khi. “Vết này nhỏ như duyên phận của ngươi với ta thôi.” Rồi hắn ngã xuống, tay vẫn nắm chặt pháp khí chắn trước mặt nàng."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

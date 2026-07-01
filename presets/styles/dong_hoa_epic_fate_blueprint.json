@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy kéo nhịp cảnh", "chấm phẩy cho song song", "rất ít chấm than"],
   "chapterCadence": ["mở bằng bối cảnh có sức nặng", "giữa chương đặt lựa chọn không thể vẹn toàn", "kết bằng dư âm bi tráng"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không triết lý rỗng", "không cổ trang giả nếu bối cảnh hiện đại"],
+  "voiceExemplars": [
+    "Gió từ ải bắc thổi suốt ba ngày không dứt, cuốn cát phủ mờ những lá cờ đã bạc màu trên tường thành. Nàng đứng trên vọng lâu, nhìn đoàn quân xa dần thành một vệt mỏng giữa trời chiều, và biết rằng người ấy sẽ không quay đầu lại.",
+    "“Nếu cứu được thành, ta mất chàng. Nếu giữ được chàng, ta phụ cả thiên hạ.” Nàng nói rất khẽ. Rồi nàng đặt bút xuống, đóng ấn. Có những lựa chọn không cho phép người ta khóc."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

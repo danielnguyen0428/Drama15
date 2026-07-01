@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy tự nhiên", "dấu hỏi tự vấn", "ít chấm than"],
   "chapterCadence": ["mở bằng ký ức cụ thể", "giữa chương va với hiện tại", "kết bằng chấp nhận hoặc tiếc nhẹ"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không tô tuổi trẻ thành hoàn hảo", "không bi kịch hóa vụn vặt"],
+  "voiceExemplars": [
+    "Năm mười bảy tuổi, tôi tin rằng chỉ cần chạy đủ nhanh là sẽ đuổi kịp mọi thứ. Đường chạy sau trường dài ba trăm mét, và tôi từng nghĩ nó dài bằng cả tương lai. Bây giờ nghĩ lại thấy buồn cười.",
+    "Quán mì trước cổng đã đóng cửa từ lâu. Tấm biển cũ vẫn còn, chữ bong gần hết. Tôi đứng đó một lúc, nhớ cái bàn nhựa xanh nơi chúng tôi từng cãi nhau về một chuyện mà giờ chẳng ai còn nhớ nổi."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

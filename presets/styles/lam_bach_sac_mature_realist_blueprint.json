@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu chấm rõ", "dấu phẩy cho phân tích", "ít dấu lửng"],
   "chapterCadence": ["mở bằng xung đột lợi ích", "giữa chương giải quyết vấn đề", "kết bằng một bước tin tưởng"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không định mệnh hóa tình yêu", "không kiểm soát độc hại"],
+  "voiceExemplars": [
+    "“Tôi không cần anh đồng ý,” cô nói, gập laptop lại. “Tôi cần anh đọc kỹ điều khoản bốn trước khi ký.” Anh im lặng một lúc, rồi kéo ghế ngồi xuống đối diện. Đó không phải nhượng bộ, mà là tôn trọng.",
+    "Email đến lúc mười một giờ đêm, đúng như cô đoán. Ba dòng, không lời chào, không một câu xin lỗi. Cô đọc hai lần, xoá bản nháp đang viết dở, rồi trả lời bằng đúng một câu: “Chín giờ sáng mai, mang theo hợp đồng gốc.”"
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu lửng cho khoảng đau", "ít chấm than", "câu hỏi nội tâm không cần trả lời"],
   "chapterCadence": ["mở bằng dấu hiệu mất mát", "giữa chương tăng hiểu lầm", "kết bằng sự thật muộn hoặc im lặng"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không khóc lóc ồn ào", "không giải thích đạo lý dài"],
+  "voiceExemplars": [
+    "Cô vẫn giữ thói quen pha hai cốc cà phê mỗi sáng, dù người kia đã rời khỏi căn nhà này gần một năm. Cốc thứ hai để nguội, rồi cô đổ đi. Mỗi ngày. Như thể chỉ cần còn pha, thì vẫn còn điều gì đó chưa thật sự kết thúc…",
+    "“Em ổn mà.” Cô nói, và còn cười được. Anh quay lưng đi, không nhìn thấy bàn tay cô siết chặt vạt áo đến mức run lên. Cửa khép lại rất nhẹ. Nhẹ hơn cô tưởng rất nhiều."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

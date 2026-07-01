@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy nhiều nhưng kiểm soát", "dấu lửng cho đau không nói", "hiếm chấm than"],
   "chapterCadence": ["mở bằng vẻ đẹp có vết nứt", "giữa chương hiểu lầm/phản bội", "kết bằng hy sinh hoặc mất mát"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không khóc lóc van xin", "không mỹ từ rỗng"],
+  "voiceExemplars": [
+    "Tuyết rơi trên những cánh hoa cuối cùng còn sót lại bên bậc thềm ngọc, phủ lên chúng một lớp trắng lặng lẽ như tấm khăn liệm mỏng. Nàng mỉm cười. “Ta chưa từng để tâm đến ngươi.” Máu nhỏ xuống nền tuyết, đỏ đến chói mắt.",
+    "Cây đàn đứt dây từ đêm ấy, nàng không buồn thay. Người nghe đã đi rồi, giữ lại âm thanh để làm gì. Nàng chỉ ôm đàn ngồi đó, lưng thẳng như chưa từng gục ngã."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

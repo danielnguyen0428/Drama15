@@ -267,10 +267,26 @@ function styleBlueprintSystemInstruction(stylePresetId: string): string {
 
   return [
     "--- STYLE BLUEPRINT RULES ---",
-    "Treat the selected style preset as craft constraints: rhythm, POV distance, dialogue policy, emotion rendering, imagery palette, and chapter cadence.",
-    "Do not copy, paraphrase, or closely imitate any source author, title, scene sequence, protected phrasing, or recognizable passage.",
-    "Use the blueprint to create original commercial-drama prose, written in the story's output language, that fits the current story, niche, and chapter architecture.",
+    "The selected style blueprint is the PRIMARY voice spec for this prose. Follow its narrative distance, sentence music, punctuation rhythm, dialogue policy, emotion rendering, imagery palette, and chapter cadence closely and consistently so the chapter reads in that exact voice.",
+    "Craft, cadence, rhythm, and technique are not copyrightable — reproduce the described craft faithfully. When the blueprint's voice choices differ from generic drafting defaults, the blueprint wins for voice.",
+    "The only hard limit is protected expression: never copy, paraphrase, or reconstruct the specific wording, sentences, character names, titles, or recognizable scene sequences of any real source work. Imitate the technique, never the actual text.",
+    "Write original prose in the story's output language that fits the current story, niche, and chapter architecture.",
   ].join("\n");
+}
+
+function styleBlueprintPromptBlock(stylePreset: StylePreset): string {
+  const { voiceExemplars, ...fields } = stylePreset as StylePreset & { voiceExemplars?: string[] };
+  const parts: string[] = [];
+  if (voiceExemplars && voiceExemplars.length > 0) {
+    parts.push(
+      "STYLE BLUEPRINT VOICE — write the chapter in this voice. Study the exemplars below and match their sentence rhythm, punctuation, texture, and register. Do NOT reuse their names, plot, or exact wording; they only demonstrate the voice.",
+    );
+    voiceExemplars.forEach((exemplar, index) => {
+      parts.push(`Voice exemplar ${index + 1}:\n${exemplar}`);
+    });
+  }
+  parts.push(block("Style blueprint craft fields", fields));
+  return parts.join("\n\n");
 }
 
 function outputLanguageName(outputLanguage: OutputLanguage) {
@@ -758,6 +774,8 @@ export function buildChapterDraftPrompt(params: {
     userPrompt: [
       "Draft one chapter of a commercial short drama.",
       buildNarrativeLanguageInstruction(outputLanguage),
+      "VOICE FIRST — the style blueprint below is the primary voice for this chapter. Write the entire chapter in that voice: sentence music, punctuation rhythm, dialogue policy, emotion rendering, imagery palette, and chapter cadence. The numeric targets further down (length, dialogue ratio, intensity, hook density) are ranges to stay within, not a license to flatten the prose into a generic register.",
+      styleBlueprintPromptBlock(stylePreset),
       "Return JSON with exactly these keys: chapterNumber, title, summary, text.",
       "Do not switch to alternate template keys. Keep summary as one clean prose sentence; do not include internal labels, memory tags, or template codes in summary or text.",
       "The chapter text must contain a strong opening hook, an emotional turn, and a sharp ending beat.",
@@ -802,7 +820,6 @@ export function buildChapterDraftPrompt(params: {
           ]
         : []),
       block("Continuity", continuityLite ?? {}),
-      block("Style preset", stylePreset),
     ].join("\n\n"),
   };
 }
@@ -923,10 +940,13 @@ export function buildRegenerateChapterPrompt(params: {
       loadDrama15SystemPrompt(),
       JSON_OUTPUT_GUARD,
       REGENERATE_CHAPTER_SYSTEM_PROMPT_SUPPLEMENT,
+      styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
       "Revise the target chapter while preserving continuity.",
       buildNarrativeLanguageInstruction(outputLanguage),
+      "Keep the revision in the style blueprint's voice: sentence music, punctuation rhythm, dialogue policy, emotion rendering, imagery palette, and chapter cadence. Apply the user's instruction without drifting into a generic register.",
+      styleBlueprintPromptBlock(stylePreset),
       "Return JSON with exactly these keys: chapterNumber, title, summary, text.",
       "Preserve the target chapter's 15-chapter architecture function while applying the user's rewrite instruction.",
       `Revision mode: ${mode}.`,
@@ -939,7 +959,6 @@ export function buildRegenerateChapterPrompt(params: {
       chapterArchitectureBlock(chapterPlanItem.chapterNumber),
       block("Current chapter", currentChapter),
       block("Continuity", continuityLite),
-      block("Style preset", stylePreset),
     ].join("\n\n"),
   };
 }

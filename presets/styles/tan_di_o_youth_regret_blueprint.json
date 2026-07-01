@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy kể chuyện", "dấu lửng tiết chế", "ít chấm than"],
   "chapterCadence": ["mở bằng hiện tại chạm ký ức", "giữa chương lộ vết nứt cũ", "kết bằng hiểu ra muộn"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không tô hồng tuổi trẻ quá mức", "không bi lụy giả"],
+  "voiceExemplars": [
+    "Con đường từ trường về nhà giờ đã mở rộng gấp đôi, hàng cây ngày xưa không còn nữa. Tôi vẫn đi chậm ở đoạn ấy, theo thói quen của một người từng có ai đó đi cùng. Chỉ là bây giờ, đi chậm cũng chẳng để chờ ai.",
+    "Tôi tìm thấy tin nhắn cũ khi đổi điện thoại. “Đợi tớ ở cổng nhé.” Gửi năm năm trước, chưa bao giờ được trả lời. Hóa ra có những cánh cổng, mình đứng đợi cả thanh xuân mà không biết người kia đã đi lối khác."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

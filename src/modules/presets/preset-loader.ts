@@ -37,6 +37,7 @@ const StylePresetSchema = z.object({
   hookSharpness: z.string().min(1),
   dialogueRatioTarget: z.number().min(0).max(1),
   melodramaLevel: z.string().min(1),
+  voiceExemplars: z.array(z.string().min(1)).optional(),
   notes: z.array(z.string().min(1)).min(1),
 }).passthrough();
 

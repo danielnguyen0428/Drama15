@@ -66,14 +66,14 @@ export function analyzeVoiceFingerprint(texts: string[]): VoiceFingerprint | nul
 
 export function buildVoiceLockInstruction(fingerprint: VoiceFingerprint): string {
   const lines = [
-    "VOICE LOCK — match the established prose voice of the earlier chapters:",
+    "VOICE LOCK — the style blueprint above defines the voice. The stats below are mechanical measurements of the earlier chapters, for continuity only; if any of them conflicts with the blueprint's voice, follow the blueprint.",
     `- Mean sentence length around ${fingerprint.meanSentenceWords} words, with varied rhythm (length CV ≈ ${fingerprint.sentenceLengthCv}). Keep short punchy lines mixed with longer ones.`,
     `- Quoted-dialogue density around ${Math.round(fingerprint.dialogueRatio * 100)}% of words.`,
     `- Paragraphs around ${fingerprint.meanParagraphWords} words on average; do not turn into long essay blocks.`,
     `- Keep em dashes sparse (the book so far uses about ${fingerprint.emDashPer1000Words} per 1000 words).`,
   ];
   if (fingerprint.topOpeners.length > 0) {
-    lines.push(`- Earlier chapters often open sentences with: ${fingerprint.topOpeners.join(", ")}. Stay in this register but do not start every sentence the same way.`);
+    lines.push(`- Earlier chapters leaned on these sentence openers: ${fingerprint.topOpeners.join(", ")}. Vary your openings; do not reuse these or fall back on any single opener.`);
   }
   lines.push("Do not change names, plot facts, or continuity to fit the voice.");
   return lines.join("\n");

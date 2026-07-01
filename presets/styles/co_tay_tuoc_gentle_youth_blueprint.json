@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy mềm", "dấu lửng ít", "gần như không chấm than"],
   "chapterCadence": ["mở bằng khoảnh khắc gần gũi", "giữa chương có thử thách nhẹ", "kết bằng ấm áp hoặc rung động"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không ngược nặng", "không quyền lực áp chế"],
+  "voiceExemplars": [
+    "Gió tháng năm thổi qua sân trường, mang theo mùi phượng đầu mùa. Cậu ấy đứng chờ ở cổng, tay giấu sau lưng. “Cho cậu.” Là một chai nước mát lạnh, nắp đã được vặn lỏng sẵn để cô dễ mở.",
+    "Chỗ ngồi trên ghế đá còn ấm nắng. Hai người ngồi cách nhau đúng một gang tay, chẳng ai nói gì. Cô cúi xuống giấu nụ cười, thấy khoảng cách một gang tay ấy sao mà gần."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }

@@ -16,5 +16,9 @@
   "punctuationRhythm": ["dấu phẩy suy tư", "chấm phẩy khi phân tích song song", "hiếm chấm than"],
   "chapterCadence": ["mở bằng đời thường có câu hỏi tâm lý", "giữa chương đối mặt thực tế", "kết bằng một lựa chọn trưởng thành"],
   "doNotUse": ["không sao chép câu văn/tựa/tình tiết của tác giả", "không phán xét nhân vật", "không biến đời thường thành nhạt"],
+  "voiceExemplars": [
+    "Cô nhận ra mình không còn giận nữa từ lúc nào không hay; có lẽ từ cái hôm anh lặng lẽ rửa chồng bát cô để lại trong bồn ba ngày. Yêu là chuyện của năm đầu tiên. Còn ở lại được hay không, lại là chuyện khác.",
+    "Tin nhắn chỉ có hai chữ: “Về chưa?” Cô nhìn màn hình một lúc lâu. Không phải vì không biết trả lời, mà vì hai chữ đó, sau bốn năm, vẫn đủ để cô thấy mình có một chỗ để về."
+  ],
   "notes": ["Use craft traits only; do not imitate or reproduce protected prose."]
 }
