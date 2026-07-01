@@ -30,7 +30,7 @@ export const LLM_PROVIDER_CATALOG = {
     { id: 'other', label: 'OTHER' },
   ],
   presets: [
-    { id: 'c', label: 'C-PROVIDER', provider: 'c', model: 'mainnewnol/deepseek-v4-flash' },
+    { id: 'c', label: 'C-PROVIDER', provider: 'c', model: 'tanynguyen97/deepseek-v4-flash [cheap]' },
     { id: 's', label: 'S-PROVIDER', provider: 's' },
     { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
     { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },

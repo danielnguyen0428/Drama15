@@ -32,7 +32,7 @@ const testManagedProviders = {
   c: {
     baseUrl: 'https://api.xah.io/v1',
     apiKey: 'managed-c-secret',
-    model: 'mainnewnol/deepseek-v4-flash',
+    model: 'tanynguyen97/deepseek-v4-flash [cheap]',
   },
 };
 
@@ -48,7 +48,7 @@ test('users without saved settings can use the managed C-PROVIDER default', asyn
   assert.equal(resolved.success, true);
   if (!resolved.success) return;
   assert.equal(resolved.data.provider, 'c');
-  assert.equal(resolved.data.model, 'mainnewnol/deepseek-v4-flash');
+  assert.equal(resolved.data.model, 'tanynguyen97/deepseek-v4-flash [cheap]');
   assert.equal(resolved.data.apiKey, 'managed-c-secret');
 
   assert.equal(published.success, true);
@@ -65,7 +65,7 @@ test('managed C-PROVIDER works without a personal API key after save', async () 
 
   await handler.save('alice', {
     provider: 'c',
-    model: 'mainnewnol/deepseek-v4-flash',
+    model: 'tanynguyen97/deepseek-v4-flash [cheap]',
   });
   const resolved = await handler.resolve('alice');
 

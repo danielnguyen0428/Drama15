@@ -28,6 +28,8 @@ services:
         value: pro
       - key: MODEL_PRESET_PREMIUM
         value: premium
+      - key: MANAGED_C_PROVIDER_MODEL
+        value: tanynguyen97/deepseek-v4-flash [cheap]
       - key: AUXILIARY_ANALYSIS_MODEL
         value: mainnewnol/deepseek-v4-flash
       - key: ROUTER_DEFAULT_TIMEOUT_MS

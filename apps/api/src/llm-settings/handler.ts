@@ -15,7 +15,7 @@ import { validateLlmBaseUrl } from './urlPolicy.js';
 const DEFAULT_SETTINGS = {
   provider: 'c' as const,
   baseUrl: 'https://api.xah.io/v1',
-  model: 'mainnewnol/deepseek-v4-flash',
+  model: 'tanynguyen97/deepseek-v4-flash [cheap]',
 };
 
 export type ManagedProviderConfig = {

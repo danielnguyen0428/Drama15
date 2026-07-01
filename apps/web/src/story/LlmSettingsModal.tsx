@@ -27,7 +27,7 @@ type LlmCatalog = {
 };
 
 const FALLBACK_PRESETS: LlmPreset[] = [
-  { id: 'c', label: 'C-PROVIDER', provider: 'c', model: 'mainnewnol/deepseek-v4-flash' },
+  { id: 'c', label: 'C-PROVIDER', provider: 'c', model: 'tanynguyen97/deepseek-v4-flash [cheap]' },
   { id: 's', label: 'S-PROVIDER', provider: 's' },
   { id: 'openai', label: 'OpenAI', provider: 'other', baseUrl: 'https://api.openai.com/v1' },
   { id: 'openrouter', label: 'OpenRouter', provider: 'other', baseUrl: 'https://openrouter.ai/api/v1' },
@@ -50,7 +50,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
   const [catalog, setCatalog] = useState<LlmCatalog | null>(null);
   const [provider, setProvider] = useState<LlmProvider>('c');
   const [baseUrl, setBaseUrl] = useState('');
-  const [model, setModel] = useState('mainnewnol/deepseek-v4-flash');
+  const [model, setModel] = useState('tanynguyen97/deepseek-v4-flash [cheap]');
   const [apiKey, setApiKey] = useState('');
   const [clearApiKey, setClearApiKey] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -213,7 +213,7 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
           </label>
         )}
         <label className="settings-field">Model
-          <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="mainnewnol/deepseek-v4-flash" />
+          <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="tanynguyen97/deepseek-v4-flash [cheap]" />
           <small>Nhập chính xác model ID do provider cung cấp.</small>
         </label>
         <label className="settings-field">API key {settings?.apiKeySet && <span className="muted-inline">đã đặt: {settings.apiKeyFingerprint}</span>}

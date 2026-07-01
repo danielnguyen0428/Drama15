@@ -27,7 +27,7 @@ const managedProviders = {
   c: {
     baseUrl: 'https://api.xah.io/v1',
     apiKey: 'managed-c-secret',
-    model: 'mainnewnol/deepseek-v4-flash',
+    model: 'tanynguyen97/deepseek-v4-flash [cheap]',
   },
 };
 
@@ -102,7 +102,7 @@ test('settings API exposes managed defaults without serializing the server API k
 
   assert.equal(loaded.statusCode, 200);
   assert.equal(loaded.json().provider, 'c');
-  assert.equal(loaded.json().model, 'mainnewnol/deepseek-v4-flash');
+  assert.equal(loaded.json().model, 'tanynguyen97/deepseek-v4-flash [cheap]');
   assert.equal(loaded.json().configured, true);
   assert.equal(loaded.json().apiKeySet, false);
   assert.doesNotMatch(loaded.body, /managed-c-secret|sk-/);
