@@ -43,6 +43,10 @@ import {
   STORY_BIBLE_SYSTEM_PROMPT_SUPPLEMENT,
 } from "./stage-system-instructions";
 import {
+  analyzeSentenceVariance,
+  buildVarianceRepairInstruction,
+} from "../core-pipeline/validators/sentence-variance";
+import {
   renderConceptTitleGrammarForPrompt,
   renderNicheAwareTitleGrammarForPrompt,
   renderTrendAwareSeedEngineForPrompt,
@@ -801,6 +805,7 @@ export function buildChapterDraftPrompt(params: {
       `End on or within one short beat after: ${chapterPlanItem.endingBeat}.`,
       "Cut duplicate reaction beats. Do not explain the same humiliation twice in narration.",
       "Keep the prose sharp and readable. Avoid padded description.",
+      "Sentence rhythm — write like the human author defined by the style blueprint, not like an AI. Vary sentence length hard: mix short 3-8 word lines with longer 20-35 word sentences that use subordinate clauses, and follow the blueprint's sentence music. Do not let most sentences land near the same length, and do not open consecutive sentences with the same subject. Aim for human length variance (coefficient of variation ≥ 0.65); flat, uniform sentence lengths read as machine-written.",
       prosePolishBlock(params.prosePolishConfig, "chapter", outputLanguage),
       ...(voiceLock ? [voiceLock] : []),
       ...renderSpeechPatternPromptBlock(storyBible),
@@ -850,6 +855,7 @@ export function buildChapterRepairPrompt(params: {
   const targetChapterArchitecture = chapterArchitectureBlock(params.chapterPlanItem.chapterNumber, scaling);
   const needsDialogueRepair = params.failures.some((failure) => /dialogue ratio/i.test(failure));
   const needsHookRepair = params.failures.some((failure) => /hook density/i.test(failure));
+  const needsVarianceRepair = params.failures.some((failure) => /sentence length variance/i.test(failure));
 
   return [
     "The previous draft missed quality targets and must be rewritten to pass them.",
@@ -877,6 +883,9 @@ export function buildChapterRepairPrompt(params: {
           `Hook density repair (${params.draftControls.hookDensity}): ${renderHookDensityInstruction(params.draftControls.hookDensity)}`,
           "Add short tension paragraphs and sharpen the closing beat without changing plot facts.",
         ]
+      : []),
+    ...(needsVarianceRepair
+      ? [buildVarianceRepairInstruction(analyzeSentenceVariance(params.previousDraft))]
       : []),
     // Character consistency drift violations
     ...(params.driftViolations && params.driftViolations.length > 0

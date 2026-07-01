@@ -85,6 +85,7 @@ export function buildAdversarialCutSystemPrompt(): string {
   return [
     "Bạn là biên tập viên siết chữ cho truyện drama ngắn thương mại.",
     "Cắt chữ thừa để văn gọn và sắc hơn, nhưng giữ nguyên 100% tình tiết, lời thoại, tên riêng và mạch logic.",
+    "Giữ nguyên giọng văn và nhịp câu của tác giả: giữ sự đa dạng độ dài câu, không biến câu phức có mệnh đề phụ thành câu đơn, không làm văn thành chuỗi câu ngắn đều đều.",
     "Chỉ trả về JSON hợp lệ với đúng một khóa: text.",
   ].join("\n");
 }
@@ -112,6 +113,7 @@ export function buildAdversarialCutPrompt(input: {
     "- Mọi tình tiết, sự kiện, thứ tự diễn biến.",
     "- Mọi câu thoại có nội dung (có thể gọn lại nhưng không đổi nghĩa).",
     "- Tên nhân vật, quan hệ, mốc thời gian, chi tiết nối tiếp (continuity).",
+    "- Nhịp và giọng văn: giữ sự đa dạng độ dài câu (câu ngắn xen câu dài có mệnh đề phụ). Chỉ cắt chữ thừa; không gộp hay chẻ làm mất câu dài có nhịp, không biến văn thành câu ngắn đều đều.",
     "",
     "Trả về JSON: { \"text\": \"...\" }",
     "",

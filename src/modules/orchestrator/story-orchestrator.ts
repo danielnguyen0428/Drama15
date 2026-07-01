@@ -965,7 +965,7 @@ export class StoryOrchestrator {
         }
 
         let repairedChapter = chapter;
-        const maxAttempts = metrics.addressRegister.needsRepair || (driftReport && hasCriticalViolations(driftReport))
+        const maxAttempts = metrics.addressRegister.needsRepair || metrics.sentenceVariance.needsRepair || (driftReport && hasCriticalViolations(driftReport))
           ? MAX_CHAPTER_REPAIR_ATTEMPTS + 1
           : MAX_CHAPTER_REPAIR_ATTEMPTS;
 
