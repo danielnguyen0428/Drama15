@@ -1,5 +1,6 @@
 import { AppError } from "../../lib/errors";
 import { env } from "../../lib/env";
+import { unwrapEnvelope, unwrapArrayEnvelope } from "../../lib/envelope";
 import {
   GeneratedSettingSeedSchema,
   GenerateChapterRequestSchema,
@@ -2176,24 +2177,7 @@ function findMissingCoreFields(fields: Record<string, string | undefined>): stri
     .map(([name]) => `${name} is missing or empty; provide a concrete value.`);
 }
 
-function unwrapEnvelope(value: unknown, key: string) {
-  if (value && typeof value === "object" && key in value) {
-    return (value as Record<string, unknown>)[key];
-  }
-
-  return value;
-}
-
-function unwrapArrayEnvelope(value: unknown, key: string) {
-  if (value && typeof value === "object" && key in value) {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return {
-      [key]: value,
-    };
-  }
-
-  return value;
-}
+// Envelope unwrapping lives in ../../lib/envelope so it can be unit-tested in
+// isolation and shared. It tolerates double-wrapping and renamed wrapper keys,
+// which fixes the "every field undefined" schema errors from models that wrap
+// their JSON differently (e.g. Claude echoing the skeleton wrapper twice).
