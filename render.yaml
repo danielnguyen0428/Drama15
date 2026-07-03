@@ -39,6 +39,10 @@ services:
         value: tanynguyen97/deepseek-v4-flash [cheap]
       - key: AUXILIARY_ANALYSIS_MODEL
         value: tanynguyen97/deepseek-v4-flash [cheap]
+      # Extra provider hosts allowed for per-user LLM settings (comma-separated),
+      # on top of the built-in allowlist in llm-settings/urlPolicy.ts.
+      - key: LLM_ALLOWED_HOSTS
+        value: api.tuongtacfree.vn
       - key: ROUTER_DEFAULT_TIMEOUT_MS
         value: "300000"
       - key: ROUTER_PLANNING_TIMEOUT_MS
