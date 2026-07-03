@@ -23,6 +23,8 @@ export type CorpusExcerpt = {
   niche: string;
   tags: string[];
   text: string;
+  /** "ai" = our own verbatim excerpt; "human" = structural profile (no verbatim source text). */
+  source?: "ai" | "human";
 };
 
 type CorpusFile = { version?: number; excerpts?: CorpusExcerpt[] };
@@ -76,6 +78,7 @@ export function selectCorpusExamples(opts: {
   niche?: string;
   types: string[];
   perType?: number;
+  sourceFilter?: "ai" | "human";
   random?: () => number;
 }): CorpusExcerpt[] {
   const all = loadCorpus();
@@ -86,10 +89,17 @@ export function selectCorpusExamples(opts: {
   const out: CorpusExcerpt[] = [];
 
   for (const type of opts.types) {
-    const ofType = all.filter((e) => e.excerptType === type);
+    let ofType = all.filter((e) => e.excerptType === type);
+    if (opts.sourceFilter) ofType = ofType.filter((e) => (e.source ?? "ai") === opts.sourceFilter);
     if (ofType.length === 0) continue;
-    let pool = opts.niche ? ofType.filter((e) => e.niche === opts.niche) : ofType;
-    if (pool.length < perType) pool = ofType; // fallback: cross-niche
+    // Human items are general (match any niche); AI items prefer the story's niche.
+    const nicheAware =
+      opts.sourceFilter === "human"
+        ? ofType
+        : opts.niche
+          ? ofType.filter((e) => e.niche === opts.niche)
+          : ofType;
+    const pool = nicheAware.length >= perType ? nicheAware : ofType; // fallback: cross-niche
     out.push(...pickRandom(pool, perType, random));
   }
   return out;
@@ -114,7 +124,11 @@ export function renderCorpusReferenceBlock(examples: CorpusExcerpt[]): string {
     "Hard rule: do NOT copy their wording, character names, plot, or images, and do not blend them into a familiar pastiche. Write fully original prose in this story's own voice and the selected style blueprint.",
   ];
   for (const e of examples) {
-    lines.push(`--- [${TYPE_LABEL[e.excerptType] ?? e.excerptType}] ---\n${e.text}`);
+    if ((e.source ?? "ai") === "human") {
+      lines.push(e.text); // self-describing structural pattern (contains no verbatim source text)
+    } else {
+      lines.push(`--- [${TYPE_LABEL[e.excerptType] ?? e.excerptType}] (đoạn tham khảo) ---\n${e.text}`);
+    }
   }
   return lines.join("\n\n");
 }
@@ -129,6 +143,9 @@ export function buildChapterCorpusReference(opts: {
   const types = isOpeningChapter
     ? ["opening", "character_intro", "chapter_ending"]
     : ["high_tension_dialogue", "chapter_ending"];
-  const examples = selectCorpusExamples({ niche: opts.niche, types, perType: 1, random: opts.random });
-  return renderCorpusReferenceBlock(examples);
+  // Human structural patterns first (the reusable "formula"), then AI verbatim
+  // excerpts (real rhythm to mirror), niche-aware.
+  const patterns = selectCorpusExamples({ types, perType: 1, sourceFilter: "human", random: opts.random });
+  const examples = selectCorpusExamples({ niche: opts.niche, types, perType: 1, sourceFilter: "ai", random: opts.random });
+  return renderCorpusReferenceBlock([...patterns, ...examples]);
 }

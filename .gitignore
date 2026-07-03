@@ -32,10 +32,10 @@ supabase/.temp/
 apps/api/scripts/story-*.json
 apps/api/scripts/story-*.txt
 
-# Local corpus built from user stories (Phase 0 — do not commit user content)
+# Raw corpus intermediate built from user stories (not committed)
 /corpus/
-# Corpus asset built from user stories (pending owner approval before commit/deploy)
-presets/corpus/
+# Human reference source texts (may be third-party copyrighted — NEVER commit)
+corpus-human/
 
 # Source-adjacent TypeScript emit artifacts
 src/**/*.js
