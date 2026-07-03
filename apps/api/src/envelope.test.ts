@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { unwrapEnvelope, unwrapArrayEnvelope } from '../../../src/lib/envelope.js';
+import {
+  unwrapEnvelope,
+  unwrapArrayEnvelope,
+  normalizeModelKeys,
+  coerceAlias,
+} from '../../../src/lib/envelope.js';
 
 const goodSeed = {
   titleHint: 'x',
@@ -57,4 +62,47 @@ test('unwrapArrayEnvelope keeps the exact key shape', () => {
 
 test('unwrapArrayEnvelope unwraps a renamed single-key array wrapper', () => {
   assert.deepEqual(unwrapArrayEnvelope({ chapters: [1, 2] }, 'chapterPlan'), { chapterPlan: [1, 2] });
+});
+
+test('normalizeModelKeys rewrites snake_case keys to camelCase (regression: settingSeed undefined)', () => {
+  const snake = {
+    title_hint: 'x',
+    line_preset: 'y',
+    setting_seed: 'z',
+    story_controls: { betrayal_type: 'a' },
+    draft_controls: {},
+  };
+  assert.deepEqual(normalizeModelKeys(snake), {
+    titleHint: 'x',
+    linePreset: 'y',
+    settingSeed: 'z',
+    storyControls: { betrayalType: 'a' },
+    draftControls: {},
+  });
+});
+
+test('normalizeModelKeys handles kebab-case and nested arrays', () => {
+  assert.deepEqual(
+    normalizeModelKeys({ 'story-controls': [{ ending_mode: 'm' }] }),
+    { storyControls: [{ endingMode: 'm' }] },
+  );
+});
+
+test('normalizeModelKeys does not clobber an existing camelCase value', () => {
+  const result = normalizeModelKeys({ settingSeed: 'good', setting_seed: '' }) as Record<string, unknown>;
+  assert.equal(result.settingSeed, 'good');
+});
+
+test('coerceAlias fills a missing canonical field from a synonym', () => {
+  assert.deepEqual(
+    coerceAlias({ titleHint: 'x', seed: 'long world text' }, 'settingSeed', ['seed', 'setup', 'world']),
+    { titleHint: 'x', seed: 'long world text', settingSeed: 'long world text' },
+  );
+});
+
+test('coerceAlias leaves an existing canonical value untouched', () => {
+  assert.deepEqual(
+    coerceAlias({ settingSeed: 'original', seed: 'other' }, 'settingSeed', ['seed']),
+    { settingSeed: 'original', seed: 'other' },
+  );
 });

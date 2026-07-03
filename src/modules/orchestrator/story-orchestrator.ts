@@ -1,6 +1,6 @@
 import { AppError } from "../../lib/errors";
 import { env } from "../../lib/env";
-import { unwrapEnvelope, unwrapArrayEnvelope } from "../../lib/envelope";
+import { unwrapEnvelope, unwrapArrayEnvelope, normalizeModelKeys, coerceAlias } from "../../lib/envelope";
 import {
   GeneratedSettingSeedSchema,
   GenerateChapterRequestSchema,
@@ -443,7 +443,17 @@ export class StoryOrchestrator {
       ...prompt,
       temperature: 0.92,
       timeoutMs: env.routerPlanningTimeoutMs,
-      validate: (data) => validateWithSchema(GeneratedSettingSeedSchema, unwrapEnvelope(data, "seedPackage")),
+      validate: (data) => validateWithSchema(
+        GeneratedSettingSeedSchema,
+        // Normalize snake_case/kebab keys to camelCase, then fill settingSeed
+        // from a synonym if the model named the long text field differently.
+        // Fixes cross-model misses (e.g. Claude emitting setting_seed / seed).
+        coerceAlias(
+          normalizeModelKeys(unwrapEnvelope(data, "seedPackage")),
+          "settingSeed",
+          ["seed", "setup", "world", "settingSeedText", "premise"],
+        ),
+      ),
     });
 
     const rawSeedPackage = result.data;
