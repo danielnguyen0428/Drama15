@@ -49,7 +49,8 @@ export async function postProcessProseHumanizer(input: ProseHumanizerPostProcess
     }
 
     return candidate;
-  } catch {
+  } catch (error) {
+    console.warn(`[prose-humanizer] pass skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return input.text;
   }
 }

@@ -59,7 +59,7 @@ export const DraftControlsSchema = z.object({
     .min(MIN_TARGET_WORDS_PER_CHAPTER)
     .max(MAX_TARGET_WORDS_PER_CHAPTER)
     .optional(),
-  dialogueRatio: z.number().min(0.2).max(0.85).default(0.55),
+  dialogueRatio: z.number().min(0.2).max(0.85).default(0.56),
   hookDensity: z.enum(["low", "medium", "high"]).default("high"),
 });
 
@@ -350,6 +350,9 @@ export const GenerateChapterRequestSchema = z
     // ─── Character Consistency (optional, added for character tracking) ──
     memoryStore: z.any().optional(),
     continuityTracker: z.any().optional(),
+    // ─── Phrase-reuse index (optional, per-generation instance to avoid the
+    //     global singleton racing across concurrent generations) ──────────
+    phraseReuseIndex: z.any().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.storyTitle && value.title && value.storyTitle !== value.title) {
@@ -411,7 +414,7 @@ export const GeneratedSettingSeedSchema = z.object({
     endingMode: z.string().trim().min(1).max(600),
   }),
   draftControls: z.object({
-    dialogueRatio: z.number().min(0.2).max(0.85).default(0.55),
+    dialogueRatio: z.number().min(0.2).max(0.85).default(0.56),
     hookDensity: z.enum(["low", "medium", "high"]).default("high"),
   }),
 });

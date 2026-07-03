@@ -24,7 +24,7 @@ export const VIETNAMESE_GIVEN_NAME_POOL = [
   "Hiền", "Bảo", "Châu", "Giang", "Hương", "Lâm", "Mỹ", "Ngân", "Nhung", "Uyên",
   "Vân", "Xuân", "Chi", "Đào", "Hà", "Huệ", "Loan", "Ly", "Nga", "Nhi",
   "Thư", "Thúy", "Tiên", "Trinh", "Tuyết", "Vy", "An", "Đan", "Hân", "Khánh",
-  "Mai Anh", "Phương Nhi", "Thanh Trúc", "Bảo Hân", "Diệu", "Hạ", "Kim Chi", "Lệ",
+  "Tuệ Mẫn", "Diệu Nhi", "Thanh Trúc", "Bảo Hân", "Diệu", "Hạ", "Kim Chi", "Lệ",
 ];
 
 /** Sino-Vietnamese (Hán-Việt) transcribed given names for a classical register. */

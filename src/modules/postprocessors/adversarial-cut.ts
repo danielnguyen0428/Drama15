@@ -76,7 +76,8 @@ export async function tightenChapterText(input: AdversarialCutInput): Promise<st
       return input.text;
     }
     return candidate;
-  } catch {
+  } catch (error) {
+    console.warn(`[adversarial-cut] pass skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return input.text;
   }
 }

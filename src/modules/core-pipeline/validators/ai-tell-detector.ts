@@ -155,15 +155,67 @@ export const ENGLISH_BANNED_PHRASES: Readonly<Record<string, readonly string[]>>
   ],
 });
 
+// ─── Spanish AI-Tell Phrases ─────────────────────────────────────────────────
+
+export const SPANISH_BANNED_PHRASES: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  emotional_cliche: [
+    "su corazón dio un vuelco",
+    "un escalofrío recorrió su espalda",
+    "las lágrimas brotaron de sus ojos",
+    "se le hizo un nudo en la garganta",
+    "el corazón se le encogió",
+    "contuvo las lágrimas",
+  ],
+  world_collapse: [
+    "su mundo se derrumbó",
+    "el tiempo se detuvo",
+    "todo se detuvo",
+    "el aire se volvió denso",
+  ],
+  gaze_description: [
+    "sus miradas se cruzaron",
+    "sus ojos se clavaron en los de ella",
+    "sus ojos se abrieron de par en par",
+  ],
+});
+
+// ─── Portuguese AI-Tell Phrases ──────────────────────────────────────────────
+
+export const PORTUGUESE_BANNED_PHRASES: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  emotional_cliche: [
+    "seu coração disparou",
+    "um arrepio percorreu sua espinha",
+    "lágrimas brotaram em seus olhos",
+    "um nó se formou em sua garganta",
+    "seu coração se apertou",
+    "conteve as lágrimas",
+  ],
+  world_collapse: [
+    "seu mundo desabou",
+    "o tempo parou",
+    "tudo parou",
+    "o ar ficou denso",
+  ],
+  gaze_description: [
+    "seus olhares se cruzaram",
+    "seus olhos se fixaram nos dela",
+    "seus olhos se arregalaram",
+  ],
+});
+
 // ─── Combined Banned Phrase Map ──────────────────────────────────────────────
 
+// Japanese/Korean are intentionally left without a phrase ban list: reliable
+// AI-cliché sets for those languages are not curated here, and guessing them
+// would produce false positives. Sentence-variance and structural-slop checks
+// still run language-agnostically for those outputs.
 const ALL_BANNED_PHRASES: ReadonlyMap<string, Readonly<Record<string, readonly string[]>>> = new Map([
   ["vietnamese", VIETNAMESE_BANNED_PHRASES],
   ["english", ENGLISH_BANNED_PHRASES],
+  ["spanish", SPANISH_BANNED_PHRASES],
+  ["portuguese", PORTUGUESE_BANNED_PHRASES],
   ["japanese", {}],
   ["korean", {}],
-  ["portuguese", {}],
-  ["spanish", {}],
 ]);
 
 // ─── Detection ───────────────────────────────────────────────────────────────

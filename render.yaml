@@ -12,6 +12,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Asset/config roots must point at the repo root because the start command
+      # runs with cwd=apps/api (npm --prefix). Without these, resolveAssetPath()
+      # falls back to process.cwd() and preset/corpus loading fails in prod.
+      - key: DRAMA15_APP_ROOT
+        value: /opt/render/project/src
+      - key: DRAMA15_ASSET_ROOT
+        value: /opt/render/project/src
       - key: HOST
         value: 0.0.0.0
       - key: CORS_ORIGINS
@@ -31,7 +38,7 @@ services:
       - key: MANAGED_C_PROVIDER_MODEL
         value: tanynguyen97/deepseek-v4-flash [cheap]
       - key: AUXILIARY_ANALYSIS_MODEL
-        value: mainnewnol/deepseek-v4-flash
+        value: tanynguyen97/deepseek-v4-flash [cheap]
       - key: ROUTER_DEFAULT_TIMEOUT_MS
         value: "300000"
       - key: ROUTER_PLANNING_TIMEOUT_MS

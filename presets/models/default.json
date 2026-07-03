@@ -1,7 +1,7 @@
 {
-  "planner": "mainnewnol/deepseek-v4-flash",
-  "bible": "mainnewnol/deepseek-v4-flash",
-  "drafter": "mainnewnol/deepseek-v4-flash",
-  "rewriter": "mainnewnol/deepseek-v4-flash",
+  "planner": "tanynguyen97/deepseek-v4-flash [cheap]",
+  "bible": "tanynguyen97/deepseek-v4-flash [cheap]",
+  "drafter": "tanynguyen97/deepseek-v4-flash [cheap]",
+  "rewriter": "tanynguyen97/deepseek-v4-flash [cheap]",
   "fallback": "deepseek-v4-pro"
 }

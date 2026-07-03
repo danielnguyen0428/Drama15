@@ -59,7 +59,8 @@ export async function reviewManuscript(input: ManuscriptReviewInput): Promise<Ma
     });
 
     return normalizeReviewReport(result.data, result.modelUsed);
-  } catch {
+  } catch (error) {
+    console.warn(`[manuscript-review] evaluation skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }

@@ -23,7 +23,7 @@ export const CHAPTER_DRAFT_SYSTEM_PROMPT_SUPPLEMENT = [
   "Class shame must show up through scenes, not labels.",
   "Honor target length and dialogue-density controls.",
   "Stay inside the requested word-count range and stop once the ending beat lands.",
-  "Use smart dialogue quotation marks (U+201C and U+201D) for every spoken line so dialogue density is easy to verify without raw ASCII quote characters inside JSON text values.",
+  "Use the conventional dialogue quotation marks for the output language for every spoken line (curly U+201C/U+201D for Latin-script languages, corner brackets U+300C/U+300D for Japanese) so dialogue density is easy to verify without raw ASCII quote characters inside JSON text values.",
   "If dialogue density is high, build the chapter around verbal exchanges rather than reflective narration.",
   "Keep continuity exact across names, status positions, emotional facts, and chapter logic.",
   "Honor the chapter-specific architecture instructions even when they narrow the general word-count target.",

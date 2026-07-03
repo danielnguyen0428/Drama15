@@ -69,7 +69,8 @@ export async function runReaderPanel(input: ReaderPanelInput): Promise<ReaderPan
     });
 
     return normalizeReaderPanelReport(result.data, result.modelUsed);
-  } catch {
+  } catch (error) {
+    console.warn(`[reader-panel] evaluation skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }

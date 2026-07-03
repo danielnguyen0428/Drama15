@@ -63,7 +63,8 @@ export async function evaluateFoundation(input: FoundationGateInput): Promise<Fo
       timeoutMs: input.timeoutMs,
     });
     return normalizeFoundationReport(result.data, result.modelUsed);
-  } catch {
+  } catch (error) {
+    console.warn(`[foundation-gate] evaluation skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }

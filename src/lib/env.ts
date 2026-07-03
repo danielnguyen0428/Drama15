@@ -34,7 +34,13 @@ const EnvSchema = z.object({
   ROUTER_FALLBACK_ENABLED: z.string().optional().transform((value) => value !== "false"),
   DEFAULT_LINE_PRESET: z.string().default("billionaire_rich_poor_romance"),
   DEFAULT_STYLE_PRESET: z.string().default("co_man_warm_modern_blueprint"),
-  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().default(15),
+  // Drama15's pipeline is hardwired to a 15-chapter architecture (schema
+  // `.length(15)`/`.max(15)`, the 15-beat chapter architecture, and the ch14/15
+  // reveal/equilibrium prompts). A different value would pass request validation
+  // but fail mid-generation, so the count is locked to 15 at config load.
+  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().refine((value) => value === 15, {
+    message: "DEFAULT_CHAPTER_COUNT must be 15 — the Drama15 pipeline is fixed to a 15-chapter architecture.",
+  }).default(15),
   OUTPUT_DIR: z.string().optional(),
   WRITE_EXPORT_FILES: z.string().optional().transform((value) => value === "true"),
   MODEL_PRESET: z.string().default("default"),
@@ -42,7 +48,7 @@ const EnvSchema = z.object({
   MODEL_PRESET_PRO: z.string().default("pro"),
   MODEL_PRESET_PREMIUM: z.string().default("premium"),
   MANAGED_C_PROVIDER_MODEL: z.string().default("tanynguyen97/deepseek-v4-flash [cheap]"),
-  AUXILIARY_ANALYSIS_MODEL: z.string().default("mainnewnol/deepseek-v4-flash"),
+  AUXILIARY_ANALYSIS_MODEL: z.string().default("tanynguyen97/deepseek-v4-flash [cheap]"),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

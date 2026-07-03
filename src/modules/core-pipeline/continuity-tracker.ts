@@ -103,19 +103,30 @@ export class ContinuityTracker {
 
     this.characterFacts.set(chapter.chapterNumber, factSheet);
 
-    // Check if this chapter achieved its planned beat
+    const chapterBody = `${chapter.summary}\n${chapter.text}`;
+
+    // Mark the planned beat as achieved only when the chapter body actually
+    // shares content with the planned beat. A chapter that drifts entirely off
+    // its plan leaves the beat unachieved instead of being rubber-stamped.
     const beat = this.plotBeats.find((b) => b.chapterNumber === chapter.chapterNumber);
     if (beat) {
-      beat.achieved = true;
+      beat.achieved = hasContentOverlap(beat.plannedBeat, chapterBody);
       beat.summary = chapter.summary;
     }
 
-    // Check foreshadow activation (the activation chapter pays off the plant)
+    // Foreshadow payoff: at the activation chapter, only flip a planted item to
+    // "activated" when the chapter text echoes the planted detail; otherwise the
+    // payoff is missing and the item is recorded as "missed" so the propagation
+    // ledger can surface it.
     if (chapter.chapterNumber === DRAMA15_KEY_CHAPTERS.foreshadowActivate && this.foreshadowItems.length > 0) {
       for (const item of this.foreshadowItems) {
         if (item.status === "planted") {
-          item.activatedInChapter = DRAMA15_KEY_CHAPTERS.foreshadowActivate;
-          item.status = "activated";
+          if (hasContentOverlap(item.detail, chapterBody)) {
+            item.activatedInChapter = DRAMA15_KEY_CHAPTERS.foreshadowActivate;
+            item.status = "activated";
+          } else {
+            item.status = "missed";
+          }
         }
       }
     }
@@ -284,4 +295,40 @@ export class ContinuityTracker {
   }> {
     return collectSpeechPatternsFromBible(this.storyBible);
   }
+}
+
+/**
+ * Deterministic, language-agnostic check for whether `body` actually engages
+ * with the content of `reference` (a planned beat or a foreshadow detail).
+ *
+ * It extracts the distinctive content tokens of the reference (dropping very
+ * short/common tokens) and returns true when a meaningful fraction of them
+ * reappear in the chapter body. The threshold is intentionally lenient so it
+ * only flags chapters that drift almost entirely off their plan — the goal is
+ * to stop unconditional "achieved/activated" rubber-stamping, not to police
+ * paraphrase. When the reference carries too few distinctive tokens to judge,
+ * it defaults to true (achieved) to avoid false "missed" reports.
+ */
+function hasContentOverlap(reference: string, body: string): boolean {
+  const referenceTokens = distinctiveTokens(reference);
+  if (referenceTokens.size < 3) {
+    return true;
+  }
+  const bodyTokens = distinctiveTokens(body);
+  let matched = 0;
+  for (const token of referenceTokens) {
+    if (bodyTokens.has(token)) {
+      matched += 1;
+    }
+  }
+  return matched / referenceTokens.size >= 0.25;
+}
+
+function distinctiveTokens(text: string): Set<string> {
+  const tokens = text
+    .toLowerCase()
+    .normalize("NFC")
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((token) => token.length >= 4);
+  return new Set(tokens);
 }

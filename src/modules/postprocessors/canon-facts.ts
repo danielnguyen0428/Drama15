@@ -49,7 +49,8 @@ export async function generateCanonFacts(input: CanonFactsInput): Promise<string
       timeoutMs: input.timeoutMs,
     });
     return normalizeCanonFacts(result.data, maxFacts);
-  } catch {
+  } catch (error) {
+    console.warn(`[canon-facts] generation skipped (fail-open): ${error instanceof Error ? error.message : String(error)}`);
     return [];
   }
 }

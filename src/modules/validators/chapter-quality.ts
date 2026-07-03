@@ -88,6 +88,7 @@ export function analyzeChapterQuality(
   chapterNumber?: number,
   userIntensity?: number,
   addressRegisters?: AddressRegisterMap,
+  phraseReuseIndex?: PhraseReuseIndex,
 ): ChapterQualityMetrics {
   const wordCount = countWordLikeUnits(text, outputLanguage);
   const paragraphs = text.split(/\n\s*\n/).filter((value) => value.trim().length > 0);
@@ -121,9 +122,9 @@ export function analyzeChapterQuality(
   const structuralSlop = detectStructuralSlop(text);
 
   // Phrase Reuse Tracking
-  const phraseReuseIndex = getOrCreatePhraseReuseIndex();
+  const resolvedPhraseReuseIndex = phraseReuseIndex ?? getOrCreatePhraseReuseIndex();
   const phraseReuse = chapterNumber !== undefined
-    ? scoreCandidate(phraseReuseIndex, text, chapterNumber)
+    ? scoreCandidate(resolvedPhraseReuseIndex, text, chapterNumber)
     : { reuseScore: 0, topRepeats: [], needsRepair: false };
 
   const scaling = buildUserDraftScaling(controls, userIntensity);
@@ -196,6 +197,60 @@ export function needsChapterRetry(metrics: ChapterQualityMetrics) {
 
 export function hasOnlySoftChapterQualityFailures(metrics: ChapterQualityMetrics) {
   return metrics.failures.length > 0 && metrics.failures.every((failure) => SOFT_CHAPTER_QUALITY_FAILURES.has(failure));
+}
+
+// A chapter is allowed to ship with a few individual soft-quality misses, but a
+// chapter that trips many soft checks at once reads as broadly machine-written.
+// Beyond this budget the accumulated soft failures are treated as blocking, which
+// restores a real gate for languages (e.g. English) where the only hard check —
+// the address register — does not apply.
+export const SOFT_CHAPTER_QUALITY_FAILURE_BUDGET = 3;
+
+export function countSoftChapterQualityFailures(metrics: ChapterQualityMetrics): number {
+  return metrics.failures.filter((failure) => SOFT_CHAPTER_QUALITY_FAILURES.has(failure)).length;
+}
+
+/**
+ * True when the chapter's soft-failure count is within the acceptable budget.
+ * Used at the final accept/reject decision so a chapter that fails most soft
+ * checks simultaneously is not silently published.
+ */
+export function isWithinSoftFailureBudget(metrics: ChapterQualityMetrics): boolean {
+  return countSoftChapterQualityFailures(metrics) <= SOFT_CHAPTER_QUALITY_FAILURE_BUDGET;
+}
+
+/**
+ * Composite penalty score for a chapter (lower is better). Used to decide
+ * whether a rewritten/tightened chapter is actually an improvement before it is
+ * allowed to overwrite the original. Hard failures dominate; the soft signal
+ * scores (ai-tell, structural slop, phrase reuse) act as tie-breakers, and low
+ * sentence-length variance is penalized because uniform prose reads as machine
+ * written.
+ */
+export function scoreChapterQualityPenalty(metrics: ChapterQualityMetrics): number {
+  const hardFailures = metrics.failures.filter((failure) => !SOFT_CHAPTER_QUALITY_FAILURES.has(failure)).length;
+  const softFailures = metrics.failures.filter((failure) => SOFT_CHAPTER_QUALITY_FAILURES.has(failure)).length;
+  const varianceGap = Math.max(0, 0.65 - metrics.sentenceVariance.cv);
+  return (
+    hardFailures * 1000 +
+    softFailures * 100 +
+    metrics.aiTellScore * 10 +
+    metrics.structuralSlop.score * 10 +
+    metrics.phraseReuse.reuseScore * 10 +
+    varianceGap * 5
+  );
+}
+
+/**
+ * True when `candidate` is at least as good as `baseline` (its penalty is not
+ * higher). Guards the adversarial-cut and revision passes so they can never
+ * replace a chapter with a strictly worse one.
+ */
+export function isChapterQualityNotWorse(
+  candidate: ChapterQualityMetrics,
+  baseline: ChapterQualityMetrics,
+): boolean {
+  return scoreChapterQualityPenalty(candidate) <= scoreChapterQualityPenalty(baseline);
 }
 
 function countWordLikeUnits(text: string, outputLanguage?: OutputLanguage) {

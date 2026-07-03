@@ -57,7 +57,8 @@ import {
   validateOutlineGeneration,
   validateStoryPayload,
 } from "../validators/story-validator";
-import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, getOrCreatePhraseReuseIndex, resetPhraseReuseIndex, indexChapter, type ChapterQualityMetrics } from "../validators/chapter-quality";
+import { analyzeChapterQuality, hasOnlySoftChapterQualityFailures, needsChapterRetry, isChapterQualityNotWorse, isWithinSoftFailureBudget, getOrCreatePhraseReuseIndex, indexChapter, type ChapterQualityMetrics } from "../validators/chapter-quality";
+import { createPhraseReuseIndex, type PhraseReuseIndex } from "../core-pipeline/validators/phrase-reuse-tracker";
 // ─── Character Consistency (shared core-pipeline) ────────────────────────────
 import {
   createEmptyMemoryStore,
@@ -474,8 +475,10 @@ export class StoryOrchestrator {
       chapterPlan: outline.chapterPlan,
     });
 
-    // Reset phrase reuse index for this generation run
-    resetPhraseReuseIndex();
+    // Per-run phrase-reuse index (instance-scoped, not a shared singleton) so
+    // concurrent story generations on the same web process never contaminate or
+    // reset each other's phrase tracking.
+    const phraseReuseIndex = createPhraseReuseIndex();
 
     // Canon hard-facts (autonovel gen_canon): lock facts before drafting and
     // feed them into every chapter via the continuity tracker.
@@ -538,6 +541,7 @@ export class StoryOrchestrator {
               corpusReference: this.buildCorpusReference(outline.request, chapterPlanItem.chapterNumber),
               memoryStore,
               continuityTracker,
+              phraseReuseIndex,
             },
             outline.request.stylePreset,
             undefined,
@@ -566,7 +570,7 @@ export class StoryOrchestrator {
       chapters.push(chapter);
 
       // Index chapter for phrase reuse tracking
-      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+      indexChapter(phraseReuseIndex, chapter.chapterNumber, chapter.text);
 
       // Update continuity tracker with character facts
       const factSheet = memoryStore.chapters.get(chapter.chapterNumber);
@@ -620,6 +624,12 @@ export class StoryOrchestrator {
       },
       chapters,
       relationshipGraph,
+      // Persist the accumulated address usage so a later resume/regenerate keeps
+      // the cross-chapter address lock instead of starting from an empty list.
+      continuityLite: {
+        ...outline.continuityLite,
+        establishedAddressUsage: continuityTracker.getContinuityContext(chapters.length + 1).establishedAddressUsage,
+      },
       meta: {
         ...outline.meta,
         generatedAt: new Date().toISOString(),
@@ -679,9 +689,49 @@ export class StoryOrchestrator {
     let relationshipGraph = storyPayload.relationshipGraph ?? createInitialRelationshipGraph(storyPayload.storyBible);
     const memoryStore: CharacterMemoryStore = createEmptyMemoryStore();
 
-    resetPhraseReuseIndex();
+    // Rebuild the continuity tracker from the already-written chapters so the
+    // resumed run keeps the same character memory, canon locks, foreshadow and
+    // established-address state as a fresh full run (fixes memory loss on resume).
+    const continuityTracker = new ContinuityTracker({
+      storyBible: storyPayload.storyBible,
+      chapterPlan: storyPayload.chapterPlan,
+    });
+    const canonFacts = storyPayload.continuityLite?.canonFacts ?? [];
+    if (canonFacts.length > 0) {
+      continuityTracker.setCanonFacts(canonFacts);
+    }
+
+    // Per-run phrase-reuse index (instance-scoped, not a shared singleton) so
+    // concurrent resumes on the same web process never contaminate each other.
+    const phraseReuseIndex = createPhraseReuseIndex();
     for (const chapter of chapters) {
-      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+      indexChapter(phraseReuseIndex, chapter.chapterNumber, chapter.text);
+      // Re-extract facts for prior chapters and replay them into the tracker +
+      // memory store + relationship graph so drift checks and the drafting
+      // context see the accumulated arc, not an empty store.
+      try {
+        const factSheet = await extractCharacterFacts(
+          chapter.text,
+          chapter.chapterNumber,
+          storyPayload.storyBible,
+          storyPayload.request.outputLanguage,
+          this.routerClient,
+        );
+        memoryStore.chapters = addFactSheet(memoryStore, factSheet).chapters;
+        relationshipGraph = applyCharacterFactsToRelationshipGraph(relationshipGraph, factSheet);
+        continuityTracker.recordChapter(
+          {
+            chapterNumber: chapter.chapterNumber,
+            title: chapter.title,
+            summary: chapter.summary,
+            text: chapter.text,
+          },
+          factSheet,
+        );
+      } catch {
+        // Fail-open: if a prior chapter cannot be re-analyzed, resume still runs
+        // with whatever memory was reconstructed so far.
+      }
     }
 
     for (const [index, chapterPlanItem] of remainingChapterPlan.entries()) {
@@ -711,6 +761,8 @@ export class StoryOrchestrator {
               voiceLock: this.computeVoiceLock(chapters),
               corpusReference: this.buildCorpusReference(storyPayload.request, chapterPlanItem.chapterNumber),
               memoryStore,
+              continuityTracker,
+              phraseReuseIndex,
             },
             storyPayload.request.stylePreset,
             undefined,
@@ -738,11 +790,20 @@ export class StoryOrchestrator {
 
       chapters.push(chapter);
       chapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
-      indexChapter(getOrCreatePhraseReuseIndex(), chapter.chapterNumber, chapter.text);
+      indexChapter(phraseReuseIndex, chapter.chapterNumber, chapter.text);
 
       const factSheet = memoryStore.chapters.get(chapter.chapterNumber);
       if (factSheet) {
         relationshipGraph = applyCharacterFactsToRelationshipGraph(relationshipGraph, factSheet);
+        continuityTracker.recordChapter(
+          {
+            chapterNumber: chapter.chapterNumber,
+            title: chapter.title,
+            summary: chapter.summary,
+            text: chapter.text,
+          },
+          factSheet,
+        );
       }
 
       const partialStoryPayload = StoryPayloadSchema.parse({
@@ -771,9 +832,19 @@ export class StoryOrchestrator {
       ...storyPayload,
       chapters,
       relationshipGraph,
+      // Persist the accumulated address usage so a later resume/regenerate keeps
+      // the cross-chapter address lock instead of starting from an empty list.
+      continuityLite: {
+        ...storyPayload.continuityLite,
+        establishedAddressUsage: continuityTracker.getContinuityContext(chapters.length + 1).establishedAddressUsage,
+      },
       meta: {
         ...storyPayload.meta,
         generatedAt: new Date().toISOString(),
+        ...((): { propagationDebt?: StoryPayload["meta"]["propagationDebt"] } => {
+          const propagationDebt = this.computePropagationDebt(continuityTracker);
+          return propagationDebt ? { propagationDebt } : {};
+        })(),
       },
     });
     const evaluationModels: PostProcessModels = {
@@ -854,9 +925,19 @@ export class StoryOrchestrator {
     // ─── Enhanced continuity context (includes character memory) ───────────
     const memoryStore = parsed.memoryStore as CharacterMemoryStore | undefined;
     const continuityTracker = parsed.continuityTracker as ContinuityTracker | undefined;
+    // Per-run phrase-reuse index (falls back to the shared singleton only when a
+    // caller does not thread one through — avoids cross-story contamination when
+    // multiple stories generate concurrently in the same process).
+    const phraseReuseIndex = (parsed.phraseReuseIndex as PhraseReuseIndex | undefined) ?? getOrCreatePhraseReuseIndex();
     const enhancedContinuity: StoryPayload["continuityLite"] | undefined = continuityTracker
       ? continuityTracker.getContinuityContext(parsed.chapterNumber) as StoryPayload["continuityLite"]
       : continuityLite;
+
+    // Render the accumulated character arc (emotional state, relationship
+    // changes, established facts, foreshadow) from prior chapters directly into
+    // the draft prompt so character development actually drives the writing —
+    // not just the post-hoc consistency check.
+    const characterArcContext = continuityTracker?.toPromptContext();
 
     const chapterPrompt = buildChapterDraftPrompt({
       storyTitle: parsed.storyTitle,
@@ -864,6 +945,7 @@ export class StoryOrchestrator {
       chapterPlanItem,
       previousChapterSummaries: parsed.previousChapterSummaries,
       continuityLite: enhancedContinuity,
+      characterArcContext,
       draftControls,
       userIntensity: parsed.userIntensity,
       outputLanguage: parsed.outputLanguage ?? "english",
@@ -929,6 +1011,7 @@ export class StoryOrchestrator {
           parsed.chapterNumber,
           parsed.userIntensity,
           addressRegisters,
+          phraseReuseIndex,
         );
 
         // ─── Character Consistency Check ──────────────────────────────────
@@ -1031,6 +1114,7 @@ export class StoryOrchestrator {
             parsed.chapterNumber,
             parsed.userIntensity,
             addressRegisters,
+            phraseReuseIndex,
           );
 
           // Re-check consistency after repair
@@ -1086,7 +1170,7 @@ export class StoryOrchestrator {
           }
         }
 
-        if (hasOnlySoftChapterQualityFailures(metrics)) {
+        if (hasOnlySoftChapterQualityFailures(metrics) && isWithinSoftFailureBudget(metrics)) {
           return {
             chapter: repairedChapter,
             repaired: true,
@@ -1130,6 +1214,7 @@ export class StoryOrchestrator {
             chapterNumber: parsed.chapterNumber,
             userIntensity: parsed.userIntensity,
             timeoutMs: env.routerChapterTimeoutMs,
+            phraseReuseIndex,
           });
         }
 
@@ -1140,8 +1225,9 @@ export class StoryOrchestrator {
           parsed.chapterNumber,
           parsed.userIntensity,
           collectAddressRegistersFromBible(parsed.storyBible),
+          phraseReuseIndex,
         );
-        if (needsChapterRetry(finalMetrics) && !hasOnlySoftChapterQualityFailures(finalMetrics)) {
+        if (needsChapterRetry(finalMetrics) && (!hasOnlySoftChapterQualityFailures(finalMetrics) || !isWithinSoftFailureBudget(finalMetrics))) {
           throw new AppError(
             "MODEL_OUTPUT_INVALID",
             `Chapter ${parsed.chapterNumber} still failed quality checks after repair: ${finalMetrics.failures.join("; ")}.`,
@@ -1161,6 +1247,7 @@ export class StoryOrchestrator {
           chapterNumber: parsed.chapterNumber,
           userIntensity: parsed.userIntensity,
           timeoutMs: env.routerChapterTimeoutMs,
+          phraseReuseIndex,
         });
       },
       `Chương ${parsed.chapterNumber} đã sẵn sàng.`,
@@ -1477,6 +1564,7 @@ export class StoryOrchestrator {
       chapterNumber: number;
       userIntensity?: number;
       timeoutMs?: number;
+      phraseReuseIndex?: PhraseReuseIndex;
     },
   ): Promise<Chapter> {
     if (!env.adversarialCutEnabled) {
@@ -1499,15 +1587,31 @@ export class StoryOrchestrator {
         return chapter;
       }
 
+      const baselineMetrics = analyzeChapterQuality(
+        chapter.text,
+        options.draftControls,
+        options.outputLanguage,
+        options.chapterNumber,
+        options.userIntensity,
+        undefined,
+        options.phraseReuseIndex,
+      );
       const metrics = analyzeChapterQuality(
         tightened,
         options.draftControls,
         options.outputLanguage,
         options.chapterNumber,
         options.userIntensity,
+        undefined,
+        options.phraseReuseIndex,
       );
       if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
         // Cut broke a hard rule (e.g. word count floor) — keep the original.
+        return chapter;
+      }
+      if (!isChapterQualityNotWorse(metrics, baselineMetrics)) {
+        // The cut lowered overall quality (more AI-tells, worse variance, more
+        // phrase reuse) without breaking a hard rule — keep the original.
         return chapter;
       }
 
@@ -1566,10 +1670,15 @@ export class StoryOrchestrator {
         attempts += 1;
         const candidate = await this.generateOutline(request, progress, options);
         const candidateReport = await evaluate(candidate);
-        if (!candidateReport || candidateReport.overallScore > (bestReport?.overallScore ?? 0)) {
+        if (!candidateReport) {
+          // Evaluation was unavailable for this attempt (transient model/parse
+          // error). Keep the current best scored outline instead of swapping in
+          // an unscored candidate, then stop trying.
+          break;
+        }
+        if (candidateReport.overallScore > bestReport.overallScore) {
           best = candidate;
           bestReport = candidateReport;
-          if (!candidateReport) break; // can't compare further; keep this one
         }
       }
 
@@ -1645,8 +1754,11 @@ export class StoryOrchestrator {
       return unchanged;
     }
 
+    // Act on medium-and-up issues (not only "high"): reader-panel / review
+    // rarely emit "high", so a high-only threshold left the loop effectively
+    // dormant. maxChapters still bounds how many chapters are rewritten.
     const briefs = planChapterRevisions(reports.readerPanel, reports.manuscriptReview, {
-      minSeverity: "high",
+      minSeverity: "medium",
       maxChapters: env.revisionMaxChapters,
     });
     if (briefs.length === 0) {
@@ -1703,15 +1815,31 @@ export class StoryOrchestrator {
             validateChapterDraft(unwrapEnvelope(result.data, "chapter"), current.chapterNumber),
             chapterPlanItem.title,
           );
+          const addressRegisters = collectAddressRegistersFromBible(storyPayload.storyBible);
           const metrics = analyzeChapterQuality(
             candidate.text,
             draftControls,
             outputLanguage,
             current.chapterNumber,
             storyPayload.request.storyControls.intensity,
+            addressRegisters,
           );
           if (needsChapterRetry(metrics) && !hasOnlySoftChapterQualityFailures(metrics)) {
             continue; // keep original — revision broke a hard rule
+          }
+
+          // Only accept the revision if it is at least as good as the current
+          // chapter; otherwise a "revision" could silently degrade the prose.
+          const baselineMetrics = analyzeChapterQuality(
+            current.text,
+            draftControls,
+            outputLanguage,
+            current.chapterNumber,
+            storyPayload.request.storyControls.intensity,
+            addressRegisters,
+          );
+          if (!isChapterQualityNotWorse(metrics, baselineMetrics)) {
+            continue; // keep original — revision did not improve quality
           }
 
           chapters[index] = candidate;
