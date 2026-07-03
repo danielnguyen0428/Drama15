@@ -419,13 +419,16 @@ export class StoryOrchestrator {
       timeoutMs: env.routerPlanningTimeoutMs,
     });
 
-    const rawSeedPackage = GeneratedSettingSeedSchema.parse(unwrapEnvelope(result.data, "seedPackage"));
+    const rawSeedPackage = parseSeedPackage(unwrapEnvelope(result.data, "seedPackage"), result.modelUsed);
     const customDramaBranch = request.customCreativeInputs?.dramaBranch?.trim();
     const normalizedSeedPackage = customDramaBranch
-      ? GeneratedSettingSeedSchema.parse({
-          ...rawSeedPackage,
-          linePreset: customDramaBranch,
-        })
+      ? parseSeedPackage(
+          {
+            ...rawSeedPackage,
+            linePreset: customDramaBranch,
+          },
+          result.modelUsed,
+        )
       : rawSeedPackage;
     const postProcessedSeedPackage = GeneratedSettingSeedSchema.safeParse({
       ...normalizedSeedPackage,
@@ -2064,6 +2067,25 @@ function buildChapterRepairExtras(params: {
 
 function normalizeHistoryKeyPart(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+/**
+ * Validate a model-produced seed package. A schema miss here means the model
+ * returned malformed/off-spec content, so it surfaces as a 502 MODEL_OUTPUT_INVALID
+ * (not a 400 request error) — otherwise the ZodError bubbles up and the API
+ * mislabels a bad model response as "invalid request data".
+ */
+function parseSeedPackage(value: unknown, modelUsed?: string) {
+  const parsed = GeneratedSettingSeedSchema.safeParse(value);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  throw new AppError(
+    "MODEL_OUTPUT_INVALID",
+    `Model${modelUsed ? ` ${modelUsed}` : ""} trả gói gợi ý sai định dạng. Hãy thử lại hoặc đổi model.`,
+    502,
+    { issues: parsed.error.issues },
+  );
 }
 
 function unwrapEnvelope(value: unknown, key: string) {

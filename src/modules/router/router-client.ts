@@ -422,9 +422,16 @@ function extractChoiceDeltaContent(response: unknown) {
 }
 
 function supportsJsonResponseFormat(model: string) {
-  const prefix = model.split("/")[0] || "";
-  const nonJsonFormatPrefixes = ["kr", "anthropic", "claude"];
-  return !nonJsonFormatPrefixes.includes(prefix.toLowerCase());
+  const normalized = model.toLowerCase();
+  // Some providers (Anthropic Claude, certain Korean models) do not support the
+  // OpenAI-style response_format json_object. Match anywhere in the model id, not
+  // just the namespace prefix, so bare ids like "claude-opus-4.8" are covered.
+  const unsupportedMarkers = ["anthropic", "claude"];
+  if (unsupportedMarkers.some((marker) => normalized.includes(marker))) {
+    return false;
+  }
+  const prefix = normalized.split("/")[0] || "";
+  return prefix !== "kr";
 }
 
 function extractModelIds(response: unknown) {
