@@ -86,6 +86,7 @@ import {
 } from "../core-pipeline/continuity-tracker";
 import { applyCharacterFactsToRelationshipGraph, createInitialRelationshipGraph } from "../relationship/relationship-graph";
 import { analyzeVoiceFingerprint, buildVoiceLockInstruction } from "../core-pipeline/validators/voice-fingerprint";
+import { buildChapterCorpusReference } from "../corpus/corpus-retrieval";
 import { buildPropagationLedger } from "../core-pipeline/validators/propagation-ledger";
 import { getRemainingChapterPlanItems } from "./story-resume";
 import { resolveFinalStoryTitle } from "./story-title";
@@ -534,6 +535,7 @@ export class StoryOrchestrator {
               outputLanguage: request.outputLanguage,
               storyTitle: outline.title,
               voiceLock: this.computeVoiceLock(chapters),
+              corpusReference: this.buildCorpusReference(outline.request, chapterPlanItem.chapterNumber),
               memoryStore,
               continuityTracker,
             },
@@ -707,6 +709,7 @@ export class StoryOrchestrator {
               outputLanguage: storyPayload.request.outputLanguage,
               storyTitle: storyPayload.title,
               voiceLock: this.computeVoiceLock(chapters),
+              corpusReference: this.buildCorpusReference(storyPayload.request, chapterPlanItem.chapterNumber),
               memoryStore,
             },
             storyPayload.request.stylePreset,
@@ -867,6 +870,7 @@ export class StoryOrchestrator {
       stylePreset: context.stylePreset,
       prosePolishConfig: this.prosePolishConfig,
       voiceLock: parsed.voiceLock,
+      corpusReference: parsed.corpusReference,
     });
 
     const chapterResult = await runProgressStage(
@@ -965,7 +969,7 @@ export class StoryOrchestrator {
         }
 
         let repairedChapter = chapter;
-        const maxAttempts = metrics.addressRegister.needsRepair || metrics.sentenceVariance.needsRepair || (driftReport && hasCriticalViolations(driftReport))
+        const maxAttempts = metrics.addressRegister.needsRepair || metrics.sentenceVariance.needsRepair || metrics.vietnameseAiVoice.needsRepair || (driftReport && hasCriticalViolations(driftReport))
           ? MAX_CHAPTER_REPAIR_ATTEMPTS + 1
           : MAX_CHAPTER_REPAIR_ATTEMPTS;
 
@@ -1419,6 +1423,20 @@ export class StoryOrchestrator {
     }
     const fingerprint = analyzeVoiceFingerprint(chapters.map((chapter) => chapter.text));
     return fingerprint ? buildVoiceLockInstruction(fingerprint) : undefined;
+  }
+
+  /**
+   * Retrieve real chapter excerpts (same niche when available) as structure
+   * references for the drafter. Fail-open: returns undefined when the corpus
+   * asset is absent, so it silently no-ops until the asset is deployed.
+   */
+  private buildCorpusReference(
+    request: { linePreset?: string; customCreativeInputs?: { dramaBranch?: string | null } | null } | undefined,
+    chapterNumber: number,
+  ): string | undefined {
+    const niche = request?.customCreativeInputs?.dramaBranch?.trim() || request?.linePreset;
+    const reference = buildChapterCorpusReference({ niche: niche || undefined, chapterNumber });
+    return reference || undefined;
   }
 
   /**

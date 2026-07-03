@@ -345,6 +345,8 @@ export const GenerateChapterRequestSchema = z
     continuityLite: ContinuityLiteSchema.optional(),
     // ─── Voice lock (optional, derived from earlier chapters) ─────────────
     voiceLock: z.string().optional(),
+    // ─── Corpus structure references (optional, retrieved from corpus asset) ─
+    corpusReference: z.string().optional(),
     // ─── Character Consistency (optional, added for character tracking) ──
     memoryStore: z.any().optional(),
     continuityTracker: z.any().optional(),

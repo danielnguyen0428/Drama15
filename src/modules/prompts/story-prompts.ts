@@ -47,6 +47,10 @@ import {
   buildVarianceRepairInstruction,
 } from "../core-pipeline/validators/sentence-variance";
 import {
+  analyzeVietnameseAiVoice,
+  buildVietnameseAiVoiceRepairInstruction,
+} from "../core-pipeline/validators/vietnamese-ai-voice";
+import {
   renderConceptTitleGrammarForPrompt,
   renderNicheAwareTitleGrammarForPrompt,
   renderTrendAwareSeedEngineForPrompt,
@@ -748,6 +752,7 @@ export function buildChapterDraftPrompt(params: {
   stylePreset: StylePreset;
   prosePolishConfig?: LocalProsePolishConfig;
   voiceLock?: string;
+  corpusReference?: string;
 }): PromptBundle {
   const {
     storyTitle,
@@ -760,6 +765,7 @@ export function buildChapterDraftPrompt(params: {
     outputLanguage,
     stylePreset,
     voiceLock,
+    corpusReference,
   } = params;
   const targetWords = resolveLegacyTargetWords(draftControls);
   const scaling = chapterScalingInput(draftControls, userIntensity);
@@ -806,6 +812,7 @@ export function buildChapterDraftPrompt(params: {
       "Cut duplicate reaction beats. Do not explain the same humiliation twice in narration.",
       "Keep the prose sharp and readable. Avoid padded description.",
       "Sentence rhythm — write like the human author defined by the style blueprint, not like an AI. Vary sentence length hard: mix short 3-8 word lines with longer 20-35 word sentences that use subordinate clauses, and follow the blueprint's sentence music. Do not let most sentences land near the same length, and do not open consecutive sentences with the same subject. Aim for human length variance (coefficient of variation ≥ 0.65); flat, uniform sentence lengths read as machine-written.",
+      ...(corpusReference ? [corpusReference] : []),
       prosePolishBlock(params.prosePolishConfig, "chapter", outputLanguage),
       ...(voiceLock ? [voiceLock] : []),
       ...renderSpeechPatternPromptBlock(storyBible),
@@ -856,6 +863,7 @@ export function buildChapterRepairPrompt(params: {
   const needsDialogueRepair = params.failures.some((failure) => /dialogue ratio/i.test(failure));
   const needsHookRepair = params.failures.some((failure) => /hook density/i.test(failure));
   const needsVarianceRepair = params.failures.some((failure) => /sentence length variance/i.test(failure));
+  const needsVnVoiceRepair = params.failures.some((failure) => /vietnamese AI-voice/i.test(failure));
 
   return [
     "The previous draft missed quality targets and must be rewritten to pass them.",
@@ -886,6 +894,9 @@ export function buildChapterRepairPrompt(params: {
       : []),
     ...(needsVarianceRepair
       ? [buildVarianceRepairInstruction(analyzeSentenceVariance(params.previousDraft))]
+      : []),
+    ...(needsVnVoiceRepair
+      ? [buildVietnameseAiVoiceRepairInstruction(analyzeVietnameseAiVoice(params.previousDraft))]
       : []),
     // Character consistency drift violations
     ...(params.driftViolations && params.driftViolations.length > 0

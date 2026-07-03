@@ -9,6 +9,7 @@ import {
 } from "../prompts/draft-controls-scaling";
 import { detectAiTells, type AiTellReport } from "../core-pipeline/validators/ai-tell-detector";
 import { analyzeSentenceVariance, type SentenceVarianceMetrics } from "../core-pipeline/validators/sentence-variance";
+import { analyzeVietnameseAiVoice, type VietnameseAiVoiceReport } from "../core-pipeline/validators/vietnamese-ai-voice";
 import { detectStructuralSlop, type StructuralSlopReport } from "../core-pipeline/validators/structural-slop";
 import {
   createPhraseReuseIndex,
@@ -50,6 +51,7 @@ const AI_TELL_FAILURE = "AI-tell phrases exceed acceptable threshold";
 const SENTENCE_VARIANCE_FAILURE = "sentence length variance is too uniform (AI-like)";
 const PHRASE_REUSE_FAILURE = "phrase reuse across chapters exceeds threshold";
 const STRUCTURAL_SLOP_FAILURE = "structural slop patterns exceed acceptable threshold";
+const VIETNAMESE_AI_VOICE_FAILURE = "vietnamese AI-voice patterns exceed threshold";
 const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   DIALOGUE_RATIO_FAILURE,
   HOOK_DENSITY_FAILURE,
@@ -57,6 +59,7 @@ const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   SENTENCE_VARIANCE_FAILURE,
   PHRASE_REUSE_FAILURE,
   STRUCTURAL_SLOP_FAILURE,
+  VIETNAMESE_AI_VOICE_FAILURE,
 ]);
 
 export type ChapterQualityMetrics = {
@@ -68,6 +71,7 @@ export type ChapterQualityMetrics = {
   aiTellScore: number;
   aiTellReport: AiTellReport;
   sentenceVariance: SentenceVarianceMetrics;
+  vietnameseAiVoice: VietnameseAiVoiceReport;
   structuralSlop: StructuralSlopReport;
   phraseReuse: PhraseReuseReport;
   addressRegister: {
@@ -109,6 +113,9 @@ export function analyzeChapterQuality(
   // Sentence Variance Analysis
   const sentenceVariance = analyzeSentenceVariance(text);
 
+  // Vietnamese AI-voice (structural clichés / opener cadence) — only meaningful for VN.
+  const vietnameseAiVoice = analyzeVietnameseAiVoice(text);
+
   // Structural Slop Detection (em-dash overload, "not just X but Y",
   // transition-opening addiction, hedge chains) — autonovel ANTI-PATTERNS.
   const structuralSlop = detectStructuralSlop(text);
@@ -140,6 +147,7 @@ export function analyzeChapterQuality(
     aiTellScore: aiTellReport.score,
     aiTellReport,
     sentenceVariance,
+    vietnameseAiVoice,
     structuralSlop,
     phraseReuse,
     addressRegister,
@@ -165,6 +173,10 @@ export function analyzeChapterQuality(
 
   if (structuralSlop.needsRepair) {
     metrics.failures.push(STRUCTURAL_SLOP_FAILURE);
+  }
+
+  if ((outputLanguage ?? "vietnamese") === "vietnamese" && vietnameseAiVoice.needsRepair) {
+    metrics.failures.push(VIETNAMESE_AI_VOICE_FAILURE);
   }
 
   if (phraseReuse.needsRepair) {
