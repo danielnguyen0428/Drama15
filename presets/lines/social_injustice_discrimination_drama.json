@@ -42,7 +42,15 @@
     "Religious Headscarf Cost Her The Job, The Court Cost Them The Brand",
     "Body-Cam Footage Cleared The Wrongful Arrest",
     "Pregnancy Cost Her The Promotion, The EEOC Cost Them The Settlement",
-    "The Bouncer Said She Did Not Look The Part, The Stage Disagreed"
+    "The Bouncer Said She Did Not Look The Part, The Stage Disagreed",
+    "Store Detective Followed Her Until The Body-Cam Cleared Her",
+    "Interpreter Denied, The Deaf Client Won The Appeal",
+    "They Seated Her By The Kitchen Until The Critic Recognized Her",
+    "The Ramp Was Locked, The Access Suit Was Not",
+    "Accent Cost Her The Call Center, Fluency Cost Them The Client",
+    "Nurse Ignored Her Pain Until The Chart Was Subpoenaed",
+    "The HOA Fined Her Flag, The Court Fined The HOA",
+    "Turned Away From The Ward, She Funded The New Wing"
   ],
   "tropeWeights": {
     "discrimination_wound": 1,

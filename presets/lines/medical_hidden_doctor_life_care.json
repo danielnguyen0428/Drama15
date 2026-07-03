@@ -45,7 +45,15 @@
     "Hospice Nurse Held The Family To The Last Honest Conversation",
     "Combat Medic Came Home And Reformed The ER",
     "Rural Clinic Doctor Out-Diagnosed The City Hospital",
-    "Whistleblower Resident Saved The Recall"
+    "Whistleblower Resident Saved The Recall",
+    "Night-Shift Nurse Caught The Dosage The Attending Missed",
+    "The VIP Skipped The Line Until The Triage Log Surfaced",
+    "Volunteer Medic Was The Surgeon They Turned Away",
+    "Consent Was Forged, The Ethics Board Was Not",
+    "They Called Her Overqualified Until The Code Blue",
+    "Insurance Denied The Child, The Chief Resident Did Not",
+    "The Retired Doctor Reopened The Case They Buried",
+    "Her Free Clinic Out-Diagnosed The Private Hospital"
   ],
   "tropeWeights": {
     "medical_justice": 1,

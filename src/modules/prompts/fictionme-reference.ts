@@ -1085,20 +1085,94 @@ export const FICTIONME_DARK_ROMANCE: FictionMeEntry[] = [
   }
 ];
 
+// Hand-authored market-pattern pools (original synthetic loglines, not copied
+// from any real work) so niches outside the billionaire/dark-romance clusters
+// stop borrowing the billionaire CEO signal set. Each entry follows the same
+// {title, premise} shape the crawl pools use, so extractReferenceSignals and the
+// few-shot renderer treat them identically.
+const FICTIONME_FAMILY_BETRAYAL: FictionMeEntry[] = [
+  { title: "The Daughter They Wrote Off", premise: "After paying the family mortgage for a decade, Mai is locked out the day her brother's name replaces hers on the deed, and the only proof she ever paid sits in a folder her mother tried to burn..." },
+  { title: "Sister of the Golden Child", premise: "Lan raised her siblings while the favorite son collected the praise, until a forged loan in her name forces her to choose between family peace and the bank statement that clears her..." },
+  { title: "The Will They Rewrote", premise: "When her father dies, Hana learns the estate lawyer took the family's side and rewrote the will, but the original was witnessed by the one relative everyone ignored..." },
+  { title: "Custody of the Keepsakes", premise: "A widowed mother returns from a work trip to find her in-laws changed the locks and took her child's documents, and the custody hearing turns on a care ledger she quietly kept for years..." },
+  { title: "Scapegoat Inheritance", premise: "Every family debt lands on Thu because she is the one who never fights back, until an audit of the family business payroll shows whose signature really moved the money..." },
+  { title: "The Adoption They Hid", premise: "Told all her life she was the difficult daughter, Bea finds sealed adoption papers her parents buried to protect their reputation, and the truth reshapes who owes whom an apology..." },
+  { title: "Mother Takes the Credit", premise: "When Kim's small bakery finally succeeds, her mother claims it was always the family's business, and the supplier contracts prove who actually built it from nothing..." },
+  { title: "The House on Both Names", premise: "A sister forges a sale to seize the family home, but the probate clerk finds a second name on the title that stops the transfer minutes before it closes..." },
+  { title: "Debt in Her Name", premise: "Yen discovers her brother opened accounts under her identity to fund his image, and the only way out runs through the fraud report her parents beg her not to file..." },
+  { title: "The Care Agreement They Burned", premise: "After years of unpaid elder care, Rosa is told she was never promised anything, until a notarized agreement she thought was destroyed resurfaces at the worst possible dinner..." },
+  { title: "Erased From the Deed", premise: "Her name vanishes from the property she funded, and the bank statements she kept out of habit become the evidence that turns a family betrayal into a courtroom reckoning..." },
+  { title: "The Favorite's Forgery", premise: "When the golden child forges power of attorney over their aging father, the scapegoat daughter is the only one who noticed the signature was wrong..." },
+  { title: "Payroll of Lies", premise: "Working unpaid at the family shop for years, Nia finds her hours erased from the books, and the reopening she was excluded from becomes the stage where the ledger speaks..." },
+  { title: "The Sibling Who Sold It", premise: "A brother empties the joint account before rent day and blames his sister, but the transaction trail refuses to match his story..." },
+];
+
+const FICTIONME_SOCIAL_JUSTICE: FictionMeEntry[] = [
+  { title: "Refused at the Door", premise: "A wheelchair user is turned away from the very restaurant she helped design, and the accessibility policy the manager violated becomes the document that reopens the case..." },
+  { title: "The Wrong Woman at Pickup", premise: "Accused of using a fake prescription in front of a full pharmacy line, Dao says nothing until the authorization record clears her and names who lied..." },
+  { title: "Searched in Public", premise: "Security empties her bag on a staged accusation, and the store's own camera path proves the theft never happened while the crowd already decided she was guilty..." },
+  { title: "The Accent They Mocked", premise: "An immigrant nurse is talked over until her supervisor's wage records reveal the abuse she reported was buried, not investigated..." },
+  { title: "No Chair for Her Shift", premise: "A pregnant worker is denied a seat and told to keep smiling, and the HR complaint she files forces a policy the company hoped no one would ever demand..." },
+  { title: "The Booking That Vanished", premise: "Her hotel reservation is canceled at check-in for reasons no one will name, and the fair-housing investigation follows the paper trail she refused to drop..." },
+  { title: "Filmed Without Consent", premise: "An influencer posts her poverty for clout, and the woman he framed answers not with outrage but with the licensing board that governs his sponsor..." },
+  { title: "The Complaint They Lost", premise: "A public office keeps losing her discrimination complaint until the tracking number she saved reappears in front of the ombudsman..." },
+  { title: "Denied the Test Drive", premise: "In work clothes, she is refused a test drive by a salesman who assumes she cannot pay, unaware the dealership's regional owner is watching the floor..." },
+  { title: "The Service Dog Refusal", premise: "Blocked from entry with her service animal, a mother documents each refusal until the chain's compliance office can no longer look away..." },
+  { title: "Profiled at the Counter", premise: "A bank manager shames her small deposit in front of the branch, and the ledger truth about who she is turns the humiliation into an audit..." },
+  { title: "The Scarred Customer", premise: "A luxury spa refuses a woman for a visible scar, and the health-department review she triggers costs them more than the booking ever would..." },
+  { title: "Verdict in the Body-Cam", premise: "Wrongly detained on a bystander's false report, she waits for the footage that clears her and exposes who called it in..." },
+  { title: "The Ramp Locked at Opening", premise: "On grand-opening day the accessibility ramp is chained shut, and the compliance inspection her video prompts rewrites the venue's rules..." },
+];
+
+const FICTIONME_WEDDING_INFIDELITY: FictionMeEntry[] = [
+  { title: "The Backup Bride's Invoice", premise: "Days before the wedding, Vy finds the venue booked her as the backup bride on the balance sheet, and the deposit trail reveals who paid for the affair she funded..." },
+  { title: "Seated Under My Name", premise: "The mistress is placed at the head table under the bride's upgraded reservation, and the hotel's room-block record dates the betrayal to the engagement..." },
+  { title: "Divorce Papers at the Toast", premise: "Her husband's divorce filing lands during the anniversary speech he insisted on giving, and the shared debt he hid surfaces in the same envelope..." },
+  { title: "The Second Wedding Website", premise: "Weeks before her ceremony, a bride finds the site for his other wedding, and the vendor payment ledger proves which one he actually planned..." },
+  { title: "Custody After the Promotion", premise: "The ex who abandoned her wants custody the moment her career takes off, and the income he hid to cut support becomes the leverage that ends him..." },
+  { title: "The Ring She Funded", premise: "She discovers the engagement was paid from her own account, and the bank trail turns a public humiliation into a quiet, decisive exit..." },
+  { title: "His Mistress in Her Dress", premise: "The other woman wears the gown the bride paid for, and the boutique's alteration records expose how long the affair had been in the fitting room..." },
+  { title: "Prenup Deadline", premise: "The ex returns after the prenup window he thought protected him, unaware the clause he ignored now protects only her..." },
+  { title: "Shared Debt in Her Name", premise: "A husband hides joint debt under his wife's name before the wedding, and the loan documents she finally reads change who owns the house..." },
+  { title: "The Livestream Reveal", premise: "An engagement livestream captures the affair in the background, and the replay everyone screenshots becomes the truth he cannot rewrite..." },
+  { title: "Best Friend, Best Liar", premise: "Her maid of honor stages a theft accusation at the rehearsal, and the vendor logs reveal who really moved the missing deposit..." },
+  { title: "The Runaway Groom's Trail", premise: "He vanishes with the wedding deposit and a paper trail, and she rebuilds not around heartbreak but around the receipts he left behind..." },
+  { title: "Cheated on the Descent", premise: "She learns of the affair on the flight home, and by landing she has already called the attorney whose card he never expected her to keep..." },
+  { title: "She Bought the Venue", premise: "Instead of walking the aisle, she cancels the wedding and buys the chapel, turning the stage of her humiliation into the deed in her name..." },
+];
+
 const NICHE_REFERENCE_MAP: Record<string, FictionMeEntry[]> = {
   billionaire_rich_poor_romance: FICTIONME_BILLIONAIRE_CEO,
   steamy_alien_captive_romance: FICTIONME_DARK_ROMANCE,
   werewolf_luna_alpha_soulmate: FICTIONME_DARK_ROMANCE,
+  toxic_family_betrayal: FICTIONME_FAMILY_BETRAYAL,
+  single_mom_poor_woman_comeback: FICTIONME_FAMILY_BETRAYAL,
+  humiliation_revenge_justice: FICTIONME_SOCIAL_JUSTICE,
+  social_injustice_discrimination_drama: FICTIONME_SOCIAL_JUSTICE,
+  medical_hidden_doctor_life_care: FICTIONME_SOCIAL_JUSTICE,
+  school_campus_bullying_identity: FICTIONME_SOCIAL_JUSTICE,
+  secret_identity_hidden_heiress: FICTIONME_BILLIONAIRE_CEO,
+  cheating_ex_wedding_drama: FICTIONME_WEDDING_INFIDELITY,
+  workplace_ceo_power_struggle: FICTIONME_BILLIONAIRE_CEO,
 };
 
 const SEED_SIGNAL_REFERENCE_MAP: Record<string, FictionMeEntry[]> = {
+  // Urban wealth/power cluster keeps the billionaire/CEO signal set.
   billionaire_rich_poor_romance: FICTIONME_BILLIONAIRE_CEO,
   workplace_ceo_power_struggle: FICTIONME_BILLIONAIRE_CEO,
   secret_identity_hidden_heiress: FICTIONME_BILLIONAIRE_CEO,
-  cheating_ex_wedding_drama: FICTIONME_BILLIONAIRE_CEO,
-  single_mom_poor_woman_comeback: FICTIONME_BILLIONAIRE_CEO,
-  toxic_family_betrayal: FICTIONME_BILLIONAIRE_CEO,
-  humiliation_revenge_justice: FICTIONME_BILLIONAIRE_CEO,
+  // Family/comeback cluster now draws from family-betrayal signals.
+  toxic_family_betrayal: FICTIONME_FAMILY_BETRAYAL,
+  single_mom_poor_woman_comeback: FICTIONME_FAMILY_BETRAYAL,
+  // Justice/dignity cluster draws from social-justice signals (includes the
+  // three niches that previously had no reference at all).
+  humiliation_revenge_justice: FICTIONME_SOCIAL_JUSTICE,
+  social_injustice_discrimination_drama: FICTIONME_SOCIAL_JUSTICE,
+  medical_hidden_doctor_life_care: FICTIONME_SOCIAL_JUSTICE,
+  school_campus_bullying_identity: FICTIONME_SOCIAL_JUSTICE,
+  // Wedding/infidelity cluster gets its own signal set.
+  cheating_ex_wedding_drama: FICTIONME_WEDDING_INFIDELITY,
+  // Fantasy/dark-romance cluster.
   steamy_alien_captive_romance: FICTIONME_DARK_ROMANCE,
   werewolf_luna_alpha_soulmate: FICTIONME_DARK_ROMANCE,
 };
