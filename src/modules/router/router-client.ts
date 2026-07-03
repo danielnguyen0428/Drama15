@@ -23,6 +23,15 @@ type GenerateJsonParams = {
   timeoutMs?: number;
 };
 
+// Flat shape (not a discriminated union) so it narrows correctly even under
+// the API package's non-strict tsconfig (strict: false disables the
+// strictNullChecks that discriminated-union narrowing relies on).
+export type JsonValidationResult<T> = {
+  ok: boolean;
+  value?: T;
+  errors: string[];
+};
+
 type HealthResult = {
   status: "healthy" | "degraded";
   baseUrl: string;
@@ -113,6 +122,51 @@ export class RouterClient {
     }
 
     throw normalizeRouterError(lastError);
+  }
+
+  /**
+   * Generate JSON and validate it against a caller-supplied validator. When the
+   * first result fails validation, run one schema-aware repair round: feed the
+   * model back its own malformed JSON plus the validation errors and ask for a
+   * corrected object. This makes structured-output stages robust across models
+   * (Deepseek, Claude, OpenAI) instead of hard-failing on the first shape miss.
+   *
+   * `validate` returns `{ ok: true, value }` or `{ ok: false, errors }`.
+   * On repeated failure the caller decides how to surface the error via
+   * `onExhausted` (which receives the last raw data and error list).
+   */
+  async generateJsonWithRepair<T>(params: GenerateJsonParams & {
+    validate: (data: unknown) => JsonValidationResult<T>;
+    repairInstruction?: (rawData: unknown, errors: string[]) => string;
+  }): Promise<{ data: T; modelUsed: string }> {
+    const first = await this.generateJson<unknown>(params);
+    const firstCheck = params.validate(first.data);
+    if (firstCheck.ok) {
+      return { data: firstCheck.value as T, modelUsed: first.modelUsed };
+    }
+
+    const repairInstruction = params.repairInstruction
+      ? params.repairInstruction(first.data, firstCheck.errors)
+      : buildJsonRepairInstruction(first.data, firstCheck.errors);
+
+    const repaired = await this.generateJson<unknown>({
+      ...params,
+      userPrompt: `${params.userPrompt}\n\n${repairInstruction}`,
+      // Lower temperature for the correction pass so the model focuses on
+      // matching the required shape rather than re-inventing content.
+      temperature: 0.2,
+    });
+    const repairedCheck = params.validate(repaired.data);
+    if (repairedCheck.ok) {
+      return { data: repairedCheck.value as T, modelUsed: repaired.modelUsed };
+    }
+
+    throw new AppError(
+      "MODEL_OUTPUT_INVALID",
+      `Model ${repaired.modelUsed} returned JSON that failed validation after one repair attempt: ${repairedCheck.errors.join("; ")}.`,
+      502,
+      { errors: repairedCheck.errors, raw: repaired.data },
+    );
   }
 
   private async resolveCandidateModels(model: string, fallbackModel?: string) {
@@ -419,6 +473,24 @@ function extractChoiceDeltaContent(response: unknown) {
   }
 
   return typeof delta.content === "string" ? delta.content : null;
+}
+
+function buildJsonRepairInstruction(rawData: unknown, errors: string[]): string {
+  let previous: string;
+  try {
+    previous = JSON.stringify(rawData, null, 2).slice(0, 4000);
+  } catch {
+    previous = String(rawData).slice(0, 4000);
+  }
+  return [
+    "Your previous JSON did not match the required shape and was rejected.",
+    "Validation errors:",
+    ...errors.map((error, index) => `${index + 1}. ${error}`),
+    "Your previous JSON was:",
+    previous,
+    "Return ONLY a corrected JSON object that fixes every error above.",
+    "Keep every required field, use the exact key names and value types requested, and do not add commentary or markdown fences.",
+  ].join("\n");
 }
 
 function supportsJsonResponseFormat(model: string) {

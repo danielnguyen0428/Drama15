@@ -11,6 +11,7 @@ import type {
   ChapterPlanItem,
   Concept,
   DraftControls,
+  GeneratedSettingSeed,
   GenerateChapterRequest,
   NormalizedFullGenerateRequest,
   NormalizedOutlineRequest,
@@ -44,7 +45,7 @@ import { tightenChapterText } from "../postprocessors/adversarial-cut";
 import { planChapterRevisions, buildRevisionInstruction } from "../postprocessors/revision-planner";
 import { evaluateFoundation, type FoundationReport } from "../postprocessors/foundation-gate";
 import { generateCanonFacts } from "../postprocessors/canon-facts";
-import { RouterClient } from "../router/router-client";
+import { RouterClient, type JsonValidationResult } from "../router/router-client";
 import {
   createContinuityLite,
   ensureChapterPlanIntegrity,
@@ -271,15 +272,23 @@ export class StoryOrchestrator {
           recentStoryTitles: options?.recentStoryTitles,
           prosePolishConfig: this.prosePolishConfig,
         });
-        const conceptResult = await this.routerClient.generateJson<unknown>({
+        const conceptResult = await this.routerClient.generateJsonWithRepair<Concept>({
           model: context.models.planner,
           fallbackModel: context.models.fallback,
           ...conceptPrompt,
           timeoutMs: env.routerPlanningTimeoutMs,
+          validate: (data) => validateParsed(
+            () => parseConcept(unwrapEnvelope(data, "concept")),
+            (concept) => findMissingCoreFields({
+              logline: concept.logline,
+              promise: concept.promise,
+              conflictEngine: concept.conflictEngine,
+            }),
+          ),
         });
 
         return {
-          concept: parseConcept(unwrapEnvelope(conceptResult.data, "concept")),
+          concept: conceptResult.data,
           modelUsed: conceptResult.modelUsed,
         };
       },
@@ -302,16 +311,26 @@ export class StoryOrchestrator {
           stylePreset: context.stylePreset,
           recentSeedHistory: (await this.seedHistoryStore?.load()) ?? [],
         });
-        const bibleResult = await this.routerClient.generateJson<unknown>({
+        const bibleResult = await this.routerClient.generateJsonWithRepair<StoryPayload["storyBible"]>({
           model: context.models.bible,
           fallbackModel: context.models.fallback,
           ...biblePrompt,
           timeoutMs: env.routerPlanningTimeoutMs,
+          validate: (data) => validateParsed(
+            () => parseStoryBible(unwrapEnvelope(data, "storyBible")),
+            (bible) => findMissingCoreFields({
+              premise: bible.premise,
+              "heroine.name": bible.heroine.name,
+              "betrayer.name": bible.betrayer.name,
+              "rival.name": bible.rival.name,
+              betrayalEngine: bible.betrayalEngine,
+            }),
+          ),
         });
 
         return {
           storyBible: enrichStoryBibleAddressRegisters(
-            parseStoryBible(unwrapEnvelope(bibleResult.data, "storyBible")),
+            bibleResult.data,
             request.outputLanguage,
           ),
           modelUsed: bibleResult.modelUsed,
@@ -340,15 +359,21 @@ export class StoryOrchestrator {
           linePreset: context.linePreset,
           stylePreset: context.stylePreset,
         });
-        const chapterPlanResult = await this.routerClient.generateJson<unknown>({
+        const chapterPlanResult = await this.routerClient.generateJsonWithRepair<ChapterPlanItem[]>({
           model: context.models.planner,
           fallbackModel: context.models.fallback,
           ...chapterPlanPrompt,
           timeoutMs: env.routerPlanningTimeoutMs,
+          validate: (data) => validateParsed(
+            () => parseChapterPlan(unwrapArrayEnvelope(data, "chapterPlan")),
+            (plan) => plan.length === context.linePreset.constraints.fixedChapterCount
+              ? []
+              : [`chapterPlan must contain exactly ${context.linePreset.constraints.fixedChapterCount} chapters, got ${plan.length}`],
+          ),
         });
 
         return {
-          chapterPlan: parseChapterPlan(unwrapArrayEnvelope(chapterPlanResult.data, "chapterPlan")),
+          chapterPlan: chapterPlanResult.data,
           modelUsed: chapterPlanResult.modelUsed,
         };
       },
@@ -411,15 +436,16 @@ export class StoryOrchestrator {
       recentStoryTitles: options?.recentStoryTitles,
       prosePolishConfig: this.prosePolishConfig,
     });
-    const result = await this.routerClient.generateJson<unknown>({
+    const result = await this.routerClient.generateJsonWithRepair<GeneratedSettingSeed>({
       model: context.models.planner,
       fallbackModel: context.models.fallback,
       ...prompt,
       temperature: 0.92,
       timeoutMs: env.routerPlanningTimeoutMs,
+      validate: (data) => validateWithSchema(GeneratedSettingSeedSchema, unwrapEnvelope(data, "seedPackage")),
     });
 
-    const rawSeedPackage = parseSeedPackage(unwrapEnvelope(result.data, "seedPackage"), result.modelUsed);
+    const rawSeedPackage = result.data;
     const customDramaBranch = request.customCreativeInputs?.dramaBranch?.trim();
     const normalizedSeedPackage = customDramaBranch
       ? parseSeedPackage(
@@ -2086,6 +2112,68 @@ function parseSeedPackage(value: unknown, modelUsed?: string) {
     502,
     { issues: parsed.error.issues },
   );
+}
+
+/**
+ * Adapt a Zod schema to the generateJsonWithRepair validator contract. On
+ * failure it returns flattened, human-readable errors that are fed back to the
+ * model in the repair round (e.g. "storyControls.betrayerType: Required").
+ */
+type SafeParseLike<T> = {
+  success: boolean;
+  data?: T;
+  error?: { issues: Array<{ path: PropertyKey[]; message: string }> };
+};
+
+function validateWithSchema<T>(
+  schema: { safeParse: (data: unknown) => SafeParseLike<T> },
+  data: unknown,
+): JsonValidationResult<T> {
+  const parsed = schema.safeParse(data);
+  if (parsed.success) {
+    return { ok: true, value: parsed.data as T, errors: [] };
+  }
+  const errors = (parsed.error?.issues ?? []).map((issue) => {
+    const path = issue.path.map((part) => String(part)).join(".");
+    return path ? `${path}: ${issue.message}` : issue.message;
+  });
+  return { ok: false, errors };
+}
+
+/**
+ * Adapt a robust parse function (parseConcept/parseStoryBible/parseChapterPlan)
+ * to the generateJsonWithRepair validator contract. These parsers coerce
+ * missing fields to placeholders instead of throwing, so a caller-supplied
+ * `findIssues` inspects the parsed result and reports any core fields that are
+ * still empty/placeholder — those issues trigger the schema-aware repair round.
+ */
+function validateParsed<T>(
+  parse: () => T,
+  findIssues: (value: T) => string[],
+): JsonValidationResult<T> {
+  let value: T;
+  try {
+    value = parse();
+  } catch (error) {
+    return { ok: false, errors: [error instanceof Error ? error.message : String(error)] };
+  }
+  const issues = findIssues(value);
+  if (issues.length > 0) {
+    return { ok: false, errors: issues };
+  }
+  return { ok: true, value, errors: [] };
+}
+
+const MISSING_FIELD_PLACEHOLDER = "Not provided";
+
+/**
+ * Report the names of core fields that a robust parser left empty or filled
+ * with the "Not provided" placeholder — i.e. fields the model failed to supply.
+ */
+function findMissingCoreFields(fields: Record<string, string | undefined>): string[] {
+  return Object.entries(fields)
+    .filter(([, value]) => !value || !value.trim() || value.trim() === MISSING_FIELD_PLACEHOLDER)
+    .map(([name]) => `${name} is missing or empty; provide a concrete value.`);
 }
 
 function unwrapEnvelope(value: unknown, key: string) {

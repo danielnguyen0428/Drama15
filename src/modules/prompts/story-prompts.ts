@@ -680,6 +680,32 @@ export function buildChapterPlanPrompt(params: {
   };
 }
 
+// Exact JSON skeleton for the setting-seed package. Included in the prompt so
+// models without native JSON-mode (e.g. Claude) still return the precise shape
+// the schema requires. Placeholders show the required keys and value types.
+const SETTING_SEED_JSON_SKELETON = JSON.stringify(
+  {
+    seedPackage: {
+      titleHint: "<string>",
+      linePreset: "<string>",
+      settingSeed: "<string, 120-260 words>",
+      storyControls: {
+        betrayalType: "<string>",
+        shameType: "<string>",
+        revengeMode: "<string>",
+        endingMode: "<string>",
+        intensity: 0.84,
+      },
+      draftControls: {
+        dialogueRatio: 0.56,
+        hookDensity: "medium",
+      },
+    },
+  },
+  null,
+  2,
+);
+
 export function buildSettingSeedPrompt(params: {
   request: NormalizedOutlineRequest;
   linePreset: LinePreset;
@@ -704,6 +730,8 @@ export function buildSettingSeedPrompt(params: {
       buildJsonLanguageInstruction(request.outputLanguage),
       "Return JSON with a single top-level key named seedPackage.",
       "seedPackage must include: titleHint, linePreset, settingSeed, storyControls, draftControls.",
+      "Match this exact JSON shape (replace the placeholders with real values, keep every key and value type):",
+      SETTING_SEED_JSON_SKELETON,
       settingSeedLinePresetInstruction(request),
       "storyControls must include hidden config values: betrayalType, shameType, revengeMode, endingMode, intensity.",
       "draftControls must include: dialogueRatio, hookDensity.",
