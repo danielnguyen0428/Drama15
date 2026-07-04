@@ -295,10 +295,19 @@ app.post('/story/setup-suggest', async (request, reply) => {
       recentStoryTitles = undefined;
     }
 
+    // Anchor the model's suggested draftControls to the user's current pacing
+    // sliders so a Suggest respects the chosen dialogue ratio + hook density
+    // instead of inventing free values.
     const result = await createUserOrchestrator(
       normalizeTier(user.tier),
       llmSettings,
-    ).generateSettingSeed(suggestionRequest, { recentStoryTitles });
+    ).generateSettingSeed(suggestionRequest, {
+      recentStoryTitles,
+      draftControlsHint: {
+        dialogueRatio: config.dialogueRatio,
+        hookDensity: toHookDensity(config.hookDensity),
+      },
+    });
 
     return reply.send({
       title: result.seedPackage.titleHint,
@@ -699,11 +708,17 @@ function normalizeOutlineRequest(config: z.infer<typeof StoryConfigSchema>): Nor
       ageBand: '18_34',
       market: 'global',
     },
-    storyControls: config.storyControls ?? {
-      betrayalType: 'hidden_relationship_replaced_by_fiancee',
-      shameType: 'polite_class_exclusion',
-      revengeMode: 'strategic_withdrawal_status_reversal',
-      endingMode: 'bittersweet_dignity_first',
+    // Always apply the user's intensity slider, even when storyControls already
+    // exists (e.g. after a prior Suggest populated it). Previously intensity was
+    // only set inside the fallback branch, so a returning storyControls object
+    // silently dropped the slider value.
+    storyControls: {
+      ...(config.storyControls ?? {
+        betrayalType: 'hidden_relationship_replaced_by_fiancee',
+        shameType: 'polite_class_exclusion',
+        revengeMode: 'strategic_withdrawal_status_reversal',
+        endingMode: 'bittersweet_dignity_first',
+      }),
       intensity: config.intensity,
     },
     customCreativeInputs: dramaBranch

@@ -442,7 +442,10 @@ export class StoryOrchestrator {
     );
   }
 
-  async generateSettingSeed(request: NormalizedOutlineRequest, options?: { recentStoryTitles?: string[] }) {
+  async generateSettingSeed(
+    request: NormalizedOutlineRequest,
+    options?: { recentStoryTitles?: string[]; draftControlsHint?: { dialogueRatio: number; hookDensity: "low" | "medium" | "high" } },
+  ) {
     const context = await this.loadGenerationContext(request.linePreset, request.stylePreset);
     const recentSeedHistory = (await this.seedHistoryStore?.load()) ?? [];
     const seedBlueprint = createSeedBlueprint({
@@ -456,6 +459,7 @@ export class StoryOrchestrator {
       seedBlueprint,
       recentSeedHistory,
       recentStoryTitles: options?.recentStoryTitles,
+      draftControlsHint: options?.draftControlsHint,
       prosePolishConfig: this.prosePolishConfig,
     });
     const result = await this.routerClient.generateJsonWithRepair<GeneratedSettingSeed>({

@@ -12,6 +12,7 @@ import { analyzeSentenceVariance, type SentenceVarianceMetrics } from "../core-p
 import { analyzeVietnameseAiVoice, type VietnameseAiVoiceReport } from "../core-pipeline/validators/vietnamese-ai-voice";
 import { detectStructuralSlop, type StructuralSlopReport } from "../core-pipeline/validators/structural-slop";
 import { detectExplanatoryCoda, type ExplanatoryCodaReport } from "../core-pipeline/validators/explanatory-coda";
+import { detectIntensityCompliance, type IntensityComplianceReport } from "../core-pipeline/validators/intensity-compliance";
 import {
   createPhraseReuseIndex,
   scoreCandidate,
@@ -53,6 +54,7 @@ const SENTENCE_VARIANCE_FAILURE = "sentence length variance is too uniform (AI-l
 const PHRASE_REUSE_FAILURE = "phrase reuse across chapters exceeds threshold";
 const STRUCTURAL_SLOP_FAILURE = "structural slop patterns exceed acceptable threshold";
 const EXPLANATORY_CODA_FAILURE = "explanatory-coda restatements exceed acceptable threshold";
+const INTENSITY_COMPLIANCE_FAILURE = "sentence rhythm does not match the requested intensity";
 const VIETNAMESE_AI_VOICE_FAILURE = "vietnamese AI-voice patterns exceed threshold";
 const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   DIALOGUE_RATIO_FAILURE,
@@ -62,6 +64,7 @@ const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   PHRASE_REUSE_FAILURE,
   STRUCTURAL_SLOP_FAILURE,
   EXPLANATORY_CODA_FAILURE,
+  INTENSITY_COMPLIANCE_FAILURE,
   VIETNAMESE_AI_VOICE_FAILURE,
 ]);
 
@@ -77,6 +80,7 @@ export type ChapterQualityMetrics = {
   vietnameseAiVoice: VietnameseAiVoiceReport;
   structuralSlop: StructuralSlopReport;
   explanatoryCoda: ExplanatoryCodaReport;
+  intensityCompliance: IntensityComplianceReport;
   phraseReuse: PhraseReuseReport;
   addressRegister: {
     violations: AddressRegisterViolation[];
@@ -147,6 +151,13 @@ export function analyzeChapterQuality(
   const hookDensity = analyzeHookDensity(text, effectiveTargets.hookDensity);
   const addressRegister = analyzeAddressRegister(text, addressRegisters ?? {}, outputLanguage);
 
+  // Intensity compliance: high requested intensity implies short-sentence,
+  // low-decoration rhythm. Previously intensity was a prompt hint with NO gate,
+  // so the model could ignore the slider entirely. This soft check compares the
+  // chapter's mean sentence length against the effective (per-chapter, offset)
+  // intensity target and flags a rhythm mismatch for a repair pass.
+  const intensityCompliance = detectIntensityCompliance(text, effectiveTargets.intensity);
+
   const metrics: ChapterQualityMetrics = {
     wordCount,
     dialogueRatio: wordCount === 0 ? 0 : quotedWordCount / wordCount,
@@ -159,6 +170,7 @@ export function analyzeChapterQuality(
     vietnameseAiVoice,
     structuralSlop,
     explanatoryCoda,
+    intensityCompliance,
     phraseReuse,
     addressRegister,
     failures: [],
@@ -187,6 +199,10 @@ export function analyzeChapterQuality(
 
   if (explanatoryCoda.needsRepair) {
     metrics.failures.push(EXPLANATORY_CODA_FAILURE);
+  }
+
+  if (intensityCompliance.needsRepair) {
+    metrics.failures.push(INTENSITY_COMPLIANCE_FAILURE);
   }
 
   if ((outputLanguage ?? "vietnamese") === "vietnamese" && vietnameseAiVoice.needsRepair) {

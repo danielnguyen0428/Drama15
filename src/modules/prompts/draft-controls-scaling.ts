@@ -5,10 +5,22 @@ import { getDrama15ChapterArchitecture } from "./drama15-chapter-architecture";
 export const DEFAULT_USER_INTENSITY = 0.84;
 export const DEFAULT_USER_DIALOGUE_RATIO = 0.56;
 
-const INTENSITY_MIN = 0.58;
-const INTENSITY_MAX = 0.95;
+const INTENSITY_MIN = 0.5;
+const INTENSITY_MAX = 0.97;
 const DIALOGUE_RATIO_MIN = 0.2;
 const DIALOGUE_RATIO_MAX = 0.85;
+
+// The slider previously moved the per-chapter target 1:1 as an offset. Because
+// the architecture baseline is the dominant term and the default sits high
+// (0.84), pushing the slider toward "max intensity" barely moved the result
+// (only ~+0.11 of headroom on low-baseline chapters). These gains amplify how
+// far the user's deviation-from-default shifts every chapter, so the slider has
+// real pull in both directions. Crucially the gain multiplies the DEVIATION, so
+// at the default value the offset is 0 and the output is unchanged — stories
+// left on the default keep their exact tuned behavior; only a moved slider bites
+// harder.
+const INTENSITY_GAIN = 1.7;
+const DIALOGUE_RATIO_GAIN = 1.3;
 
 export type UserDraftScalingInput = {
   userIntensity?: number;
@@ -62,12 +74,12 @@ export function buildUserDraftScaling(
 }
 
 export function scaleChapterIntensity(architectureIntensity: number, userIntensity: number): number {
-  const offset = userIntensity - DEFAULT_USER_INTENSITY;
+  const offset = (userIntensity - DEFAULT_USER_INTENSITY) * INTENSITY_GAIN;
   return round2(clamp(architectureIntensity + offset, INTENSITY_MIN, INTENSITY_MAX));
 }
 
 export function scaleChapterDialogueRatio(architectureRatio: number, userDialogueRatio: number): number {
-  const offset = userDialogueRatio - DEFAULT_USER_DIALOGUE_RATIO;
+  const offset = (userDialogueRatio - DEFAULT_USER_DIALOGUE_RATIO) * DIALOGUE_RATIO_GAIN;
   return round2(clamp(architectureRatio + offset, DIALOGUE_RATIO_MIN, DIALOGUE_RATIO_MAX));
 }
 

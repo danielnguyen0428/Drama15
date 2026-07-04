@@ -55,6 +55,10 @@ import {
   buildExplanatoryCodaRepairInstructions,
 } from "../core-pipeline/validators/explanatory-coda";
 import {
+  detectIntensityCompliance,
+  buildIntensityComplianceRepairInstructions,
+} from "../core-pipeline/validators/intensity-compliance";
+import {
   renderConceptTitleGrammarForPrompt,
   renderNicheAwareTitleGrammarForPrompt,
   renderTrendAwareSeedEngineForPrompt,
@@ -731,9 +735,10 @@ export function buildSettingSeedPrompt(params: {
   seedBlueprint?: SeedBlueprint;
   recentSeedHistory?: SeedHistoryEntry[];
   recentStoryTitles?: string[];
+  draftControlsHint?: { dialogueRatio: number; hookDensity: "low" | "medium" | "high" };
   prosePolishConfig?: LocalProsePolishConfig;
 }): PromptBundle {
-  const { request, linePreset, stylePreset, seedBlueprint, recentSeedHistory = [], recentStoryTitles = [] } = params;
+  const { request, linePreset, stylePreset, seedBlueprint, recentSeedHistory = [], recentStoryTitles = [], draftControlsHint } = params;
   const fictionMeReference = renderFictionMeReferenceForPrompt(request.linePreset);
 
   return {
@@ -753,6 +758,9 @@ export function buildSettingSeedPrompt(params: {
       settingSeedLinePresetInstruction(request),
       "storyControls must include hidden config values: betrayalType, shameType, revengeMode, endingMode, intensity.",
       "draftControls must include: dialogueRatio, hookDensity.",
+      draftControlsHint
+        ? `The user has already set pacing preferences on the form. Anchor draftControls to them: dialogueRatio near ${draftControlsHint.dialogueRatio.toFixed(2)} (stay within +/-0.05), hookDensity exactly "${draftControlsHint.hookDensity}". Only deviate if the chosen niche makes the user value implausible, and keep any change small.`
+        : "",
       "Write the four storyControls values as concrete hidden config text, not internal option ids.",
       "Fill title, niche, setting seed, hidden story config, and drafting controls. Keep only the output language as the user already chose it.",
       "titleHint must be newly generated for the chosen Niche. Do not reuse the incoming request titleHint, sample placeholder, or any stale title already visible in the form.",
@@ -938,6 +946,7 @@ export function buildChapterRepairPrompt(params: {
   const needsVarianceRepair = params.failures.some((failure) => /sentence length variance/i.test(failure));
   const needsVnVoiceRepair = params.failures.some((failure) => /vietnamese AI-voice/i.test(failure));
   const needsCodaRepair = params.failures.some((failure) => /explanatory-coda/i.test(failure));
+  const needsIntensityRepair = params.failures.some((failure) => /sentence rhythm does not match/i.test(failure));
 
   return [
     "The previous draft missed quality targets and must be rewritten to pass them.",
@@ -974,6 +983,9 @@ export function buildChapterRepairPrompt(params: {
       : []),
     ...(needsCodaRepair
       ? [buildExplanatoryCodaRepairInstructions(detectExplanatoryCoda(params.previousDraft))]
+      : []),
+    ...(needsIntensityRepair
+      ? [buildIntensityComplianceRepairInstructions(detectIntensityCompliance(params.previousDraft, effectiveTargets.intensity))]
       : []),
     // Character consistency drift violations
     ...(params.driftViolations && params.driftViolations.length > 0

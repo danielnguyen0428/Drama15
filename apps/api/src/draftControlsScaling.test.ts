@@ -23,15 +23,25 @@ test('default sliders preserve chapter 1 architecture targets', () => {
   assert.equal(targets.hookDensity, 'high');
 });
 
-test('higher user intensity scales architecture intensity with clamping', () => {
-  assert.equal(scaleChapterIntensity(0.66, 0.9), 0.72);
-  assert.equal(scaleChapterIntensity(0.94, 0.9), 0.95);
-  assert.equal(scaleChapterIntensity(0.56, 0.7), 0.58);
+test('user intensity deviation is amplified by gain and clamped', () => {
+  // Deviation from default (0.84) is multiplied by INTENSITY_GAIN (1.7) so the
+  // slider has real pull. (0.9-0.84)*1.7 = 0.102 → 0.66+0.102 = 0.76.
+  assert.equal(scaleChapterIntensity(0.66, 0.9), 0.76);
+  // High baseline + upward push clamps at the raised ceiling (0.97).
+  assert.equal(scaleChapterIntensity(0.94, 0.9), 0.97);
+  // Strong downward push: (0.7-0.84)*1.7 = -0.238 → 0.56-0.238 = 0.322 → floor 0.5.
+  assert.equal(scaleChapterIntensity(0.56, 0.7), 0.5);
+  // At the default, the deviation is 0, so output equals the architecture value.
+  assert.equal(scaleChapterIntensity(0.66, 0.84), 0.66);
 });
 
-test('higher user dialogue ratio scales architecture dialogue ratio', () => {
-  assert.equal(scaleChapterDialogueRatio(0.48, 0.7), 0.62);
+test('user dialogue ratio deviation is amplified by gain and clamped', () => {
+  // (0.7-0.56)*1.3 = 0.182 → 0.48+0.182 = 0.662 → 0.66.
+  assert.equal(scaleChapterDialogueRatio(0.48, 0.7), 0.66);
+  // Strong downward push clamps at the floor 0.2.
   assert.equal(scaleChapterDialogueRatio(0.4, 0.3), 0.2);
+  // At the default, output equals the architecture value.
+  assert.equal(scaleChapterDialogueRatio(0.48, 0.56), 0.48);
 });
 
 test('hook density validator accepts chapters with multiple short tension beats', () => {
