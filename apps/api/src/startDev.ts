@@ -280,10 +280,25 @@ app.post('/story/setup-suggest', async (request, reply) => {
     const llmSettings = await requireLlmSettings(user.id);
 
     const suggestionRequest = normalizeOutlineRequest(config);
+
+    // Feed recent story titles so the seed prompt's "titles to avoid" block is
+    // populated — the extra diversity layer that de-dupes suggested titles.
+    // Fail-open: a listing error must never break the suggest button.
+    let recentStoryTitles: string[] | undefined;
+    try {
+      const stories = await getStoryStore().listStories(user);
+      recentStoryTitles = stories
+        .map((story) => story.title)
+        .filter((title): title is string => Boolean(title && title.trim()))
+        .slice(0, 20);
+    } catch {
+      recentStoryTitles = undefined;
+    }
+
     const result = await createUserOrchestrator(
       normalizeTier(user.tier),
       llmSettings,
-    ).generateSettingSeed(suggestionRequest);
+    ).generateSettingSeed(suggestionRequest, { recentStoryTitles });
 
     return reply.send({
       title: result.seedPackage.titleHint,
