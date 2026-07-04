@@ -51,6 +51,10 @@ import {
   buildVietnameseAiVoiceRepairInstruction,
 } from "../core-pipeline/validators/vietnamese-ai-voice";
 import {
+  detectExplanatoryCoda,
+  buildExplanatoryCodaRepairInstructions,
+} from "../core-pipeline/validators/explanatory-coda";
+import {
   renderConceptTitleGrammarForPrompt,
   renderNicheAwareTitleGrammarForPrompt,
   renderTrendAwareSeedEngineForPrompt,
@@ -916,6 +920,7 @@ export function buildChapterRepairPrompt(params: {
   const needsHookRepair = params.failures.some((failure) => /hook density/i.test(failure));
   const needsVarianceRepair = params.failures.some((failure) => /sentence length variance/i.test(failure));
   const needsVnVoiceRepair = params.failures.some((failure) => /vietnamese AI-voice/i.test(failure));
+  const needsCodaRepair = params.failures.some((failure) => /explanatory-coda/i.test(failure));
 
   return [
     "The previous draft missed quality targets and must be rewritten to pass them.",
@@ -949,6 +954,9 @@ export function buildChapterRepairPrompt(params: {
       : []),
     ...(needsVnVoiceRepair
       ? [buildVietnameseAiVoiceRepairInstruction(analyzeVietnameseAiVoice(params.previousDraft))]
+      : []),
+    ...(needsCodaRepair
+      ? [buildExplanatoryCodaRepairInstructions(detectExplanatoryCoda(params.previousDraft))]
       : []),
     // Character consistency drift violations
     ...(params.driftViolations && params.driftViolations.length > 0

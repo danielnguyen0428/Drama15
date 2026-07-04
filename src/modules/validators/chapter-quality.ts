@@ -11,6 +11,7 @@ import { detectAiTells, type AiTellReport } from "../core-pipeline/validators/ai
 import { analyzeSentenceVariance, type SentenceVarianceMetrics } from "../core-pipeline/validators/sentence-variance";
 import { analyzeVietnameseAiVoice, type VietnameseAiVoiceReport } from "../core-pipeline/validators/vietnamese-ai-voice";
 import { detectStructuralSlop, type StructuralSlopReport } from "../core-pipeline/validators/structural-slop";
+import { detectExplanatoryCoda, type ExplanatoryCodaReport } from "../core-pipeline/validators/explanatory-coda";
 import {
   createPhraseReuseIndex,
   scoreCandidate,
@@ -51,6 +52,7 @@ const AI_TELL_FAILURE = "AI-tell phrases exceed acceptable threshold";
 const SENTENCE_VARIANCE_FAILURE = "sentence length variance is too uniform (AI-like)";
 const PHRASE_REUSE_FAILURE = "phrase reuse across chapters exceeds threshold";
 const STRUCTURAL_SLOP_FAILURE = "structural slop patterns exceed acceptable threshold";
+const EXPLANATORY_CODA_FAILURE = "explanatory-coda restatements exceed acceptable threshold";
 const VIETNAMESE_AI_VOICE_FAILURE = "vietnamese AI-voice patterns exceed threshold";
 const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   DIALOGUE_RATIO_FAILURE,
@@ -59,6 +61,7 @@ const SOFT_CHAPTER_QUALITY_FAILURES = new Set([
   SENTENCE_VARIANCE_FAILURE,
   PHRASE_REUSE_FAILURE,
   STRUCTURAL_SLOP_FAILURE,
+  EXPLANATORY_CODA_FAILURE,
   VIETNAMESE_AI_VOICE_FAILURE,
 ]);
 
@@ -73,6 +76,7 @@ export type ChapterQualityMetrics = {
   sentenceVariance: SentenceVarianceMetrics;
   vietnameseAiVoice: VietnameseAiVoiceReport;
   structuralSlop: StructuralSlopReport;
+  explanatoryCoda: ExplanatoryCodaReport;
   phraseReuse: PhraseReuseReport;
   addressRegister: {
     violations: AddressRegisterViolation[];
@@ -121,6 +125,10 @@ export function analyzeChapterQuality(
   // transition-opening addiction, hedge chains) — autonovel ANTI-PATTERNS.
   const structuralSlop = detectStructuralSlop(text);
 
+  // Explanatory-coda Detection (scene shown, then a sentence that tells the
+  // reader what it meant — restatement grammar / abstract moral-of-scene lines).
+  const explanatoryCoda = detectExplanatoryCoda(text);
+
   // Phrase Reuse Tracking
   const resolvedPhraseReuseIndex = phraseReuseIndex ?? getOrCreatePhraseReuseIndex();
   const phraseReuse = chapterNumber !== undefined
@@ -150,6 +158,7 @@ export function analyzeChapterQuality(
     sentenceVariance,
     vietnameseAiVoice,
     structuralSlop,
+    explanatoryCoda,
     phraseReuse,
     addressRegister,
     failures: [],
@@ -174,6 +183,10 @@ export function analyzeChapterQuality(
 
   if (structuralSlop.needsRepair) {
     metrics.failures.push(STRUCTURAL_SLOP_FAILURE);
+  }
+
+  if (explanatoryCoda.needsRepair) {
+    metrics.failures.push(EXPLANATORY_CODA_FAILURE);
   }
 
   if ((outputLanguage ?? "vietnamese") === "vietnamese" && vietnameseAiVoice.needsRepair) {
@@ -236,6 +249,7 @@ export function scoreChapterQualityPenalty(metrics: ChapterQualityMetrics): numb
     softFailures * 100 +
     metrics.aiTellScore * 10 +
     metrics.structuralSlop.score * 10 +
+    metrics.explanatoryCoda.score * 10 +
     metrics.phraseReuse.reuseScore * 10 +
     varianceGap * 5
   );

@@ -139,6 +139,15 @@ export {
   type StructuralSlopReport,
 } from "./validators/structural-slop";
 
+// ─── Explanatory-Coda Detection ──────────────────────────────────────────────
+export {
+  detectExplanatoryCoda,
+  buildExplanatoryCodaRepairInstructions,
+  type ExplanatoryCodaKind,
+  type ExplanatoryCodaHit,
+  type ExplanatoryCodaReport,
+} from "./validators/explanatory-coda";
+
 // ─── Voice Fingerprint ───────────────────────────────────────────────────────
 export {
   analyzeVoiceFingerprint,
