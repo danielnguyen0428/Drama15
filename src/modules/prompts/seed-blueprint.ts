@@ -3,6 +3,7 @@ import { buildFictionMeSeedSignalBank } from "./fictionme-reference";
 
 export type SeedBlueprint = {
   linePreset: string;
+  castArchetype: string;
   topicAnchor: string;
   motifFamily: string;
   socialPain: string;
@@ -37,6 +38,7 @@ export type SeedHistoryEntry = {
 };
 
 type SeedBlueprintBank = {
+  castArchetypes: string[];
   topicAnchors: string[];
   motifFamilies: string[];
   socialPains: string[];
@@ -920,6 +922,20 @@ const STEAMY_ALIEN_SKELETONS: SeedSkeletonBank = {
 
 const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
   billionaire_rich_poor_romance: {
+    castArchetypes: [
+      "poor heroine with a real trade (baker, mechanic, nurse, florist) + heir who courts her at her workplace; obstacle is his family, not a rival woman",
+      "hidden-wealth hero pretending to be ordinary + working-class heroine who falls for the man before the fortune",
+      "hidden-heiress heroine testing a poor-but-honest hero + her own family as the class gatekeeper",
+      "single-father billionaire + the teacher/therapist his child trusts first; obstacle is grief and class, no villain",
+      "career-woman heroine + younger heir who must prove he is serious; tension is timelines and status, not betrayal",
+      "childhood-friends-reunited as heir and working-class professional + a decade of missed timing as the obstacle",
+      "disabled or scarred heroine + heir who refuses the family's 'suitable match'; obstacle is prejudice, not a scheming rival",
+      "first-love-reunion pair on opposite sides of new money + families who still mistrust each other",
+      "caregiver heroine + tycoon who mistakes dependence for love until she makes him choose",
+      "rich heroine fallen on hard times + working-class hero who knew her before and after the money",
+      "rival-heirs-to-rival-houses forbidden romance + two families as the pressure, Romeo-and-Juliet style",
+      "bodyguard/driver hero hiding his own standing + the heiress he is sworn to protect and cannot court",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.billionaire_rich_poor_romance,
     motifFamilies: [
       "first meeting between heir and poor lover that misreads class",
@@ -1481,6 +1497,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ],
   },
   humiliation_revenge_justice: {
+    castArchetypes: [
+      "wrongly-accused service worker + a manager who scapegoats her + the customer/witness who later clears her",
+      "mocked intern + the senior who stole her work + the investor who eventually reads the real record",
+      "framed cleaner/maid + the household that blamed her + the audit that exposes the real thief",
+      "shamed delivery/gig worker + a viral clip that misframes her + the raw footage that flips the room",
+      "blamed nurse/caregiver + a wealthy family's cover story + the care record that speaks",
+      "demoted whistleblower + the boss who buried her report + the regulator who reopens it",
+      "publicly humiliated vendor + a client who rates her like a servant + the contract proof she kept",
+      "accused tenant/neighbor + a council that shamed the wrong woman + the permit trail that clears her",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.humiliation_revenge_justice,
     motifFamilies: [
       "public shame turns into same-room justice",
@@ -1627,6 +1653,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...HUMILIATION_JUSTICE_SKELETONS,
   },
   secret_identity_hidden_heiress: {
+    castArchetypes: [
+      "undercover heiress working as staff + the manager who abuses invisible workers + the loyal insider who knew",
+      "hidden company owner posing as a temp + the executive skimming from the firm + the auditor she secretly authorized",
+      "disguised famous performer + the clique that mocks the 'nobody' + the moment the stage reveals her",
+      "secret shareholder treated as catering staff + the board that dismissed her + the credential check that lands",
+      "lost heiress under an alias + the family that erased her + the DNA/ownership proof that returns her name",
+      "incognito investor in the pitch room + the founder stealing her idea + the term sheet only she controls",
+      "bodyguard-protected student + a donor-parent clique + the incident log that proves the warnings",
+      "brand owner mystery-shopping her own store + a snobbish salesperson + the receipt that outs the truth",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.secret_identity_hidden_heiress,
     motifFamilies: [
       "undercover heiress audits a corrupt workplace",
@@ -1773,6 +1809,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...SECRET_IDENTITY_SKELETONS,
   },
   toxic_family_betrayal: {
+    castArchetypes: [
+      "scapegoat daughter who paid the bills + the golden-child sibling + the parents who chose the favorite",
+      "widowed mother + the in-laws seizing the child's documents + the care ledger she quietly kept",
+      "self-made daughter + a mother claiming her business + the supplier contract that proves ownership",
+      "adopted daughter + the family hiding her papers + the sealed record that resurfaces",
+      "elder-care giver + relatives denying any promise + the notarized agreement they tried to burn",
+      "sister framed for missing jewelry + the sibling who staged it + the bank statement that clears her",
+      "heir erased from the deed + the estate lawyer aligned with the family + the original will's witness",
+      "son who funded the family shop + the brother who drained the account + the transaction trail",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.toxic_family_betrayal,
     motifFamilies: [
       "family business credit theft",
@@ -1917,6 +1963,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...TOXIC_FAMILY_SKELETONS,
   },
   cheating_ex_wedding_drama: {
+    castArchetypes: [
+      "bride who funded the wedding + the groom marrying another + the vendor ledger that dates the affair",
+      "wife on the flight home + the husband with a second life + the seat-change record",
+      "fiancee at the fitting + the sister taking her place + the boutique alteration log",
+      "abandoned wife who rose + the ex wanting custody + the hidden-income filing",
+      "backup bride + the mistress under her upgraded name + the hotel room-block record",
+      "spouse hiding shared debt + the partner who reads the loan papers + the deed clause",
+      "toasting wife + the divorce filing mid-speech + the phone backup that ends his story",
+      "cancelled-wedding woman + the officiant pressured to proceed + the venue she buys back",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.cheating_ex_wedding_drama,
     motifFamilies: [
       "wedding betrayal exposed through vendor logistics",
@@ -2064,6 +2120,18 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...CHEATING_WEDDING_SKELETONS,
   },
   single_mom_poor_woman_comeback: {
+    castArchetypes: [
+      "single mom barista and the widowed CEO whose child she quietly comforts",
+      "night-shift nurse mother and the investor who mistakes her for hired help",
+      "food-delivery mom and the tech founder who recognizes her rejected pitch",
+      "seamstress raising twins and the fashion heir who copied her design",
+      "cleaner mother and the school-board chair who shamed her at the fee desk",
+      "gig-driver mom and the ex-husband's lawyer who underestimated her records",
+      "cafeteria-worker mother and the pediatric surgeon who owes her a diagnosis",
+      "ghostwriter single mom and the celebrity who took credit for her book",
+      "factory-line mother and the union rival who buried her safety report",
+      "part-time tutor mom and the wealthy parent who tried to buy her silence",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.single_mom_poor_woman_comeback,
     motifFamilies: [
       "single mother mocked while solving everyone else's crisis",
@@ -2211,6 +2279,18 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...SINGLE_MOM_SKELETONS,
   },
   social_injustice_discrimination_drama: {
+    castArchetypes: [
+      "wheelchair-using architect and the manager who barred her from her own building",
+      "deaf engineer and the boss who talked over her until the patent named her",
+      "immigrant nurse and the supervisor who mocked her accent then buried her report",
+      "pregnant worker and the HR head who denied accommodation on record",
+      "scarred spa client and the receptionist who refused her under a fake policy",
+      "elderly widow and the bank manager who shamed her small deposit publicly",
+      "blind musician and the venue owner who assumed she needed a chaperone",
+      "single father and the school that profiled his son by neighborhood",
+      "trans applicant and the interviewer who leaked her file to sink her",
+      "day laborer and the store that staged a theft accusation on camera",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.social_injustice_discrimination_drama,
     motifFamilies: [
       "access denial becomes policy justice",
@@ -2357,6 +2437,18 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...SOCIAL_INJUSTICE_SKELETONS,
   },
   workplace_ceo_power_struggle: {
+    castArchetypes: [
+      "erased co-founder and the partner who wrote her out of the cap table",
+      "assistant and the CEO whose empire runs on the credit he takes from her",
+      "whistleblower analyst and the executive burying the safety report",
+      "contract wife on paper and the heir who needs the marriage to keep the board",
+      "pregnant secretary and the CEO offering a buyout instead of accountability",
+      "returning ex-wife turned rival investor and the man who once fired her",
+      "junior engineer and the manager selling her prototype as his own",
+      "interim CEO and the founding family trying to reclaim the company she saved",
+      "outsourced auditor and the CFO whose books she was hired to destroy",
+      "demoted veteran and the golden-boy hire promoted on her stolen roadmap",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.workplace_ceo_power_struggle,
     motifFamilies: [
       "assistant saves the company but loses public credit",
@@ -2581,6 +2673,18 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
     ...WORKPLACE_CEO_SKELETONS,
   },
   medical_hidden_doctor_life_care: {
+    castArchetypes: [
+      "hidden senior surgeon and the ward that treats her as a charity case",
+      "night nurse and the VIP family who scapegoat her to hide their secret",
+      "suspended resident and the chief protecting a negligent colleague",
+      "patient advocate and the administrator burying a consent scandal",
+      "rural clinic doctor and the city hospital that mocked her methods",
+      "combat medic returning home and the ER hierarchy that dismisses her",
+      "whistleblower pharmacist and the director taking pharma kickbacks",
+      "hospice nurse and the heir contesting the will she witnessed",
+      "disabled specialist and the board that refused to page her in a crisis",
+      "transplant coordinator and the donor family bending the list with money",
+    ],
     topicAnchors: HOT_MOTIF_ANCHORS.medical_hidden_doctor_life_care,
     motifFamilies: [
       "hidden surgeon treated as charity before a lifesaving reveal",
@@ -2722,6 +2826,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
   },
   school_campus_bullying_identity: {
     topicAnchors: HOT_MOTIF_ANCHORS.school_campus_bullying_identity,
+    castArchetypes: [
+      "scholarship transfer student and the class leader who first mocked then defended her",
+      "quiet bullied girl with a hidden talent and the teacher who noticed too late",
+      "poor student secretly funding the school and the donor-parent clique that shamed her",
+      "returning student under a new name and the former friend who betrayed her",
+      "athletic prodigy benched by favoritism and the coach forced to face merit",
+      "bullied boy protected by a girl who refuses the crowd's cruelty",
+      "gifted outsider and the popular rival whose perfect image is a fraud",
+      "working-class scholarship kid and the heir classmate raised to look down on her",
+    ],
     motifFamilies: [
       "scholarship girl bullied before hidden ownership reveal",
       "new transfer student mocked until bodyguard log surfaces",
@@ -2862,6 +2976,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
   },
   werewolf_luna_alpha_soulmate: {
     topicAnchors: HOT_MOTIF_ANCHORS.werewolf_luna_alpha_soulmate,
+    castArchetypes: [
+      "rejected omega and the alpha who denied the bond to protect his throne",
+      "rogue lone wolf heroine and the pack heir raised to distrust outsiders",
+      "healer of the pack and the wounded warrior who owes her his life",
+      "captured rival-pack daughter and the alpha who cannot cage her loyalty",
+      "hidden hybrid Luna and the pure-blood council that wants her gone",
+      "second-chance mates separated by a false rejection years ago",
+      "human mate marked against pack law and the alpha who breaks it for her",
+      "moon-blessed seer and the disbelieving future alpha she must guide",
+    ],
     motifFamilies: [
       "rejected Luna returns under blood-moon proof",
       "Alpha soulmate denies the bond to protect pack status",
@@ -3008,6 +3132,16 @@ const BASE_SEED_BLUEPRINT_BANKS: Record<string, SeedBlueprintBank> = {
   },
   steamy_alien_captive_romance: {
     topicAnchors: HOT_MOTIF_ANCHORS.steamy_alien_captive_romance,
+    castArchetypes: [
+      "human captive and the alien commander who cannot enforce his own conquest law",
+      "human translator and the emperor whose language she weaponizes against him",
+      "war-prize bride and the warlord who must testify for her freedom",
+      "captured scientist and the alien ruler who needs her mind more than her body",
+      "slave-auction survivor and the buyer who was already secretly on her side",
+      "treaty bride and the dominant heir who expected obedience, not a rival",
+      "escaped experiment and the frontier outlaw who hides her from the empire",
+      "rebel envoy and the crown prince negotiating across a captivity contract",
+    ],
     motifFamilies: [
       "alien captive breaks the empire's obedience contract",
       "dominant commander learns possession cannot create loyalty",
@@ -3179,6 +3313,7 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
       .map((entry) => (entry.blueprint ? createSeedSkeletonFingerprint(entry.blueprint) : ""))
       .filter(Boolean),
   );
+  const recentCastArchetypes = new Set(recentHistory.map((entry) => entry.blueprint?.castArchetype).filter(Boolean));
   const recentRelationshipDynamics = new Set(recentHistory.map((entry) => entry.blueprint?.relationshipDynamic).filter(Boolean));
   const recentProtagonistAgencies = new Set(recentHistory.map((entry) => entry.blueprint?.protagonistAgency).filter(Boolean));
   const recentAntagonistWebs = new Set(recentHistory.map((entry) => entry.blueprint?.antagonistWeb).filter(Boolean));
@@ -3200,6 +3335,7 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
     const score = scoreBlueprintNovelty(blueprint, {
       recentFingerprints,
       recentSkeletonFingerprints,
+      recentCastArchetypes,
       recentRelationshipDynamics,
       recentProtagonistAgencies,
       recentAntagonistWebs,
@@ -3218,6 +3354,7 @@ export function createSeedBlueprint(options: CreateSeedBlueprintOptions): SeedBl
     if (
       !hasRecentFingerprintMatch(blueprint.fingerprint, recentFingerprints) &&
       !recentSkeletonFingerprints.has(skeletonFingerprint) &&
+      !recentCastArchetypes.has(blueprint.castArchetype) &&
       !recentRelationshipDynamics.has(blueprint.relationshipDynamic) &&
       !recentProtagonistAgencies.has(blueprint.protagonistAgency) &&
       !recentRevealMechanisms.has(blueprint.revealMechanism) &&
@@ -3244,6 +3381,7 @@ export function renderRecentSeedHistoryForPrompt(history: SeedHistoryEntry[], li
     fingerprint: entry.fingerprint,
     linePreset: entry.linePreset,
     titleHint: entry.titleHint,
+    castArchetype: entry.blueprint?.castArchetype,
     topicAnchor: entry.blueprint?.topicAnchor,
     motifFamily: entry.blueprint?.motifFamily,
     socialPain: entry.blueprint?.socialPain,
@@ -3357,6 +3495,7 @@ function mergeFictionMeSeedSignals(banks: Record<string, SeedBlueprintBank>): Re
       return [
         linePreset,
         {
+          castArchetypes: [...bank.castArchetypes],
           topicAnchors: [...bank.topicAnchors],
           motifFamilies: appendUnique(bank.motifFamilies, signalBank.motifFamilies),
           socialPains: appendUnique(bank.socialPains, signalBank.socialPains),
@@ -3381,6 +3520,7 @@ function mergeFictionMeSeedSignals(banks: Record<string, SeedBlueprintBank>): Re
 
 function cloneBank(bank: SeedBlueprintBank): SeedBlueprintBank {
   return {
+    castArchetypes: [...bank.castArchetypes],
     topicAnchors: [...bank.topicAnchors],
     motifFamilies: [...bank.motifFamilies],
     socialPains: [...bank.socialPains],
@@ -3416,6 +3556,7 @@ function buildBlueprint(
 
   const blueprintWithoutFingerprint = {
     linePreset,
+    castArchetype: pick(bank.castArchetypes, random, attempt, 16),
     topicAnchor: pick(bank.topicAnchors, random, attempt, 0),
     motifFamily: pick(bank.motifFamilies, random, attempt, 1),
     socialPain: pick(bank.socialPains, random, attempt, 2),
@@ -3457,6 +3598,7 @@ function clampRandom(value: number) {
 function createSeedFingerprint(value: Omit<SeedBlueprint, "fingerprint">) {
   return [
     value.linePreset,
+    value.castArchetype,
     value.topicAnchor,
     value.motifFamily,
     value.socialPain,
@@ -3475,10 +3617,11 @@ function createSeedFingerprint(value: Omit<SeedBlueprint, "fingerprint">) {
 
 function createSeedSkeletonFingerprint(value: Pick<
   SeedBlueprint,
-  "linePreset" | "relationshipDynamic" | "protagonistAgency" | "antagonistWeb" | "revealMechanism" | "endingShape"
+  "linePreset" | "castArchetype" | "relationshipDynamic" | "protagonistAgency" | "antagonistWeb" | "revealMechanism" | "endingShape"
 >) {
   return [
     value.linePreset,
+    value.castArchetype,
     value.relationshipDynamic,
     value.protagonistAgency,
     value.antagonistWeb,
@@ -3494,6 +3637,7 @@ function scoreBlueprintNovelty(
   recent: {
     recentFingerprints: Set<string>;
     recentSkeletonFingerprints: Set<string>;
+    recentCastArchetypes: Set<string | undefined>;
     recentRelationshipDynamics: Set<string | undefined>;
     recentProtagonistAgencies: Set<string | undefined>;
     recentAntagonistWebs: Set<string | undefined>;
@@ -3509,6 +3653,8 @@ function scoreBlueprintNovelty(
   let score = 0;
   if (!hasRecentFingerprintMatch(blueprint.fingerprint, recent.recentFingerprints)) score += 10;
   if (!recent.recentSkeletonFingerprints.has(createSeedSkeletonFingerprint(blueprint))) score += 8;
+  if (!recent.recentCastArchetypes.has(blueprint.castArchetype)) score += 7;
+  if (!recent.recentCastArchetypes.has(blueprint.castArchetype)) score += 7;
   if (!recent.recentTopicAnchors.has(blueprint.topicAnchor)) score += 6;
   if (!recent.recentMotifFamilies.has(blueprint.motifFamily)) score += 6;
   if (!recent.recentArenas.has(blueprint.arena)) score += 5;

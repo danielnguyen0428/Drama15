@@ -68,6 +68,52 @@ test('seed blueprint avoids recently used topic, motif and arena axes, not only 
   assert.notEqual(next.arena, first.arena);
 });
 
+test('seed blueprint exposes a castArchetype and treats it as a diversity lock', () => {
+  const first = createSeedBlueprint({
+    linePreset: 'billionaire_rich_poor_romance',
+    random: () => 0,
+    maxAttempts: 1,
+  });
+
+  // Every blueprint must now carry a non-empty cast archetype so the setting
+  // seed can vary WHO the story is about, not only the plot mechanics.
+  assert.ok(first.castArchetype && first.castArchetype.trim().length > 0);
+
+  // A recent history entry using that exact cast archetype must push the next
+  // blueprint onto a different cast — otherwise every billionaire seed collapses
+  // onto the same victim/betrayer/rival trio.
+  const history: SeedHistoryEntry[] = [{
+    fingerprint: 'recent-cast',
+    linePreset: 'billionaire_rich_poor_romance',
+    createdAt: '2026-05-29T00:00:00.000Z',
+    blueprint: { ...first },
+  }];
+
+  const next = createSeedBlueprint({
+    linePreset: 'billionaire_rich_poor_romance',
+    history,
+    random: () => 0,
+  });
+
+  assert.notEqual(next.castArchetype, first.castArchetype);
+});
+
+test('billionaire cast archetypes span beyond the betrayer/rival template', () => {
+  // Draw a spread of cast archetypes and confirm the bank is not just
+  // victim + scheming rival: at least some casts frame the obstacle as
+  // something other than betrayal (prejudice, grief, timing, family feud).
+  const casts = new Set<string>();
+  for (let i = 0; i < 24; i += 1) {
+    const bp = createSeedBlueprint({
+      linePreset: 'billionaire_rich_poor_romance',
+      random: () => i / 24,
+      maxAttempts: 1,
+    });
+    casts.add(bp.castArchetype);
+  }
+  assert.ok(casts.size >= 4, `expected varied casts, got ${casts.size}`);
+});
+
 test('story bible prompt includes recent character names from seed history', () => {
   const prompt = buildStoryBiblePrompt({
     request: request as never,
