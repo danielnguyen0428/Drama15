@@ -38,6 +38,7 @@ import {
   buildStoryBiblePrompt,
 } from "../prompts/story-prompts";
 import { createSeedBlueprint, type SeedHistoryEntry } from "../prompts/seed-blueprint";
+import { resolveNicheSpine } from "../prompts/niche-spine";
 import { getLocalProsePolishConfig, type LocalProsePolishConfig, type ProsePolishTarget } from "../presets/prose-polish-config";
 import { postProcessProseHumanizer } from "../postprocessors/prose-humanizer-post-processor";
 import { runReaderPanel } from "../postprocessors/reader-panel";
@@ -257,6 +258,20 @@ export class StoryOrchestrator {
       throw new AppError("VALIDATION_ERROR", `chapterCount must be ${context.linePreset.constraints.fixedChapterCount}`, 400);
     }
 
+    // Seed blueprint drives per-story diversity: a fresh set of the 16 niche
+    // diversity axes (arena, humiliation, leverage, reveal, ending...), scored
+    // for novelty against recent history so two stories in the SAME niche do not
+    // share the same plot skeleton. Previously this only ran in generateSettingSeed
+    // (the "Gợi ý" button); the actual outline generation ignored it, so every
+    // niche collapsed onto the same static preset + fixed architecture. We build
+    // it once here and feed it into concept, bible, and chapter-plan prompts.
+    const outlineRecentSeedHistory = (await this.seedHistoryStore?.load()) ?? [];
+    const outlineSeedBlueprint = createSeedBlueprint({
+      linePreset: resolveSeedBlueprintLinePreset(request),
+      history: outlineRecentSeedHistory,
+    });
+    const nicheSpine = resolveNicheSpine(resolveSeedBlueprintLinePreset(request));
+
     const concept = await runProgressStage(
       progress,
       2,
@@ -272,6 +287,8 @@ export class StoryOrchestrator {
           stylePreset: context.stylePreset,
           recentStoryTitles: options?.recentStoryTitles,
           prosePolishConfig: this.prosePolishConfig,
+          seedBlueprint: outlineSeedBlueprint,
+          nicheSpine,
         });
         const conceptResult = await this.routerClient.generateJsonWithRepair<Concept>({
           model: context.models.planner,
@@ -311,6 +328,8 @@ export class StoryOrchestrator {
           linePreset: context.linePreset,
           stylePreset: context.stylePreset,
           recentSeedHistory: (await this.seedHistoryStore?.load()) ?? [],
+          seedBlueprint: outlineSeedBlueprint,
+          nicheSpine,
         });
         const bibleResult = await this.routerClient.generateJsonWithRepair<StoryPayload["storyBible"]>({
           model: context.models.bible,
@@ -359,6 +378,8 @@ export class StoryOrchestrator {
           storyBible: storyBible.storyBible,
           linePreset: context.linePreset,
           stylePreset: context.stylePreset,
+          seedBlueprint: outlineSeedBlueprint,
+          nicheSpine,
         });
         const chapterPlanResult = await this.routerClient.generateJsonWithRepair<ChapterPlanItem[]>({
           model: context.models.planner,

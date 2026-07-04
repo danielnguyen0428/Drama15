@@ -73,6 +73,7 @@ import {
   type SeedHistoryEntry,
 } from "./seed-blueprint";
 import { renderFictionMeReferenceForPrompt } from "./fictionme-reference";
+import { renderNicheSpineForPrompt, type NicheSpine } from "./niche-spine";
 import { renderCharacterNamingPolicyForPrompt } from "./character-naming";
 import { loadDrama15SystemPrompt } from "./system-prompt-loader";
 
@@ -536,8 +537,10 @@ export function buildConceptPrompt(params: {
   stylePreset: StylePreset;
   recentStoryTitles?: string[];
   prosePolishConfig?: LocalProsePolishConfig;
+  seedBlueprint?: SeedBlueprint;
+  nicheSpine?: NicheSpine;
 }): PromptBundle {
-  const { request, linePreset, stylePreset, recentStoryTitles = [] } = params;
+  const { request, linePreset, stylePreset, recentStoryTitles = [], seedBlueprint, nicheSpine } = params;
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -560,6 +563,8 @@ export function buildConceptPrompt(params: {
       recentStoryTitles.length ? block("Recent story titles — generate something completely different", recentStoryTitles.slice(0, 20)) : "",
       prosePolishBlock(params.prosePolishConfig, "concept", request.outputLanguage),
       block("Request", request),
+      nicheSpine ? renderNicheSpineForPrompt(nicheSpine) : "",
+      seedBlueprint ? renderSeedBlueprintForPrompt(seedBlueprint) : "",
       architectureBlock(),
       block("Line preset", linePreset),
       block("Style preset", stylePreset),
@@ -573,8 +578,10 @@ export function buildStoryBiblePrompt(params: {
   linePreset: LinePreset;
   stylePreset: StylePreset;
   recentSeedHistory?: SeedHistoryEntry[];
+  seedBlueprint?: SeedBlueprint;
+  nicheSpine?: NicheSpine;
 }): PromptBundle {
-  const { request, concept, linePreset, stylePreset, recentSeedHistory = [] } = params;
+  const { request, concept, linePreset, stylePreset, recentSeedHistory = [], seedBlueprint, nicheSpine } = params;
   const recentCharacterNamesBlock = renderRecentCharacterNamesForPrompt(recentSeedHistory);
 
   return {
@@ -597,6 +604,9 @@ export function buildStoryBiblePrompt(params: {
       renderCharacterNamingPolicyForPrompt(recentCharacterNamesBlock, request.outputLanguage),
       "Strengths must include one concrete behavior-based capability that can be proven in chapter 1 and reactivated in chapter 11.",
       "Betrayal and class shame engines must support: masked threat in chapter 3, reveal without confrontation in chapter 7, no-rescue nadir in chapter 9, and public truth reveal in chapter 14.",
+      nicheSpine ? renderNicheSpineForPrompt(nicheSpine) : "",
+      "The betrayalEngine, classShameEngine, and revengeEngine values must be written in the vocabulary of THIS niche's spine above, not a generic betrayal/shame/revenge template. Ground premise, wounds, and engines in the seed blueprint's specific arena, leverage, and pressure.",
+      seedBlueprint ? renderSeedBlueprintForPrompt(seedBlueprint) : "",
       customNicheLockInstruction(request),
       block("Request", request),
       block("Concept", concept),
@@ -652,8 +662,10 @@ export function buildChapterPlanPrompt(params: {
   storyBible: StoryBible;
   linePreset: LinePreset;
   stylePreset: StylePreset;
+  seedBlueprint?: SeedBlueprint;
+  nicheSpine?: NicheSpine;
 }): PromptBundle {
-  const { request, concept, storyBible, linePreset, stylePreset } = params;
+  const { request, concept, storyBible, linePreset, stylePreset, seedBlueprint, nicheSpine } = params;
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -673,10 +685,12 @@ export function buildChapterPlanPrompt(params: {
       "Follow the supplied 15-chapter architecture exactly. Keep the old JSON keys, but make each chapter perform its architecture function.",
       "Chapter 3 must plant a concrete foreshadow detail. Chapter 7 must activate it. Chapter 9 must be maximum loss with no rescue. Chapter 10 must be an earned internal pivot. Chapter 14 must be a public reveal. Chapter 15 must be a short new equilibrium.",
       "Sustain the middle: chapters 6, 8, 12, and 13 must each add fresh pressure or new information so the 15-chapter arc never stalls or repeats a beat.",
+      nicheSpine ? renderNicheSpineForPrompt(nicheSpine) : "",
       customNicheLockInstruction(request),
       block("Request", request),
       block("Concept", concept),
       block("Story bible", storyBible),
+      seedBlueprint ? renderSeedBlueprintForPrompt(seedBlueprint) : "",
       block("Chapter architecture map", renderChapterPlanArchitectureForPrompt()),
       block("Line preset", linePreset),
       block("Style preset", stylePreset),
