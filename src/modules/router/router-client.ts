@@ -200,7 +200,17 @@ export class RouterClient {
     const payload: Record<string, unknown> = {
       model: params.model,
       messages: params.messages,
-      stream: true,
+      // Non-streaming on purpose. `fetchText` already buffers the whole body via
+      // response.text(), so we never consumed the stream incrementally anyway —
+      // we just reassembled hundreds of SSE delta frames with regex after the
+      // fact. That reassembly is an extra surface where a single delta frame
+      // dropped upstream (model/proxy under load) silently deletes one
+      // leading-space token, producing rare word-boundary corruption like
+      // "khô kèm" -> "khôèm". Asking for a single buffered JSON completion
+      // removes the multi-frame path entirely with no functional loss; the
+      // provider returns one message.content object that extractCompletionContent
+      // reads directly.
+      stream: false,
       ...(supportsJsonResponseFormat(params.model) ? { response_format: { type: "json_object" } } : {}),
       ...(runtimeConfig.source === "env"
         ? { temperature: params.temperature ?? runtimeConfig.temperature ?? 0.7 }
