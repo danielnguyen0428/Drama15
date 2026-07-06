@@ -152,6 +152,23 @@ export const StoryBibleSchema = z.object({
     addressRegister: AddressRegisterSchema.optional(),
   }),
   classHierarchy: z.array(z.string().min(1)).min(1).default(["elite family circles", "startup capital gatekeepers"]),
+  // Named secondary characters who apply pressure on the heroine beyond the
+  // betrayer/rival pair — parents, elders, guardians, board members, councils.
+  // Previously the bible only modelled 3 roles, so a family/institutional
+  // pressure implied by the concept (e.g. "the family forces the marriage")
+  // silently vanished from the actual story. Optional by default; the
+  // orchestrator enforces "at least one" only when the concept implies such a
+  // role, so two-hander stories that need no supporting cast are not penalised.
+  supportingPressureCast: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        role: z.string().min(1),
+        relationshipToHeroine: z.string().min(1),
+        pressureContribution: z.string().min(1),
+      }),
+    )
+    .default([]),
   betrayalEngine: z.string().min(1),
   classShameEngine: z.string().min(1),
   revengeEngine: z.string().min(1),

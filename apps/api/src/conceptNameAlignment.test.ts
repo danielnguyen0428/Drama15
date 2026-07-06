@@ -44,6 +44,7 @@ const storyBible = {
   betrayer: { name: 'Ethan Brooks', wound: 'cowardice', cowardiceVector: 'image' },
   rival: { name: 'Vivian Ashford', socialPower: 'media dynasty', demeanor: 'polished' },
   classHierarchy: ['elite circles'],
+  supportingPressureCast: [],
   betrayalEngine: 'public replacement',
   classShameEngine: 'polite exclusion',
   revengeEngine: 'evidence',

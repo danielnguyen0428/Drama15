@@ -152,6 +152,12 @@ export interface StoryBible {
     };
   };
   classHierarchy: string[];
+  supportingPressureCast: {
+    name: string;
+    role: string;
+    relationshipToHeroine: string;
+    pressureContribution: string;
+  }[];
   betrayalEngine: string;
   classShameEngine: string;
   revengeEngine: string;

@@ -118,6 +118,7 @@ export function parseStoryBible(rawStoryBible: unknown): StoryBible {
       addressRegister: rival.addressRegister,
     },
     classHierarchy: coerceStringArray(source.classHierarchy, "elite hierarchy"),
+    supportingPressureCast: parseSupportingPressureCast(source.supportingPressureCast),
     betrayalEngine: coerceText(source.betrayalEngine),
     classShameEngine: coerceText(source.classShameEngine),
     revengeEngine: coerceText(source.revengeEngine),
@@ -344,4 +345,44 @@ function coerceChapterNumber(value: unknown, fallback: number): number {
   }
 
   return fallback;
+}
+
+// Parse the optional supporting-pressure cast (parents, elders, guardians,
+// board members) the model may return. Entries missing any required field are
+// dropped rather than defaulted, so a half-formed entry never becomes a fake
+// character. Returns [] when absent — the orchestrator decides whether "at
+// least one" is required based on whether the concept implies such a role.
+function parseSupportingPressureCast(value: unknown): Array<{
+  name: string;
+  role: string;
+  relationshipToHeroine: string;
+  pressureContribution: string;
+}> {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = asRecord(item);
+      return {
+        name: coerceText(record.name, ""),
+        role: coerceText(record.role, ""),
+        relationshipToHeroine: coerceText(
+          firstDefined(record.relationshipToHeroine, record.relationship, record.relation),
+          "",
+        ),
+        pressureContribution: coerceText(
+          firstDefined(record.pressureContribution, record.pressure, record.contribution),
+          "",
+        ),
+      };
+    })
+    .filter(
+      (entry) =>
+        entry.name.trim() &&
+        entry.role.trim() &&
+        entry.relationshipToHeroine.trim() &&
+        entry.pressureContribution.trim(),
+    );
 }

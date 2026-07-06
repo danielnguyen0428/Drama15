@@ -338,13 +338,23 @@ export class StoryOrchestrator {
           timeoutMs: env.routerPlanningTimeoutMs,
           validate: (data) => validateParsed(
             () => parseStoryBible(unwrapEnvelope(data, "storyBible")),
-            (bible) => findMissingCoreFields({
-              premise: bible.premise,
-              "heroine.name": bible.heroine.name,
-              "betrayer.name": bible.betrayer.name,
-              "rival.name": bible.rival.name,
-              betrayalEngine: bible.betrayalEngine,
-            }),
+            (bible) => [
+              ...findMissingCoreFields({
+                premise: bible.premise,
+                "heroine.name": bible.heroine.name,
+                "betrayer.name": bible.betrayer.name,
+                "rival.name": bible.rival.name,
+                betrayalEngine: bible.betrayalEngine,
+              }),
+              // When the concept implies a family / institutional pressure
+              // (parents, elders, council, board), the bible must name at least
+              // one supportingPressureCast member so that role does not silently
+              // vanish from the story the way it did in earlier drafts.
+              ...(conceptImpliesSupportingPressure(concept.concept)
+                && bible.supportingPressureCast.length === 0
+                ? ["supportingPressureCast is empty but the concept implies a family, council, or institutional pressure role; name at least one such character."]
+                : []),
+            ],
           ),
         });
 
@@ -2210,6 +2220,26 @@ function findMissingCoreFields(fields: Record<string, string | undefined>): stri
   return Object.entries(fields)
     .filter(([, value]) => !value || !value.trim() || value.trim() === MISSING_FIELD_PLACEHOLDER)
     .map(([name]) => `${name} is missing or empty; provide a concrete value.`);
+}
+
+// Detect whether a concept leans on a family / institutional pressure beyond the
+// betrayer-rival pair, so the bible generation step can require at least one
+// named supportingPressureCast member. Matches both English and Vietnamese
+// keywords because the concept text follows the story's output language.
+const SUPPORTING_PRESSURE_KEYWORDS = [
+  // English
+  "family", "parents", "mother", "father", "mother-in-law", "father-in-law",
+  "elder", "grandmother", "grandfather", "council", "board", "clan",
+  "guardian", "in-laws", "relatives", "aunt", "uncle",
+  // Vietnamese
+  "gia đình", "gia tộc", "cha", "mẹ", "bố", "ba mẹ", "cha mẹ", "mẹ chồng",
+  "bố chồng", "cha chồng", "ông nội", "bà nội", "hội đồng", "dòng họ",
+  "người giám hộ", "họ hàng", "chú", "bác", "cô", "dì", "nhà chồng",
+];
+
+function conceptImpliesSupportingPressure(concept: { logline: string; promise: string; conflictEngine: string }): boolean {
+  const haystack = `${concept.logline}\n${concept.promise}\n${concept.conflictEngine}`.toLowerCase();
+  return SUPPORTING_PRESSURE_KEYWORDS.some((keyword) => haystack.includes(keyword));
 }
 
 // Envelope unwrapping lives in ../../lib/envelope so it can be unit-tested in

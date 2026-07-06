@@ -25,6 +25,7 @@ const storyBible = {
     demeanor: 'Lịch sự nhưng độc địa.',
   },
   classHierarchy: ['gia đình tài phiệt'],
+  supportingPressureCast: [],
   betrayalEngine: 'Minh Quân phủ nhận Lan Anh trước gia đình.',
   classShameEngine: 'Bảo Trâm dùng gia thế để hạ thấp Lan Anh.',
   revengeEngine: 'Lan Anh rời đi và lấy lại quyền kiểm soát.',
