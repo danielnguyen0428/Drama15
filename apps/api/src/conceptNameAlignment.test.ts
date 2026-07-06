@@ -45,6 +45,7 @@ const storyBible = {
   rival: { name: 'Vivian Ashford', socialPower: 'media dynasty', demeanor: 'polished' },
   classHierarchy: ['elite circles'],
   supportingPressureCast: [],
+  pressureThreads: [],
   betrayalEngine: 'public replacement',
   classShameEngine: 'polite exclusion',
   revengeEngine: 'evidence',

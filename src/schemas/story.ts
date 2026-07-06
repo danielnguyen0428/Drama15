@@ -173,6 +173,21 @@ export const StoryBibleSchema = z.object({
   classShameEngine: z.string().min(1),
   revengeEngine: z.string().min(1),
   endingMode: z.string().min(1),
+  // Distinct pressure lines the story must resolve at the climax. Earlier drafts
+  // resolved only the strongest (usually material/evidence) thread and let the
+  // social/emotional thread evaporate, so the climax felt lopsided and the final
+  // chapter had to absorb an unresolved thread it had no room for. Requiring at
+  // least two named threads, each with a concrete resolutionBeat, forces the
+  // climax chapter to close every line it opened. Defaults to empty for
+  // backward compatibility; the orchestrator enforces "min 2" on fresh bibles.
+  pressureThreads: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        resolutionBeat: z.string().min(1),
+      }),
+    )
+    .default([]),
 });
 
 export const ChapterPlanItemSchema = z.object({
@@ -310,6 +325,16 @@ export const FoundationReportSchema = z.object({
   generatedAt: z.string(),
 });
 
+// Per-thread resolution signal computed after the whole manuscript exists: for
+// each pressureThreads item declared in the bible, did the final two chapters
+// (climax + resolution) actually reference and close it? Informational (like
+// propagationDebt) — surfaces a lopsided climax that resolved only one thread.
+export const ThreadResolutionSchema = z.object({
+  label: z.string().min(1),
+  addressed: z.boolean(),
+  resolved: z.boolean(),
+});
+
 export const StoryPayloadSchema = z.object({
   title: z.string().min(1),
   request: z.object({
@@ -343,6 +368,7 @@ export const StoryPayloadSchema = z.object({
     readerPanel: ReaderPanelReportSchema.optional(),
     manuscriptReview: ManuscriptReviewReportSchema.optional(),
     propagationDebt: z.array(PropagationDebtSchema).optional(),
+    threadResolution: z.array(ThreadResolutionSchema).optional(),
     foundationReport: FoundationReportSchema.optional(),
   }),
 });

@@ -162,6 +162,10 @@ export interface StoryBible {
   classShameEngine: string;
   revengeEngine: string;
   endingMode: string;
+  pressureThreads: {
+    label: string;
+    resolutionBeat: string;
+  }[];
 }
 
 // ─── Pipeline Story Payload (unified output) ─────────────────────────────────

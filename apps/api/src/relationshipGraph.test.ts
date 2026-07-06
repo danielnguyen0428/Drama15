@@ -26,6 +26,7 @@ const storyBible = {
   },
   classHierarchy: ['gia đình tài phiệt'],
   supportingPressureCast: [],
+  pressureThreads: [],
   betrayalEngine: 'Minh Quân phủ nhận Lan Anh trước gia đình.',
   classShameEngine: 'Bảo Trâm dùng gia thế để hạ thấp Lan Anh.',
   revengeEngine: 'Lan Anh rời đi và lấy lại quyền kiểm soát.',

@@ -13,7 +13,7 @@ const base = {
     premise: 'pre', heroine: { name: 'A', wound: 'w', strengths: ['s'], blindSpots: ['b'] },
     betrayer: { name: 'B', wound: 'w', cowardiceVector: 'cv' },
     rival: { name: 'C', socialPower: 'sp', demeanor: 'd' },
-    classHierarchy: ['x'], supportingPressureCast: [], betrayalEngine: 'be', classShameEngine: 'cse', revengeEngine: 're', endingMode: 'em',
+    classHierarchy: ['x'], supportingPressureCast: [], pressureThreads: [], betrayalEngine: 'be', classShameEngine: 'cse', revengeEngine: 're', endingMode: 'em',
   },
   chapterPlan: [{ chapterNumber: 1, title: 'c1', hook: 'h', mainBeat: 'm', humiliationProgression: 'h', revengeProgression: 'r', endingBeat: 'e' }],
   outputLanguage: 'vietnamese' as const,

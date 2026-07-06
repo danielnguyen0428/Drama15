@@ -123,6 +123,7 @@ export function parseStoryBible(rawStoryBible: unknown): StoryBible {
     classShameEngine: coerceText(source.classShameEngine),
     revengeEngine: coerceText(source.revengeEngine),
     endingMode: coerceText(source.endingMode),
+    pressureThreads: parsePressureThreads(source.pressureThreads),
   });
 }
 
@@ -385,4 +386,26 @@ function parseSupportingPressureCast(value: unknown): Array<{
         entry.relationshipToHeroine.trim() &&
         entry.pressureContribution.trim(),
     );
+}
+
+function parsePressureThreads(value: unknown): Array<{
+  label: string;
+  resolutionBeat: string;
+}> {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = asRecord(item);
+      return {
+        label: coerceText(firstDefined(record.label, record.name, record.thread), ""),
+        resolutionBeat: coerceText(
+          firstDefined(record.resolutionBeat, record.resolution, record.payoff, record.closeBeat),
+          "",
+        ),
+      };
+    })
+    .filter((entry) => entry.label.trim() && entry.resolutionBeat.trim());
 }

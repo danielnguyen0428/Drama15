@@ -92,6 +92,7 @@ import { applyCharacterFactsToRelationshipGraph, createInitialRelationshipGraph 
 import { analyzeVoiceFingerprint, buildVoiceLockInstruction } from "../core-pipeline/validators/voice-fingerprint";
 import { buildChapterCorpusReference } from "../corpus/corpus-retrieval";
 import { buildPropagationLedger } from "../core-pipeline/validators/propagation-ledger";
+import { detectThreadResolution } from "../core-pipeline/validators/thread-resolution";
 import { getRemainingChapterPlanItems } from "./story-resume";
 import { resolveFinalStoryTitle } from "./story-title";
 
@@ -353,6 +354,13 @@ export class StoryOrchestrator {
               ...(conceptImpliesSupportingPressure(concept.concept)
                 && bible.supportingPressureCast.length === 0
                 ? ["supportingPressureCast is empty but the concept implies a family, council, or institutional pressure role; name at least one such character."]
+                : []),
+              // Require at least two distinct pressure threads, each with a
+              // concrete resolutionBeat, so the climax chapter must close every
+              // line it opened instead of resolving only the strongest one and
+              // dumping the rest on the final chapter.
+              ...(bible.pressureThreads.length < 2
+                ? ["pressureThreads must list at least two distinct pressure lines (e.g. a material/evidence line and a social/emotional line), each with a concrete resolutionBeat."]
                 : []),
             ],
           ),
@@ -714,6 +722,10 @@ export class StoryOrchestrator {
           const propagationDebt = this.computePropagationDebt(continuityTracker);
           return propagationDebt ? { propagationDebt } : {};
         })(),
+        ...((): { threadResolution?: StoryPayload["meta"]["threadResolution"] } => {
+          const threadResolution = this.computeThreadResolution(outline.storyBible, chapters);
+          return threadResolution && threadResolution.length > 0 ? { threadResolution } : {};
+        })(),
       },
     });
     return runProgressStage(
@@ -919,6 +931,10 @@ export class StoryOrchestrator {
         ...((): { propagationDebt?: StoryPayload["meta"]["propagationDebt"] } => {
           const propagationDebt = this.computePropagationDebt(continuityTracker);
           return propagationDebt ? { propagationDebt } : {};
+        })(),
+        ...((): { threadResolution?: StoryPayload["meta"]["threadResolution"] } => {
+          const threadResolution = this.computeThreadResolution(storyPayload.storyBible, chapters);
+          return threadResolution ? { threadResolution } : {};
         })(),
       },
     });
@@ -1619,6 +1635,37 @@ export class StoryOrchestrator {
         totalChapters: plotBeats.total,
       });
       return debts.length > 0 ? debts : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Check that every pressure thread declared in the story bible is at least
+   * addressed in the closing chapters (climax + resolution). Informational
+   * signal persisted to meta.threadResolution — mirrors computePropagationDebt:
+   * prompt-free, fail-open, non-blocking. The hard enforcement lives in the
+   * prompt layer (climax mandatory element + bible min-2-threads validation).
+   */
+  private computeThreadResolution(storyBible: StoryPayload["storyBible"], chapters: Chapter[]): StoryPayload["meta"]["threadResolution"] {
+    try {
+      const threads = storyBible.pressureThreads ?? [];
+      if (threads.length === 0 || chapters.length === 0) {
+        return undefined;
+      }
+      const closingText = chapters
+        .slice(-2)
+        .map((chapter) => chapter.text)
+        .join("\n\n");
+      const report = detectThreadResolution(threads, closingText);
+      if (report.threads.length === 0) {
+        return undefined;
+      }
+      return report.threads.map((entry) => ({
+        label: entry.label,
+        addressed: entry.addressed,
+        resolved: entry.resolved,
+      }));
     } catch {
       return undefined;
     }

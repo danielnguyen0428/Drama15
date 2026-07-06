@@ -408,6 +408,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
       "public confrontation in the niche's highest-pressure room: council, wedding, boardroom, gala, classroom, court, hospital hearing, pack ritual, alien tribunal, or family table",
       "the heroine times evidence, witness, rule, or confession pressure without screaming",
       "the antagonist pushes back intelligently",
+      "resolve every pressure thread named in the story bible's pressureThreads list here — not only the one backed by the strongest physical evidence; if any thread (social, emotional, dignity, family) still lacks a concrete on-page resolution beat, deliver it in this chapter",
       "end with the decisive truth exposed but emotional outcome unfinished",
     ],
     forbiddenElements: [
@@ -440,6 +441,7 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
       "new villain",
       "new betrayal",
       "second climax",
+      "carrying an unresolved pressure thread over from the climax chapter — every pressureThreads item must already be closed before this chapter begins",
       "heroine agency transferred to another character",
       "ending over 2,000 words",
     ],
