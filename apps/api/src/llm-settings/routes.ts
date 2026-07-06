@@ -72,7 +72,23 @@ export function registerLlmSettingsRoutes(
       request.body as SaveLlmSettingsInput,
     );
     if (resolved.success === false) return sendFailure(reply, resolved);
-    return reply.send(await dependencies.testConnection(resolved.data));
+    const result = await dependencies.testConnection(resolved.data);
+    // A successful test now also persists the tested draft, so it becomes the
+    // settings story generation reads via resolve(). Previously "Test
+    // connection" only validated the draft in-memory: a user could test a new
+    // key, see "OK", forget to press the separate "Save" button, and then hit
+    // a 401 on story generation because it still read the old saved key. Only
+    // persist on success so a failing key never overwrites a working one.
+    if (result.ok) {
+      const saveResult = await dependencies.handler.save(userId, request.body as SaveLlmSettingsInput);
+      if (saveResult.success === false) {
+        return reply.send({
+          ok: false,
+          detail: `Kết nối OK nhưng không lưu được cấu hình: ${saveResult.error.message}`,
+        });
+      }
+    }
+    return reply.send(result);
   });
 }
 

@@ -161,7 +161,7 @@ test('settings API keeps two authenticated users isolated and never returns plai
   await app.close();
 });
 
-test('connection test uses draft values without persisting them', async () => {
+test('connection test uses draft values for the probe itself', async () => {
   const repository = new MemoryRepository();
   const handler = createHandler(repository);
   await handler.save('alice', {
@@ -192,11 +192,82 @@ test('connection test uses draft values without persisting them', async () => {
       apiKey: 'draft-secret',
     },
   });
-  const saved = await handler.resolve('alice');
 
   assert.equal(response.statusCode, 200);
   assert.equal(testedModel, 'draft-model');
   assert.equal(testedKey, 'draft-secret');
+  await app.close();
+});
+
+test('a successful connection test persists the draft so story generation reads the same key', async () => {
+  const repository = new MemoryRepository();
+  const handler = createHandler(repository);
+  await handler.save('alice', {
+    provider: 'other',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'saved-model',
+    apiKey: 'saved-secret',
+  });
+  const app = fastify();
+  registerLlmSettingsRoutes(app, {
+    handler,
+    authenticate: async () => 'alice',
+    testConnection: async () => ({ ok: true, detail: 'OK' }),
+  });
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/llm/settings/test',
+    payload: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'draft-model',
+      apiKey: 'draft-secret',
+    },
+  });
+  const saved = await handler.resolve('alice');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().ok, true);
+  assert.equal(saved.success, true);
+  // The tested draft is now the persisted settings — this is the fix: a user
+  // who tests a new key and never presses the separate Save button no longer
+  // has story generation silently fall back to the old saved key.
+  if (saved.success) {
+    assert.equal(saved.data.model, 'draft-model');
+    assert.equal(saved.data.apiKey, 'draft-secret');
+  }
+  await app.close();
+});
+
+test('a failing connection test does not overwrite the previously saved working key', async () => {
+  const repository = new MemoryRepository();
+  const handler = createHandler(repository);
+  await handler.save('alice', {
+    provider: 'other',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'saved-model',
+    apiKey: 'saved-secret',
+  });
+  const app = fastify();
+  registerLlmSettingsRoutes(app, {
+    handler,
+    authenticate: async () => 'alice',
+    testConnection: async () => ({ ok: false, detail: 'Router returned HTTP 401. API key không đúng.' }),
+  });
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/llm/settings/test',
+    payload: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'bad-model',
+      apiKey: 'bad-secret',
+    },
+  });
+  const saved = await handler.resolve('alice');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().ok, false);
   assert.equal(saved.success, true);
   if (saved.success) assert.equal(saved.data.model, 'saved-model');
   await app.close();

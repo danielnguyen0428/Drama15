@@ -120,7 +120,24 @@ export function LlmSettingsModal({ open, onClose, onSaved }: Props): JSX.Element
       const response = await httpFetch('/llm/settings/test', jsonRequest('POST', buildRequestBody()));
       if (!response.ok) throw new Error(await readApiError(response));
       const result = (await response.json()) as { ok: boolean; detail: string };
-      setMessage(result.ok ? `Kết nối OK: ${result.detail}` : `Kết nối chưa ổn: ${result.detail}`);
+      if (result.ok) {
+        // A successful test now also persists the tested draft on the server
+        // (see llm-settings/routes.ts), so it becomes the config story
+        // generation actually reads. Refresh local state to match — otherwise
+        // the form still shows the old "chưa đặt key" placeholder and a later
+        // Save with an empty key field would look like a no-op to the user.
+        const settingsResponse = await httpFetch('/llm/settings');
+        if (settingsResponse.ok) {
+          const nextSettings = (await settingsResponse.json()) as LlmSettings;
+          setSettings(nextSettings);
+          setApiKey('');
+          setClearApiKey(false);
+          onSaved(nextSettings);
+        }
+        setMessage(`Kết nối OK và đã lưu cấu hình này: ${result.detail}`);
+      } else {
+        setMessage(`Kết nối chưa ổn, chưa lưu cấu hình: ${result.detail}`);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Không test được connection.');
     } finally {
