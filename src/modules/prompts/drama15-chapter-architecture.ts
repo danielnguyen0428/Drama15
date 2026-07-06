@@ -17,6 +17,22 @@ export const DRAMA15_TOTAL_TARGET_WORDS = 37_500;
 export const DRAMA15_FIXED_CHAPTER_COUNT = 15;
 export const DRAMA15_EXACT_WORD_COUNT_OPERATIONAL_TOLERANCE = 100;
 
+// Phase A: the architecture is no longer hard-locked to exactly 15 chapters.
+// The floor stays at 15 so no authored beat is ever dropped; the planner may
+// request 16 or 17 when the plot needs an extra breathing chapter before the
+// climax. Extra chapters are inserted into the rise arc (see
+// buildDrama15ChapterArchitecture), never before the nadir/pivot locks.
+export const DRAMA15_MIN_CHAPTER_COUNT = 15;
+export const DRAMA15_MAX_CHAPTER_COUNT = 17;
+
+export function clampChapterCount(total: number): number {
+  if (!Number.isFinite(total)) return DRAMA15_FIXED_CHAPTER_COUNT;
+  const rounded = Math.round(total);
+  if (rounded < DRAMA15_MIN_CHAPTER_COUNT) return DRAMA15_MIN_CHAPTER_COUNT;
+  if (rounded > DRAMA15_MAX_CHAPTER_COUNT) return DRAMA15_MAX_CHAPTER_COUNT;
+  return rounded;
+}
+
 /**
  * Named structural positions for the fixed 15-chapter architecture.
  *
@@ -42,6 +58,39 @@ export const DRAMA15_KEY_CHAPTERS = {
 } as const;
 
 const K = DRAMA15_KEY_CHAPTERS;
+
+export type ResolvedKeyChapters = {
+  foreshadowPlant: number;
+  foreshadowActivate: number;
+  reveal: number;
+  nadir: number;
+  pivot: number;
+  publicReveal: number;
+  resolution: number;
+};
+
+/**
+ * Resolve the structural lock positions for a given total chapter count.
+ *
+ * Extra chapters (16, 17) are added to the rise arc, so only the climax and
+ * resolution positions slide down by the delta from 15. Every earlier lock
+ * (foreshadow plant/activate, nadir, pivot) keeps its canonical position, which
+ * is why the authored mandatory-element text referencing those chapters stays
+ * accurate. For total === 15 this returns exactly DRAMA15_KEY_CHAPTERS.
+ */
+export function resolveKeyChapters(total: number = DRAMA15_FIXED_CHAPTER_COUNT): ResolvedKeyChapters {
+  const clamped = clampChapterCount(total);
+  const delta = clamped - DRAMA15_FIXED_CHAPTER_COUNT;
+  return {
+    foreshadowPlant: K.foreshadowPlant,
+    foreshadowActivate: K.foreshadowActivate,
+    reveal: K.reveal,
+    nadir: K.nadir,
+    pivot: K.pivot,
+    publicReveal: K.publicReveal + delta,
+    resolution: K.resolution + delta,
+  };
+}
 
 export const DRAMA15_INVARIANT_RULES = [
   "No direct cloning from outside novels: borrow only commercial setup patterns, premise energy, social pressure, and pacing logic; all names, scenes, twists, evidence, and outcomes must be original.",
@@ -453,6 +502,72 @@ export const DRAMA15_CHAPTER_ARCHITECTURE: ChapterArchitecture[] = [
   },
 ];
 
+// Template for a chapter inserted into the rise arc when the planner requests 16
+// or 17 chapters. It carries generic "sustain the rise" content: add fresh
+// leverage/pressure before the climax without resolving anything. Word count and
+// intensity match the canonical rise chapters (11/12) so the pacing curve stays
+// smooth. Only used for total > 15; total === 15 never inserts anything.
+const RISE_SUSTAIN_TEMPLATE: Omit<ChapterArchitecture, "chapterNumber" | "summaryMemoryTags"> = {
+  arc: "rise",
+  functionName: "rise_sustain_pressure",
+  wordCountTarget: 2600,
+  wordCountRange: [2500, 2800],
+  intensity: 0.8,
+  dialogueRatio: 0.55,
+  hookType: "tension",
+  mandatoryElements: [
+    "add one fresh piece of leverage, evidence, ally, or information the heroine did not have before",
+    "raise the cost or risk of the heroine's plan so the coming public confrontation feels earned",
+    "the antagonist makes a confident move that will later become part of their exposure",
+    "keep the heroine's agency visible through a concrete choice, not a plan speech",
+  ],
+  forbiddenElements: [
+    "repeating the previous rise chapter's beat with new wording",
+    "resolving the central conflict early",
+    "an outside party taking over the heroine's plan",
+    "a new unrelated subplot that delays the climax",
+  ],
+  craftInstructions: [
+    "This is an added rise/breathing chapter before the climax: it must add new information and tighten the path to one decisive room, never stall or recap.",
+    "Keep the rise cumulative and strategic; every gain should cost something and narrow the path to the public confrontation.",
+  ],
+};
+
+/**
+ * Build the chapter architecture for a given total chapter count (15-17).
+ *
+ * For total === 15 this returns the canonical array by reference, so the
+ * default path is byte-identical to before this feature existed. For 16/17 it
+ * inserts extra rise-arc chapters right after the last canonical rise chapter
+ * (ch12), then renumbers sequentially. Setup/escalation/break/pivot beats keep
+ * their exact positions, so every mandatoryElements text that references a
+ * chapter number (3/7/9/10) stays accurate; only the climax + resolution
+ * chapters slide down by the delta, matching resolveKeyChapters.
+ */
+export function buildDrama15ChapterArchitecture(
+  total: number = DRAMA15_FIXED_CHAPTER_COUNT,
+): ChapterArchitecture[] {
+  const clamped = clampChapterCount(total);
+  if (clamped === DRAMA15_FIXED_CHAPTER_COUNT) {
+    return DRAMA15_CHAPTER_ARCHITECTURE;
+  }
+
+  const delta = clamped - DRAMA15_FIXED_CHAPTER_COUNT;
+  const lastRiseIndex = DRAMA15_CHAPTER_ARCHITECTURE.map((chapter) => chapter.arc).lastIndexOf("rise");
+  const before = DRAMA15_CHAPTER_ARCHITECTURE.slice(0, lastRiseIndex + 1);
+  const after = DRAMA15_CHAPTER_ARCHITECTURE.slice(lastRiseIndex + 1);
+  const inserted: ChapterArchitecture[] = Array.from({ length: delta }, (_unused, index) => ({
+    ...RISE_SUSTAIN_TEMPLATE,
+    chapterNumber: 0, // renumbered below
+    summaryMemoryTags: [`RISE_SUSTAIN_${index + 1}`, "LEVERAGE_BUILD"],
+  }));
+
+  return [...before, ...inserted, ...after].map((chapter, index) => ({
+    ...chapter,
+    chapterNumber: index + 1,
+  }));
+}
+
 const ARC_PROSE_PROFILES: Record<string, string> = {
   setup: "sensory grounded, fast commercial entry, clear social rules, concrete status pressure, no lore dump",
   escalation: "dialogue-led status pressure, tighter paragraphing, public comparison, visible cost",
@@ -514,17 +629,25 @@ function renderDialogueExecution(dialogueRatio: number) {
   return `Dialogue execution: target ${Math.round(dialogueRatio * 100)}% quoted speech; include action beats and silence as part of dialogue. No quoted speech turn over 80 words.`;
 }
 
-export function getDrama15ChapterArchitecture(chapterNumber: number) {
-  return DRAMA15_CHAPTER_ARCHITECTURE.find((chapter) => chapter.chapterNumber === chapterNumber);
+export function getDrama15ChapterArchitecture(
+  chapterNumber: number,
+  totalChapters: number = DRAMA15_FIXED_CHAPTER_COUNT,
+) {
+  return buildDrama15ChapterArchitecture(totalChapters).find(
+    (chapter) => chapter.chapterNumber === chapterNumber,
+  );
 }
 
-export function getDrama15ChapterOperationalWordCountRange(chapterNumber: number): [number, number] | undefined {
-  const architecture = getDrama15ChapterArchitecture(chapterNumber);
+export function getDrama15ChapterOperationalWordCountRange(
+  chapterNumber: number,
+  totalChapters: number = DRAMA15_FIXED_CHAPTER_COUNT,
+): [number, number] | undefined {
+  const architecture = getDrama15ChapterArchitecture(chapterNumber, totalChapters);
   if (!architecture) {
     return undefined;
   }
 
-  if (architecture.chapterNumber === DRAMA15_FIXED_CHAPTER_COUNT) {
+  if (architecture.chapterNumber === clampChapterCount(totalChapters)) {
     return architecture.wordCountRange;
   }
 
@@ -549,6 +672,32 @@ export function renderDrama15ArchitectureOverview() {
   ].join("\n");
 }
 
+// Resolve the template style-lock line for a chapter. For total === 15 this is
+// the authored per-chapter lock. For 16/17, inserted rise chapters have no
+// authored lock, and the climax/resolution chapters shift down, so we derive a
+// lock from the architecture's arc/function instead of reading a fixed index.
+function resolveTemplateStyleLock(
+  architecture: ChapterArchitecture,
+  totalChapters: number,
+): string {
+  if (clampChapterCount(totalChapters) === DRAMA15_FIXED_CHAPTER_COUNT) {
+    return PROMPT_TEMPLATE_STYLE_LOCKS[architecture.chapterNumber] ?? "";
+  }
+
+  const keys = resolveKeyChapters(totalChapters);
+  if (architecture.chapterNumber === keys.publicReveal) {
+    return PROMPT_TEMPLATE_STYLE_LOCKS[K.publicReveal];
+  }
+  if (architecture.chapterNumber === keys.resolution) {
+    return PROMPT_TEMPLATE_STYLE_LOCKS[K.resolution];
+  }
+  if (PROMPT_TEMPLATE_STYLE_LOCKS[architecture.chapterNumber] && architecture.functionName !== "rise_sustain_pressure") {
+    return PROMPT_TEMPLATE_STYLE_LOCKS[architecture.chapterNumber];
+  }
+  // Inserted rise chapter (or any shifted chapter without an authored lock).
+  return `chapter ${architecture.chapterNumber} sustains the rise: add fresh leverage or information and tighten the path to the public confrontation without resolving the conflict or recapping the previous chapter.`;
+}
+
 export function renderChapterArchitectureForPrompt(
   chapterNumber: number,
   effectiveTargets?: {
@@ -557,8 +706,9 @@ export function renderChapterArchitectureForPrompt(
     hookDensity: "low" | "medium" | "high";
     hookDensityInstruction?: string;
   },
+  totalChapters: number = DRAMA15_FIXED_CHAPTER_COUNT,
 ) {
-  const architecture = getDrama15ChapterArchitecture(chapterNumber);
+  const architecture = getDrama15ChapterArchitecture(chapterNumber, totalChapters);
   if (!architecture) {
     return "";
   }
@@ -577,15 +727,17 @@ export function renderChapterArchitectureForPrompt(
     renderDialogueExecution(dialogueRatio),
     renderHookExecution(architecture.hookType),
     ...(hookDensityLine ? [hookDensityLine] : []),
-    `Template style lock: ${PROMPT_TEMPLATE_STYLE_LOCKS[architecture.chapterNumber]}`,
+    `Template style lock: ${resolveTemplateStyleLock(architecture, totalChapters)}`,
     `Mandatory elements: ${architecture.mandatoryElements.join("; ")}.`,
     `Forbidden elements: ${architecture.forbiddenElements.join("; ")}.`,
     `Craft instructions: ${architecture.craftInstructions.join(" ")}`,
   ].join("\n");
 }
 
-export function renderChapterPlanArchitectureForPrompt() {
-  return DRAMA15_CHAPTER_ARCHITECTURE.map(
+export function renderChapterPlanArchitectureForPrompt(
+  totalChapters: number = DRAMA15_FIXED_CHAPTER_COUNT,
+) {
+  return buildDrama15ChapterArchitecture(totalChapters).map(
     (chapter) =>
       `Ch.${chapter.chapterNumber} ${chapter.functionName}: ${chapter.mandatoryElements.join("; ")}. Avoid: ${chapter.forbiddenElements.join("; ")}.`,
   ).join("\n");
