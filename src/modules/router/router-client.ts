@@ -195,9 +195,17 @@ export class RouterClient {
     messages: ChatMessage[];
     temperature?: number;
     timeoutMs: number;
+    // Whether to request OpenAI-style JSON mode. Structured-output stages want
+    // it; the connectivity probe (testConnection) does not — forcing
+    // response_format there makes strict providers reject the probe with a 400
+    // because the probe prompt never mentions "json".
+    jsonResponseFormat?: boolean;
   }) {
     const runtimeConfig = await this.getRuntimeConfig();
-    const payload: Record<string, unknown> = {
+    const wantsJsonResponseFormat =
+      (params.jsonResponseFormat ?? true) && supportsJsonResponseFormat(params.model);
+
+    const buildPayload = (withResponseFormat: boolean): Record<string, unknown> => ({
       model: params.model,
       messages: params.messages,
       // Non-streaming on purpose. `fetchText` already buffers the whole body via
@@ -211,19 +219,38 @@ export class RouterClient {
       // provider returns one message.content object that extractCompletionContent
       // reads directly.
       stream: false,
-      ...(supportsJsonResponseFormat(params.model) ? { response_format: { type: "json_object" } } : {}),
+      ...(withResponseFormat ? { response_format: { type: "json_object" } } : {}),
       ...(runtimeConfig.source === "env"
         ? { temperature: params.temperature ?? runtimeConfig.temperature ?? 0.7 }
         : {}),
-    };
-    if (runtimeConfig.source === "env" && runtimeConfig.maxTokens) {
-      payload.max_tokens = runtimeConfig.maxTokens;
+      ...(runtimeConfig.source === "env" && runtimeConfig.maxTokens
+        ? { max_tokens: runtimeConfig.maxTokens }
+        : {}),
+    });
+
+    const call = (withResponseFormat: boolean) =>
+      this.fetchText("/chat/completions", {
+        method: "POST",
+        timeoutMs: params.timeoutMs,
+        body: buildPayload(withResponseFormat),
+      }, runtimeConfig);
+
+    let response: string;
+    try {
+      response = await call(wantsJsonResponseFormat);
+    } catch (error) {
+      // Some OpenAI-compatible providers reject `response_format: json_object`
+      // with a 400 "invalid payload / unsupported parameter" (either the model
+      // does not support JSON mode, or the provider requires the word "json" in
+      // the messages). Retry once without response_format so every configured
+      // provider stays usable; the downstream JSON parser already tolerates
+      // prose-wrapped JSON.
+      if (wantsJsonResponseFormat && isUnsupportedParameterError(error)) {
+        response = await call(false);
+      } else {
+        throw error;
+      }
     }
-    const response = await this.fetchText("/chat/completions", {
-      method: "POST",
-      timeoutMs: params.timeoutMs,
-      body: payload,
-    }, runtimeConfig);
 
     const choice = extractCompletionContent(response);
     if (!choice) {
@@ -245,6 +272,9 @@ export class RouterClient {
         ],
         temperature: 0,
         timeoutMs: 15_000,
+        // Connectivity probe only. Forcing JSON mode here makes strict providers
+        // reject the probe with a 400 because this prompt never mentions "json".
+        jsonResponseFormat: false,
       });
       return { ok: true, detail: text.trim().slice(0, 80) || "OK" };
     } catch (error) {
@@ -584,6 +614,20 @@ function normalizeRouterError(error: unknown) {
   }
 
   return new AppError("UNKNOWN_ERROR", "Unknown router error.", 500);
+}
+
+// Detect a 400 that means "this provider rejected the payload / an unsupported
+// parameter" (most commonly `response_format: json_object`). Used to retry the
+// completion once without response_format so strict OpenAI-compatible providers
+// stay usable. Deliberately narrow: only a 400 on /chat/completions counts, so
+// genuine auth/quota/model errors still surface unchanged.
+function isUnsupportedParameterError(error: unknown) {
+  if (!isAppError(error) || error.code !== "ROUTER_UNAVAILABLE") {
+    return false;
+  }
+
+  const details = error.details as { endpoint?: unknown; status?: unknown } | undefined;
+  return details?.endpoint === "/chat/completions" && details?.status === 400;
 }
 
 function isModelUnavailableError(error: unknown) {
