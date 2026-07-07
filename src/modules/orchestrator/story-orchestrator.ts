@@ -1142,6 +1142,21 @@ export class StoryOrchestrator {
 
         const needsRepair = needsChapterRetry(metrics) || (driftReport && hasCriticalViolations(driftReport));
 
+        // Voice-consistency telemetry: confirms at runtime why some chapters read
+        // "human" and others read "AI". A chapter only gets the low-temp anti-AI
+        // rewrite when it fails the gate here; chapters that pass keep the raw
+        // draft cadence. Watch for repaired=false rows whose sameSubjectOpenerShare
+        // sits in the 0.35–0.44 "dead zone" the VN AI-voice gate does not catch.
+        const vav = metrics.vietnameseAiVoice;
+        console.info(
+          `[voice-metrics] ch=${parsed.chapterNumber} willRepair=${Boolean(needsRepair)} ` +
+            `vavNeedsRepair=${vav.needsRepair} vavScore=${vav.score.toFixed(3)} ` +
+            `sameSubjectShare=${vav.sameSubjectOpenerShare.toFixed(3)} maxStreak=${vav.maxSameSubjectStreak} ` +
+            `clicheHits=${vav.clicheHits} motCach=${vav.adverbialMotCach} ` +
+            `sentenceCV=${metrics.sentenceVariance.cv.toFixed(3)} ` +
+            `softFailures=${metrics.failures.length} [${metrics.failures.join(" | ")}]`,
+        );
+
         if (!needsRepair) {
           // Extract facts and store even if no repair needed
           if (memoryStore) {
