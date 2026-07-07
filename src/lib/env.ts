@@ -34,12 +34,14 @@ const EnvSchema = z.object({
   ROUTER_FALLBACK_ENABLED: z.string().optional().transform((value) => value !== "false"),
   DEFAULT_LINE_PRESET: z.string().default("billionaire_rich_poor_romance"),
   DEFAULT_STYLE_PRESET: z.string().default("co_man_warm_modern_blueprint"),
-  // Drama15's pipeline is hardwired to a 15-chapter architecture (schema
-  // `.length(15)`/`.max(15)`, the 15-beat chapter architecture, and the ch14/15
-  // reveal/equilibrium prompts). A different value would pass request validation
-  // but fail mid-generation, so the count is locked to 15 at config load.
-  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().refine((value) => value === 15, {
-    message: "DEFAULT_CHAPTER_COUNT must be 15 — the Drama15 pipeline is fixed to a 15-chapter architecture.",
+  // Drama15 floors at a 15-chapter architecture and may flex up to 17 when the
+  // plot complexity (pressure threads, supporting pressure cast) warrants an
+  // extra breathing chapter before the climax. This value is the FLOOR/default
+  // chapter count; the effective per-story count is decided after the bible and
+  // clamped to [15, 17] by clampChapterCount. Keeping the default at 15 means
+  // stories that need no extra chapter are byte-identical to before.
+  DEFAULT_CHAPTER_COUNT: z.coerce.number().int().refine((value) => value >= 15 && value <= 17, {
+    message: "DEFAULT_CHAPTER_COUNT must be between 15 and 17 — the Drama15 pipeline floors at a 15-chapter architecture and flexes to 17.",
   }).default(15),
   OUTPUT_DIR: z.string().optional(),
   WRITE_EXPORT_FILES: z.string().optional().transform((value) => value === "true"),

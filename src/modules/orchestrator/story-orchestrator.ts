@@ -39,6 +39,7 @@ import {
 } from "../prompts/story-prompts";
 import { createSeedBlueprint, type SeedHistoryEntry } from "../prompts/seed-blueprint";
 import { resolveNicheSpine } from "../prompts/niche-spine";
+import { resolveComplexityChapterCount, clampChapterCount } from "../prompts/drama15-chapter-architecture";
 import { getLocalProsePolishConfig, type LocalProsePolishConfig, type ProsePolishTarget } from "../presets/prose-polish-config";
 import { postProcessProseHumanizer } from "../postprocessors/prose-humanizer-post-processor";
 import { runReaderPanel } from "../postprocessors/reader-panel";
@@ -255,8 +256,11 @@ export class StoryOrchestrator {
       () => this.loadGenerationContext(request.linePreset, request.stylePreset),
       "Đã nạp preset và alias model.",
     );
-    if (request.chapterCount !== context.linePreset.constraints.fixedChapterCount) {
-      throw new AppError("VALIDATION_ERROR", `chapterCount must be ${context.linePreset.constraints.fixedChapterCount}`, 400);
+    // The incoming chapterCount only needs to sit inside the supported band;
+    // the exact count is finalised after the bible exists (see below), because
+    // it now flexes with story complexity (pressureThreads / supporting cast).
+    if (clampChapterCount(request.chapterCount) !== request.chapterCount) {
+      throw new AppError("VALIDATION_ERROR", `chapterCount must be within the supported 15-17 band`, 400);
     }
 
     // Seed blueprint drives per-story diversity: a fresh set of the 16 niche
@@ -381,17 +385,29 @@ export class StoryOrchestrator {
 
     const alignedConcept = await this.alignConceptNames(request, concept.concept, storyBible.storyBible, context);
 
+    // Phase A: finalise the chapter count (15-17) from the story's structural
+    // complexity now that the bible exists. Extra pressure threads or supporting
+    // pressure cast earn breathing chapters in the rise arc so the climax is not
+    // forced to resolve everything at once. The floor is 15, so a simple story is
+    // byte-identical to the previous fixed pipeline. Every downstream step
+    // (plan prompt, validation, chapter loop, progress math) uses this count.
+    const effectiveChapterCount = resolveComplexityChapterCount({
+      pressureThreadCount: storyBible.storyBible.pressureThreads.length,
+      supportingCastCount: storyBible.storyBible.supportingPressureCast.length,
+    });
+    const effectiveRequest: NormalizedOutlineRequest = { ...request, chapterCount: effectiveChapterCount };
+
     const chapterPlan = await runProgressStage(
       progress,
       4,
       {
         id: "chapter-plan",
-        label: "Lập 15 chương",
+        label: `Lập ${effectiveChapterCount} chương`,
         detail: "Đang dựng outline từng chương.",
       },
       async () => {
         const chapterPlanPrompt = buildChapterPlanPrompt({
-          request,
+          request: effectiveRequest,
           concept: alignedConcept,
           storyBible: storyBible.storyBible,
           linePreset: context.linePreset,
@@ -406,9 +422,9 @@ export class StoryOrchestrator {
           timeoutMs: env.routerPlanningTimeoutMs,
           validate: (data) => validateParsed(
             () => parseChapterPlan(unwrapArrayEnvelope(data, "chapterPlan")),
-            (plan) => plan.length === context.linePreset.constraints.fixedChapterCount
+            (plan) => plan.length === effectiveChapterCount
               ? []
-              : [`chapterPlan must contain exactly ${context.linePreset.constraints.fixedChapterCount} chapters, got ${plan.length}`],
+              : [`chapterPlan must contain exactly ${effectiveChapterCount} chapters, got ${plan.length}`],
           ),
         });
 
@@ -438,7 +454,7 @@ export class StoryOrchestrator {
         const title = resolveFinalStoryTitle(alignedConcept, request.titleHint);
         return StoryPayloadSchema.parse({
           title,
-          request,
+          request: effectiveRequest,
           concept: alignedConcept,
           storyBible: storyBible.storyBible,
           chapterPlan: chapterPlan.chapterPlan,
@@ -542,11 +558,17 @@ export class StoryOrchestrator {
   async generateFull(request: NormalizedFullGenerateRequest, progressOptions?: StoryProgressOptions, options?: { recentStoryTitles?: string[] }) {
     const posterStageCount = this.posterGenerator ? 1 : 0;
     const chapterStageOffset = 5 + posterStageCount;
-    const finalizeStageNumber = chapterStageOffset + request.chapterCount + 1;
-    const totalStages = finalizeStageNumber;
-    const progress = resolveProgressOptions(progressOptions, "full", totalStages);
+    // The chapter count is only final after the outline (the bible's complexity
+    // decides 15-17), so seed the progress bar with the requested floor and
+    // correct it once the plan exists. emitProgress reads progress.totalStages
+    // live, so updating it mid-run keeps the bar accurate without a second bar.
+    let finalizeStageNumber = chapterStageOffset + request.chapterCount + 1;
+    const progress = resolveProgressOptions(progressOptions, "full", finalizeStageNumber);
     const initialOutline = await this.generateOutline(request, progress, options);
     const { outline, foundationReport } = await this.applyFoundationGate(initialOutline, request, progress, options);
+    // Re-derive the stage math from the actual plan length (may be 16 or 17).
+    finalizeStageNumber = chapterStageOffset + outline.chapterPlan.length + 1;
+    progress.totalStages = finalizeStageNumber;
     const posterPromise = this.startPosterGeneration(outline, progress);
     const chapters: Chapter[] = [];
     let relationshipGraph = createInitialRelationshipGraph(outline.storyBible);

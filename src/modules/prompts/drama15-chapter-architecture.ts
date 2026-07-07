@@ -34,6 +34,31 @@ export function clampChapterCount(total: number): number {
 }
 
 /**
+ * Decide how many chapters a story needs (15-17) from its structural
+ * complexity. The floor is 15 so no authored beat is ever dropped; each extra
+ * distinct load the climax must carry earns one breathing chapter in the rise
+ * arc so the finale is not forced to resolve everything at once (the exact
+ * failure seen when a lopsided climax dumped an unresolved thread on ch15).
+ *
+ * Signals (both are concrete outputs of the story bible, not guesses):
+ * - pressureThreads beyond the baseline two: every extra pressure line the
+ *   climax must close.
+ * - supportingPressureCast beyond two: every extra named family/institutional
+ *   force whose arc needs at least one on-page beat before the finale.
+ *
+ * One extra chapter per two units of excess complexity, clamped to 15-17.
+ */
+export function resolveComplexityChapterCount(signals: {
+  pressureThreadCount: number;
+  supportingCastCount: number;
+}): number {
+  const excessThreads = Math.max(0, signals.pressureThreadCount - 2);
+  const excessCast = Math.max(0, signals.supportingCastCount - 2);
+  const extraChapters = Math.floor((excessThreads + excessCast) / 2);
+  return clampChapterCount(DRAMA15_FIXED_CHAPTER_COUNT + extraChapters);
+}
+
+/**
  * Named structural positions for the fixed 15-chapter architecture.
  *
  * These are the single source of truth for the dramatic locks. Every prompt,

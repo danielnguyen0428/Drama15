@@ -191,7 +191,7 @@ export const StoryBibleSchema = z.object({
 });
 
 export const ChapterPlanItemSchema = z.object({
-  chapterNumber: z.number().int().min(1).max(15),
+  chapterNumber: z.number().int().min(1).max(17),
   title: z.string().min(1),
   hook: z.string().min(1),
   mainBeat: z.string().min(1),
@@ -202,7 +202,7 @@ export const ChapterPlanItemSchema = z.object({
 
 export const ChapterSchema = z
   .object({
-    chapterNumber: z.number().int().min(1).max(15),
+    chapterNumber: z.number().int().min(1).max(17),
     title: z.string().min(1),
     summary: z.string().min(1).optional(),
     text: z.string().min(1),
@@ -213,7 +213,7 @@ export const ChapterSchema = z
   }));
 
 export const ChapterStateSchema = z.object({
-  chapter: z.number().int().min(1).max(15),
+  chapter: z.number().int().min(1).max(17),
   heroineAgency: z.number().int().min(0).max(100),
   emotionalTemperature: z.string().optional(),
 });
@@ -250,7 +250,7 @@ export const RelationshipEdgeSchema = z.object({
   target: z.string().min(1),
   label: z.string().min(1),
   type: z.string().min(1),
-  chapterNumber: z.number().int().min(1).max(15).optional(),
+  chapterNumber: z.number().int().min(1).max(17).optional(),
   confidence: z.enum(["explicit", "inferred"]),
 });
 
@@ -282,7 +282,7 @@ export const ReaderPanelPersonaScoreSchema = z.object({
 export const EvaluationIssueSchema = z.object({
   issue: z.string().min(1),
   severity: z.enum(["low", "medium", "high"]).default("medium"),
-  chapters: z.array(z.number().int().min(1).max(15)).default([]),
+  chapters: z.array(z.number().int().min(1).max(17)).default([]),
 });
 
 export const ReaderPanelReportSchema = z.object({
@@ -307,7 +307,7 @@ export const ManuscriptReviewReportSchema = z.object({
 export const PropagationDebtSchema = z.object({
   kind: z.enum(["missed_foreshadow", "pending_foreshadow", "unachieved_beat", "late_fact"]),
   detail: z.string().min(1),
-  chapters: z.array(z.number().int().min(1).max(15)).default([]),
+  chapters: z.array(z.number().int().min(1).max(17)).default([]),
   severity: z.enum(["low", "medium", "high"]).default("medium"),
 });
 
@@ -351,7 +351,7 @@ export const StoryPayloadSchema = z.object({
   }),
   concept: ConceptSchema,
   storyBible: StoryBibleSchema,
-  chapterPlan: z.array(ChapterPlanItemSchema).length(15),
+  chapterPlan: z.array(ChapterPlanItemSchema).min(15).max(17),
   chapters: z.array(ChapterSchema).default([]),
   continuityLite: ContinuityLiteSchema,
   relationshipGraph: RelationshipGraphSchema.optional(),
@@ -379,8 +379,8 @@ export const GenerateChapterRequestSchema = z
     title: z.string().min(1).optional(),
     outputLanguage: OutputLanguageSchema.optional(),
     storyBible: StoryBibleSchema,
-    chapterPlan: z.array(ChapterPlanItemSchema).length(15),
-    chapterNumber: z.number().int().min(1).max(15),
+    chapterPlan: z.array(ChapterPlanItemSchema).min(15).max(17),
+    chapterNumber: z.number().int().min(1).max(17),
     previousChapterSummaries: z.array(z.string().min(1)).default([]),
     draftControls: DraftControlsSchema.optional(),
     userIntensity: z.number().min(0).max(1).optional(),
@@ -428,7 +428,7 @@ export const PreserveConstraintsSchema = z.object({
 
 export const RegenerateChapterRequestSchema = z.object({
   storyPayload: StoryPayloadSchema,
-  targetChapter: z.number().int().min(1).max(15),
+  targetChapter: z.number().int().min(1).max(17),
   mode: RegenerateModeSchema,
   instruction: z.string().trim().min(1),
   preserveConstraints: PreserveConstraintsSchema.default({

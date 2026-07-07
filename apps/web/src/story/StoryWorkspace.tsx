@@ -7,7 +7,7 @@ import { getAccessToken, supabase } from '../api/supabaseClient';
 import { useI18n } from '../i18n/useI18n';
 import { LlmSettingsModal, type LlmSettings } from './LlmSettingsModal';
 import { DraftControlsModal } from './DraftControlsModal';
-import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
+import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, resolveTotalChapters, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -403,7 +403,11 @@ export function StoryWorkspace(): JSX.Element {
 
   function applyStoryDetail(story: StoryDetail, label?: string) {
     const chapterCount = story.storyPayload?.chapters.length ?? story.chapterCount;
-    const completed = story.status === 'completed' || chapterCount >= TOTAL_CHAPTERS;
+    // The pipeline flexes 15-17 chapters; use the plan length as the real total
+    // so progress never shows a 17-chapter story stuck at ~88% or a 15-chapter
+    // story that never reaches 100%.
+    const totalChapters = resolveTotalChapters(story.storyPayload?.chapterPlan.length ?? story.chapterCount);
+    const completed = story.status === 'completed' || chapterCount >= totalChapters;
 
     setStoryId(story.id);
     setStoryTitle(story.storyPayload?.title || story.title);
@@ -411,8 +415,8 @@ export function StoryWorkspace(): JSX.Element {
     setActiveChapter(story.storyPayload?.chapters[0]?.chapterNumber ?? 1);
     setPanel('chapters');
     setPhase(completed ? 'completed' : story.status === 'failed' ? 'failed' : 'idle');
-    setProgress(completed ? 100 : Math.round((chapterCount / TOTAL_CHAPTERS) * 100));
-    setProgressLabel(label ?? (completed ? t('progress.opened_saved') : chapterCount > 0 ? t('progress.opened_partial', { count: chapterCount, total: TOTAL_CHAPTERS }) : t('progress.no_chapters')));
+    setProgress(completed ? 100 : Math.round((chapterCount / totalChapters) * 100));
+    setProgressLabel(label ?? (completed ? t('progress.opened_saved') : chapterCount > 0 ? t('progress.opened_partial', { count: chapterCount, total: totalChapters }) : t('progress.no_chapters')));
   }
 
   function handleStreamEvent(payload: StreamEvent) {
@@ -740,7 +744,13 @@ function ChapterPanel({ chapters, activeChapter, activeChapterData, onSelect, lo
   const fullText = activeChapterData?.content ?? '';
   const shown = typing && reveal !== undefined ? fullText.slice(0, reveal) : fullText;
   const hasText = shown.trim().length > 0;
-  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: TOTAL_CHAPTERS }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || t('chapter.waiting')}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData && hasText ? <><h3>{activeChapterData.title || `${t('chapter.prefix')} ${activeChapterData.index}`}</h3><TypewriterProse text={shown} typing={typing} /></> : loading ? <ReaderLoading message={t('chapter.loading')} /> : <div className="empty-state">{t('chapter.empty')}</div>}</article></div>;
+  // The pipeline now flexes 15-17 chapters, so the nav must size to the story's
+  // real chapter count (max index seen / count), never a hard-coded 15 — a
+  // 16/17-chapter story would otherwise hide its final chapters. Floor at 15 so
+  // the nav still shows every slot while chapters stream in.
+  const highestIndex = chapters.reduce((max, item) => Math.max(max, item.index), 0);
+  const totalChapters = resolveTotalChapters(Math.max(chapters.length, highestIndex));
+  return <div className="chapter-layout"><nav className="chapter-list">{Array.from({ length: totalChapters }, (_, index) => index + 1).map((number) => { const chapter = chapters.find((item) => item.index === number); return <button key={number} type="button" className={activeChapter === number ? 'active' : ''} disabled={!chapter} onClick={() => onSelect(number)}><span>{number.toString().padStart(2, '0')}</span><strong>{chapter?.title || t('chapter.waiting')}</strong></button>; })}</nav><article className="chapter-reader">{activeChapterData && hasText ? <><h3>{activeChapterData.title || `${t('chapter.prefix')} ${activeChapterData.index}`}</h3><TypewriterProse text={shown} typing={typing} /></> : loading ? <ReaderLoading message={t('chapter.loading')} /> : <div className="empty-state">{t('chapter.empty')}</div>}</article></div>;
 }
 
 function TextPanel({ title, content, loading, reveal, typing, t }: { title: string; content: string; loading?: boolean; reveal?: number; typing?: boolean; t: TFn }) {

@@ -27,6 +27,7 @@ import {
   renderChapterPlanArchitectureForPrompt,
   renderDrama15ArchitectureOverview,
   renderIntensityInstruction,
+  resolveKeyChapters,
 } from "./drama15-chapter-architecture";
 import {
   buildUserDraftScaling,
@@ -673,6 +674,8 @@ export function buildChapterPlanPrompt(params: {
   nicheSpine?: NicheSpine;
 }): PromptBundle {
   const { request, concept, storyBible, linePreset, stylePreset, seedBlueprint, nicheSpine } = params;
+  const total = request.chapterCount;
+  const keys = resolveKeyChapters(total);
 
   return {
     systemPrompt: composeSystemPrompt(
@@ -682,25 +685,25 @@ export function buildChapterPlanPrompt(params: {
       styleBlueprintSystemInstruction(stylePreset.id),
     ),
     userPrompt: [
-      `Create a ${request.chapterCount}-chapter plan for this short drama.`,
+      `Create a ${total}-chapter plan for this short drama.`,
       buildJsonLanguageInstruction(request.outputLanguage),
-      `Return JSON with a single top-level key named chapterPlan containing an array of ${request.chapterCount} objects.`,
+      `Return JSON with a single top-level key named chapterPlan containing an array of ${total} objects.`,
       "Each object must include: chapterNumber, title, hook, mainBeat, humiliationProgression, revengeProgression, endingBeat.",
       "Keep the output compact. Each field value must be one sentence or shorter, preferably under 18 words.",
       "Do not write explanatory paragraphs. Use clean, high-signal beats only.",
       "Revenge activation should not happen too early. Keep class shame legible and cumulative.",
-      "Follow the supplied 15-chapter architecture exactly. Keep the old JSON keys, but make each chapter perform its architecture function.",
-      "Chapter 3 must plant a concrete foreshadow detail. Chapter 7 must activate it. Chapter 9 must be maximum loss with no rescue. Chapter 10 must be an earned internal pivot. Chapter 14 must be a public reveal. Chapter 15 must be a short new equilibrium.",
-      "Sustain the middle: chapters 6, 8, 12, and 13 must each add fresh pressure or new information so the 15-chapter arc never stalls or repeats a beat.",
-      "The story bible lists pressureThreads — distinct pressure lines the story opens. Distribute their escalation across the middle chapters and make the public reveal chapter (14) resolve EVERY thread, not only the one with the strongest physical evidence. Do not push any unresolved thread into the final chapter.",
-      "The final chapter (15) is aftershock only: it must not carry a pressure thread that chapter 14 failed to close. If a thread cannot be resolved by chapter 14, move its resolution earlier — never defer it to the resolution chapter.",
+      `Follow the supplied ${total}-chapter architecture exactly. Keep the old JSON keys, but make each chapter perform its architecture function.`,
+      `Chapter ${keys.foreshadowPlant} must plant a concrete foreshadow detail. Chapter ${keys.foreshadowActivate} must activate it. Chapter ${keys.nadir} must be maximum loss with no rescue. Chapter ${keys.pivot} must be an earned internal pivot. Chapter ${keys.publicReveal} must be a public reveal. Chapter ${keys.resolution} must be a short new equilibrium.`,
+      `Sustain the middle: the escalation and rise chapters must each add fresh pressure or new information so the ${total}-chapter arc never stalls or repeats a beat.`,
+      `The story bible lists pressureThreads — distinct pressure lines the story opens. Distribute their escalation across the middle chapters and make the public reveal chapter (${keys.publicReveal}) resolve EVERY thread, not only the one with the strongest physical evidence. Do not push any unresolved thread into the final chapter.`,
+      `The final chapter (${keys.resolution}) is aftershock only: it must not carry a pressure thread that chapter ${keys.publicReveal} failed to close. If a thread cannot be resolved by chapter ${keys.publicReveal}, move its resolution earlier — never defer it to the resolution chapter.`,
       nicheSpine ? renderNicheSpineForPrompt(nicheSpine) : "",
       customNicheLockInstruction(request),
       block("Request", request),
       block("Concept", concept),
       block("Story bible", storyBible),
       seedBlueprint ? renderSeedBlueprintForPrompt(seedBlueprint) : "",
-      block("Chapter architecture map", renderChapterPlanArchitectureForPrompt()),
+      block("Chapter architecture map", renderChapterPlanArchitectureForPrompt(total)),
       block("Line preset", linePreset),
       block("Style preset", stylePreset),
     ].join("\n\n"),

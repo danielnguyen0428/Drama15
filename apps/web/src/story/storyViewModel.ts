@@ -4,8 +4,22 @@ export type StoryListItem = {
   canResume?: boolean;
 };
 
-/** Fixed number of chapters in a full Drama15 draft. */
-export const TOTAL_CHAPTERS = 15;
+/**
+ * Chapter-count band for a full Drama15 draft. The pipeline now flexes 15-17
+ * chapters based on story complexity, so UI that needs a total should prefer the
+ * story's own chapter count (plan length / saved chapterCount) and fall back to
+ * the floor only when no story data is available yet.
+ */
+export const MIN_TOTAL_CHAPTERS = 15;
+export const MAX_TOTAL_CHAPTERS = 17;
+/** @deprecated Prefer the story's actual chapter count; kept as the floor default. */
+export const TOTAL_CHAPTERS = MIN_TOTAL_CHAPTERS;
+
+/** Resolve a story's real chapter total, clamped to the supported band. */
+export function resolveTotalChapters(count: number | undefined): number {
+  if (!count || !Number.isFinite(count) || count < MIN_TOTAL_CHAPTERS) return MIN_TOTAL_CHAPTERS;
+  return Math.min(MAX_TOTAL_CHAPTERS, Math.round(count));
+}
 
 export type RelationshipNodeView = { id: string; name: string; role: string; description: string };
 export type RelationshipEdgeView = { source: string; target: string; label: string; type: string; chapterNumber?: number; confidence?: 'explicit' | 'inferred' };
@@ -249,5 +263,5 @@ function normalizeIssue(value: unknown): EvaluationIssueView | undefined {
 
 function normalizeChapters(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= TOTAL_CHAPTERS);
+  return value.filter((n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= MAX_TOTAL_CHAPTERS);
 }

@@ -12,6 +12,10 @@ import {
   StoryBibleSchema,
   StoryPayloadSchema,
 } from "../../schemas/story";
+import {
+  DRAMA15_MAX_CHAPTER_COUNT,
+  DRAMA15_MIN_CHAPTER_COUNT,
+} from "../prompts/drama15-chapter-architecture";
 import { normalizeBranchScopedStylePresetId, normalizeLinePresetId } from "../presets/legacy-preset-migrations";
 import {
   collectAddressRegistersFromBible,
@@ -57,10 +61,19 @@ export function normalizeOutlineRequest(input: OutlineRequestInput): NormalizedO
   };
 
   const validated = NormalizedOutlineRequestSchema.parse(normalized);
-  if (validated.chapterCount !== env.defaultChapterCount) {
-    throw new AppError("VALIDATION_ERROR", `chapterCount must be ${env.defaultChapterCount}`, 400, {
-      chapterCount: validated.chapterCount,
-    });
+  // The pipeline now supports a 15-17 chapter band (floor 15 so no authored beat
+  // is dropped). The exact count is finalised later from story complexity; here
+  // we only reject requests that fall outside the supported band.
+  if (
+    validated.chapterCount < DRAMA15_MIN_CHAPTER_COUNT
+    || validated.chapterCount > DRAMA15_MAX_CHAPTER_COUNT
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      `chapterCount must be between ${DRAMA15_MIN_CHAPTER_COUNT} and ${DRAMA15_MAX_CHAPTER_COUNT}`,
+      400,
+      { chapterCount: validated.chapterCount },
+    );
   }
 
   return validated;
@@ -186,10 +199,16 @@ export function validateChapterDraft(rawChapter: unknown, expectedChapterNumber:
 }
 
 export function ensureChapterPlanIntegrity(chapterPlan: ChapterPlanItem[]) {
-  if (chapterPlan.length !== env.defaultChapterCount) {
-    throw new AppError("MODEL_OUTPUT_INVALID", `Chapter plan must contain ${env.defaultChapterCount} chapters.`, 502, {
-      chapterCount: chapterPlan.length,
-    });
+  if (
+    chapterPlan.length < DRAMA15_MIN_CHAPTER_COUNT ||
+    chapterPlan.length > DRAMA15_MAX_CHAPTER_COUNT
+  ) {
+    throw new AppError(
+      "MODEL_OUTPUT_INVALID",
+      `Chapter plan must contain ${DRAMA15_MIN_CHAPTER_COUNT}-${DRAMA15_MAX_CHAPTER_COUNT} chapters.`,
+      502,
+      { chapterCount: chapterPlan.length },
+    );
   }
 
   chapterPlan.forEach((chapter, index) => {

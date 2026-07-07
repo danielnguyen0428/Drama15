@@ -6,6 +6,7 @@ import {
   DRAMA15_FIXED_CHAPTER_COUNT,
   buildDrama15ChapterArchitecture,
   clampChapterCount,
+  resolveComplexityChapterCount,
   resolveKeyChapters,
 } from '../../../src/modules/prompts/drama15-chapter-architecture.js';
 
@@ -68,6 +69,27 @@ test('inserted chapters are rise-arc sustain chapters', () => {
     // Inserted between the last canonical rise chapter (12) and the climax.
     assert.ok(chapter.chapterNumber >= 13);
   }
+});
+
+test('resolveComplexityChapterCount floors at 15 for a simple two-thread story', () => {
+  // Baseline story: exactly two pressure threads, no extra supporting cast.
+  // Must stay at 15 so a simple story is byte-identical to the old pipeline.
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 2, supportingCastCount: 0 }), 15);
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 2, supportingCastCount: 2 }), 15);
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 1, supportingCastCount: 1 }), 15);
+});
+
+test('resolveComplexityChapterCount earns one chapter per two units of excess complexity', () => {
+  // 2 excess units (e.g. 3 threads + 1 extra cast) -> +1 chapter.
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 3, supportingCastCount: 3 }), 16);
+  // 4 excess units -> +2 chapters, capped at 17.
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 4, supportingCastCount: 4 }), 17);
+  // A single excess unit is not enough for a whole chapter.
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 3, supportingCastCount: 2 }), 15);
+});
+
+test('resolveComplexityChapterCount never exceeds 17 no matter how complex', () => {
+  assert.equal(resolveComplexityChapterCount({ pressureThreadCount: 20, supportingCastCount: 20 }), 17);
 });
 
 test('resolveKeyChapters(15) matches the canonical locks exactly', () => {
