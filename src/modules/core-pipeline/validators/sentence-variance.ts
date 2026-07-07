@@ -15,6 +15,13 @@ export interface SentenceVarianceMetrics {
   stdevLengthWords: number;
   cv: number;
   fragmentRatio: number;
+  /**
+   * Longest run of consecutive short sentences (≤ SHORT_SENTENCE_WORDS words).
+   * Global cv can look healthy when a chapter mixes long clause-heavy passages
+   * with a clump of clipped staccato lines — the long sentences inflate stdev
+   * and mask the local machine-cadence run. This measures that clump directly.
+   */
+  maxShortRun: number;
   needsRepair: boolean;
 }
 
@@ -45,6 +52,29 @@ export function segmentSentences(text: string): string[] {
 
 export function countWords(sentence: string): number {
   return sentence.split(/\s+/).filter(Boolean).length;
+}
+
+// ─── Local choppy-run detection ──────────────────────────────────────────────
+
+// A sentence at or below this length counts as "short" for run detection.
+const SHORT_SENTENCE_WORDS = 6;
+// A run of this many consecutive short sentences reads as machine staccato even
+// when the whole-chapter cv looks fine. Chosen so ordinary 2-3 clipped lines
+// used for emphasis do not trip the gate, but a sustained clump does.
+const MAX_SHORT_RUN_ALLOWED = 4;
+
+export function longestShortRun(lengths: number[]): number {
+  let maxRun = 0;
+  let run = 0;
+  for (const len of lengths) {
+    if (len <= SHORT_SENTENCE_WORDS) {
+      run += 1;
+      maxRun = Math.max(maxRun, run);
+    } else {
+      run = 0;
+    }
+  }
+  return maxRun;
 }
 
 // ─── Fragment Detection ──────────────────────────────────────────────────────
@@ -99,6 +129,7 @@ export function analyzeSentenceVariance(text: string): SentenceVarianceMetrics {
       stdevLengthWords: 0,
       cv: 0,
       fragmentRatio: 0,
+      maxShortRun: 0,
       needsRepair: false,
     };
   }
@@ -117,7 +148,15 @@ export function analyzeSentenceVariance(text: string): SentenceVarianceMetrics {
     cv = stdevLength / meanLength;
   }
 
-  const needsRepair = cv < 0.55 && sentenceCount >= 3;
+  // Whole-chapter cv misses a choppy CLUMP: a chapter that mixes long
+  // clause-heavy sentences with a run of clipped ones has a high global cv, so
+  // the cv gate reads "fine" while the staccato clump still reads machine-like.
+  // A local run of consecutive short sentences catches that clump directly.
+  const maxShortRun = longestShortRun(lengths);
+
+  const needsRepair =
+    (cv < 0.55 && sentenceCount >= 3) ||
+    (maxShortRun >= MAX_SHORT_RUN_ALLOWED && sentenceCount >= 3);
 
   return {
     sentenceCount,
@@ -125,12 +164,13 @@ export function analyzeSentenceVariance(text: string): SentenceVarianceMetrics {
     stdevLengthWords: stdevLength,
     cv,
     fragmentRatio,
+    maxShortRun,
     needsRepair,
   };
 }
 
 export function buildVarianceRepairInstruction(metrics: SentenceVarianceMetrics): string {
-  return [
+  const lines = [
     `This chapter has low sentence length variance (cv = ${metrics.cv.toFixed(2)}, target ≥ 0.65).`,
     `Current stats: ${metrics.sentenceCount} sentences, mean ${metrics.meanLengthWords.toFixed(1)} words, stdev ${metrics.stdevLengthWords.toFixed(1)} words.`,
     `Fragment ratio: ${(metrics.fragmentRatio * 100).toFixed(0)}% (aim for 5-15%).`,
@@ -142,5 +182,15 @@ export function buildVarianceRepairInstruction(metrics: SentenceVarianceMetrics)
     "- Vary paragraph opening lengths — avoid starting every paragraph with a medium-length sentence.",
     "- Keep all plot facts, character names, dialogue meaning, and story progression identical.",
     "- Only restructure sentence lengths and rhythm.",
-  ].join("\n");
+  ];
+
+  if (metrics.maxShortRun >= MAX_SHORT_RUN_ALLOWED) {
+    lines.push(
+      "",
+      `Local staccato clump detected: a run of ${metrics.maxShortRun} consecutive short sentences (≤ ${SHORT_SENTENCE_WORDS} words each). Whole-chapter variance can look fine while a clipped middle still reads machine-written.`,
+      "- Find the run of short choppy lines and merge several into longer sentences with subordinate clauses, so no more than 3 short sentences sit back-to-back.",
+    );
+  }
+
+  return lines.join("\n");
 }
