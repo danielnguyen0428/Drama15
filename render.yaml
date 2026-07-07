@@ -59,6 +59,10 @@ services:
       # to keep latency and token cost down under real traffic.
       - key: ADVERSARIAL_CUT_ENABLED
         value: "true"
+      # Uniform humanizer pass over EVERY chapter (not only gate-failing ones) so
+      # voice reads consistent chapter to chapter. Trade-off: ~2x chapter latency.
+      - key: CHAPTER_POST_PROCESS_ENABLED
+        value: "true"
       - key: READER_PANEL_ENABLED
         value: "false"
       - key: MANUSCRIPT_REVIEW_ENABLED
