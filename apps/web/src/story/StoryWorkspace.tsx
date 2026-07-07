@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/useI18n';
 import { LlmSettingsModal, type LlmSettings } from './LlmSettingsModal';
 import { DraftControlsModal } from './DraftControlsModal';
 import { canResumeStory, createRelationshipGraphPreview, normalizeRelationshipGraph, normalizeQualityReports, resolveTotalChapters, TOTAL_CHAPTERS, type RelationshipGraphView, type QualityReportView } from './storyViewModel';
+import { buildEpubBlob, openPrintablePdf } from './exporters';
 import './StoryWorkspace.css';
 
 type Phase = 'idle' | 'suggesting' | 'creating' | 'streaming' | 'completed' | 'failed';
@@ -564,15 +565,32 @@ export function StoryWorkspace(): JSX.Element {
     }
   }
 
-  function exportMarkdown() {
-    if (!requireLogin()) return;
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+  function downloadBlob(blob: Blob, extension: string) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(storyTitle)}.md`;
+    link.download = `${slugify(storyTitle)}.${extension}`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function exportMarkdown() {
+    if (!requireLogin()) return;
+    downloadBlob(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }), 'md');
+  }
+
+  function exportEpub() {
+    if (!requireLogin()) return;
+    const labels = { chapterWord: t('md.chapter'), untitled: t('md.untitled') };
+    downloadBlob(buildEpubBlob(storyTitle, result.chapters, labels), 'epub');
+  }
+
+  function exportPdf() {
+    if (!requireLogin()) return;
+    const labels = { chapterWord: t('md.chapter'), untitled: t('md.untitled') };
+    if (!openPrintablePdf(storyTitle, result.chapters, labels)) {
+      setError(t('error.export_popup_blocked'));
+    }
   }
 
   function fail(err: unknown, fallback: string) {
@@ -633,7 +651,7 @@ export function StoryWorkspace(): JSX.Element {
         </aside>
 
         <section className={storyPanelFocused || writing ? 'story-panel focused' : 'story-panel'} ref={storyPanelRef}>
-          <div className="story-toolbar"><div><p className="eyebrow">{t('story.eyebrow')}</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || !llmConfigured || busy} onClick={() => storyId && void resumeStory(storyId)}>{t('story.resume_btn')}</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>{t('story.export_btn')}</button></div></div>
+          <div className="story-toolbar"><div><p className="eyebrow">{t('story.eyebrow')}</p><h2>{storyTitle}</h2></div><div className="story-toolbar-actions">{canResumeCurrentStory && <button type="button" className="primary-button" disabled={!isSignedIn || !llmConfigured || busy} onClick={() => storyId && void resumeStory(storyId)}>{t('story.resume_btn')}</button>}<button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportMarkdown}>{t('story.export_btn')}</button><button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportEpub}>{t('story.export_epub_btn')}</button><button type="button" disabled={!isSignedIn || result.chapters.length === 0} onClick={exportPdf}>{t('story.export_pdf_btn')}</button></div></div>
           <nav className="panel-tabs"><button type="button" className={panel === 'chapters' ? 'active' : ''} onClick={() => setPanel('chapters')}>{t('story.tab.chapters')}</button><button type="button" className={panel === 'overview' ? 'active' : ''} onClick={() => setPanel('overview')}>{t('story.tab.overview')}</button><button type="button" className={panel === 'plan' ? 'active' : ''} onClick={() => setPanel('plan')}>{t('story.tab.plan')}</button><button type="button" className={panel === 'bible' ? 'active' : ''} onClick={() => setPanel('bible')}>{t('story.tab.bible')}</button><button type="button" className={panel === 'relationships' ? 'active' : ''} onClick={() => setPanel('relationships')}>{t('story.tab.relationships')}</button><button type="button" className={panel === 'quality' ? 'active' : ''} onClick={() => setPanel('quality')}>{t('story.tab.quality')}</button></nav>
           {!(storyId === null && phase === 'idle') && (
             <div className="status-card story-status-card">

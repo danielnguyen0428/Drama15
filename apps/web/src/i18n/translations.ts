@@ -101,7 +101,9 @@ const vi = {
   'story.eyebrow': 'Bản thảo truyện',
   'story.default_title': 'Truyện chưa đặt tên',
   'story.resume_btn': 'Viết tiếp truyện',
-  'story.export_btn': 'Tải bản thảo',
+  'story.export_btn': 'Tải .md',
+  'story.export_epub_btn': 'Tải EPUB',
+  'story.export_pdf_btn': 'In / PDF',
   'story.tab.chapters': 'Chương',
   'story.tab.overview': 'Ý tưởng',
   'story.tab.plan': 'Dàn ý',
@@ -184,6 +186,7 @@ const vi = {
   'error.rename': 'Không thể đổi tên truyện.',
   'error.delete': 'Không thể xóa truyện.',
   'error.rewrite': 'Không thể viết lại chương.',
+  'error.export_popup_blocked': 'Trình duyệt chặn cửa sổ in. Cho phép pop-up rồi thử lại để xuất PDF.',
   'error.stream_interrupted': 'Phiên viết bị gián đoạn. Bạn có thể thử viết tiếp từ bản thảo đã có.',
 
   // Progress labels
@@ -320,7 +323,9 @@ const en: Record<keyof typeof vi, string> = {
   'story.eyebrow': 'Story Manuscript',
   'story.default_title': 'Untitled Story',
   'story.resume_btn': 'Continue Writing',
-  'story.export_btn': 'Download Manuscript',
+  'story.export_btn': 'Download .md',
+  'story.export_epub_btn': 'EPUB',
+  'story.export_pdf_btn': 'PDF',
   'story.tab.chapters': 'Chapters',
   'story.tab.overview': 'Concept',
   'story.tab.plan': 'Outline',
@@ -403,6 +408,7 @@ const en: Record<keyof typeof vi, string> = {
   'error.rename': 'Unable to rename story.',
   'error.delete': 'Unable to delete story.',
   'error.rewrite': 'Unable to rewrite chapter.',
+  'error.export_popup_blocked': 'The browser blocked the print window. Allow pop-ups for this site, then try the PDF export again.',
   'error.stream_interrupted': 'Writing session interrupted. You can try continuing from the existing manuscript.',
 
   // Progress labels
