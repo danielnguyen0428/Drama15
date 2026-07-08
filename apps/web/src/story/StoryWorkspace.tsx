@@ -710,10 +710,6 @@ export function StoryWorkspace(): JSX.Element {
           <ul className="announcement-list">
             <li>
               <span className="announcement-dot" aria-hidden="true" />
-              <span>{t('announcement.item_free')}</span>
-            </li>
-            <li>
-              <span className="announcement-dot" aria-hidden="true" />
               <span>{t('announcement.item_keys')}</span>
             </li>
             <li>

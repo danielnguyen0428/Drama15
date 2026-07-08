@@ -15,9 +15,8 @@ const vi = {
 
   // Announcement
   'announcement.kicker': 'Thông báo từ Admin',
-  'announcement.item_free': 'Hệ thống miễn phí hoàn toàn với model Deepseek 4 Flash.',
-  'announcement.item_keys': 'Nhập API key từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) cá nhân.',
-  'announcement.item_admin_provider': 'Hoặc dùng các Provider khác được cung cấp từ admin.',
+  'announcement.item_keys': 'Nhập API key của bạn từ OpenAI, OpenRouter, Gemini (OpenAI-compatible) để bắt đầu sáng tác.',
+  'announcement.item_admin_provider': 'Hoặc dùng API Key trả phí được cung cấp từ Novelkit.',
 
   // Account
   'account.avatar_alt': 'Ảnh đại diện',
@@ -237,9 +236,8 @@ const en: Record<keyof typeof vi, string> = {
 
   // Announcement
   'announcement.kicker': 'Admin Announcement',
-  'announcement.item_free': 'The system is completely free to use with free Model Deepseek 4 Flash.',
-  'announcement.item_keys': 'Enter personal API keys from OpenAI, OpenRouter, or Gemini (OpenAI-compatible).',
-  'announcement.item_admin_provider': 'Or use other providers supplied by the admin.',
+  'announcement.item_keys': 'Enter your API key from OpenAI, OpenRouter, or Gemini (OpenAI-compatible) to start writing.',
+  'announcement.item_admin_provider': 'Or use a paid API Key provided by Novelkit.',
 
   // Account
   'account.avatar_alt': 'Avatar',
