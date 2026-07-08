@@ -24,6 +24,32 @@ export type StoredStoryDetail = StoredStorySummary & {
   relationshipGraph?: RelationshipGraph;
 };
 
+// Read-only shape exposed to partner sites through the public API. It never
+// leaks the owner's user_id, config, or LLM settings — only the finished,
+// reader-facing story surface.
+export type PublicStorySummary = {
+  id: string;
+  title: string;
+  logline?: string;
+  outputLanguage?: string;
+  chapterCount: number;
+  completedAt?: string;
+  updatedAt: string;
+};
+
+export type PublicStoryChapter = {
+  index: number;
+  title: string;
+  content: string;
+};
+
+export type PublicStoryDetail = PublicStorySummary & {
+  premise?: string;
+  promise?: string;
+  chapters: PublicStoryChapter[];
+  relationshipGraph?: RelationshipGraph;
+};
+
 export class StoryStore {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -80,6 +106,43 @@ export class StoryStore {
 
     if (error) throw error;
     return data ? toDetail(data) : null;
+  }
+
+  // ─── Public (partner-facing) reads ──────────────────────────────────────
+  // These deliberately ignore user ownership and return only completed stories
+  // across all users. They select a narrow column set and never expose user_id,
+  // config, request, or LLM settings.
+
+  async listPublicStories(params: { limit: number; offset: number }): Promise<{
+    stories: PublicStorySummary[];
+    total: number;
+  }> {
+    const from = params.offset;
+    const to = params.offset + params.limit - 1;
+    const { data, error, count } = await this.supabase
+      .from('stories')
+      .select('id,title,completed_at,updated_at,story_payload', { count: 'exact' })
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false, nullsFirst: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return {
+      stories: (data ?? []).map(toPublicSummary),
+      total: count ?? 0,
+    };
+  }
+
+  async getPublicStory(id: string): Promise<PublicStoryDetail | null> {
+    const { data, error } = await this.supabase
+      .from('stories')
+      .select('id,title,completed_at,updated_at,status,story_payload,relationship_graph')
+      .eq('id', id)
+      .eq('status', 'completed')
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? toPublicDetail(data) : null;
   }
 
   async updateStatus(userId: string, id: string, status: StoredStoryStatus, errorMessage?: string) {
@@ -167,6 +230,39 @@ function toDetail(row: Record<string, unknown>): StoredStoryDetail {
     ...toSummary(row),
     config: row.config,
     storyPayload: row.story_payload as StoryPayload | undefined,
+    relationshipGraph: row.relationship_graph as RelationshipGraph | undefined,
+  };
+}
+
+function toPublicSummary(row: Record<string, unknown>): PublicStorySummary {
+  const payload = row.story_payload as StoryPayload | null | undefined;
+  return {
+    id: String(row.id),
+    title: String(payload?.title ?? row.title),
+    logline: payload?.concept?.logline,
+    outputLanguage: payload?.request?.outputLanguage,
+    chapterCount: payload?.chapters?.length ?? 0,
+    completedAt: typeof row.completed_at === 'string' ? row.completed_at : undefined,
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function toPublicDetail(row: Record<string, unknown>): PublicStoryDetail {
+  const payload = row.story_payload as StoryPayload | null | undefined;
+  const chapters: PublicStoryChapter[] = (payload?.chapters ?? [])
+    .slice()
+    .sort((a, b) => a.chapterNumber - b.chapterNumber)
+    .map((chapter) => ({
+      index: chapter.chapterNumber,
+      title: chapter.title,
+      content: chapter.text,
+    }));
+
+  return {
+    ...toPublicSummary(row),
+    premise: payload?.storyBible?.premise,
+    promise: payload?.concept?.promise,
+    chapters,
     relationshipGraph: row.relationship_graph as RelationshipGraph | undefined,
   };
 }

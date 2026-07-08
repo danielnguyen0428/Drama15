@@ -55,6 +55,13 @@ const EnvSchema = z.object({
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   ADMIN_API_KEY: z.string().optional(),
+  // Public read-only API for partner sites (e.g. studio.novelkit.cc) to list
+  // published stories. Callers must present PUBLIC_API_KEY via the x-api-key
+  // header. When PUBLIC_API_ORIGINS is set, browser requests are additionally
+  // restricted to those origins. Leave PUBLIC_API_KEY empty to disable the
+  // public endpoints entirely.
+  PUBLIC_API_KEY: z.string().optional(),
+  PUBLIC_API_ORIGINS: z.string().optional().default("https://studio.novelkit.cc"),
   LLM_SETTINGS_ENCRYPTION_KEY: z.string().optional(),
   LLM_ALLOWED_HOSTS: z.string().optional().default(""),
   LLM_ALLOW_INSECURE_LOCALHOST: z.string().optional().transform((value) => value === "true"),
@@ -113,6 +120,8 @@ export const env = {
   supabaseAnonKey: parsedEnv.SUPABASE_ANON_KEY,
   supabaseServiceRoleKey: parsedEnv.SUPABASE_SERVICE_ROLE_KEY,
   adminApiKey: parsedEnv.ADMIN_API_KEY,
+  publicApiKey: parsedEnv.PUBLIC_API_KEY,
+  publicApiOrigins: parsedEnv.PUBLIC_API_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean),
   llmSettingsEncryptionKey: parsedEnv.LLM_SETTINGS_ENCRYPTION_KEY,
   llmAllowedHosts: parsedEnv.LLM_ALLOWED_HOSTS.split(",").map((host) => host.trim()).filter(Boolean),
   llmAllowInsecureLocalhost: parsedEnv.LLM_ALLOW_INSECURE_LOCALHOST,

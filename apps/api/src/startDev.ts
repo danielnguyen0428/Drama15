@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import fastify from 'fastify';
-import type { FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { buildCorsHeaders, buildStreamHeaders } from './streamHeaders.js';
@@ -197,13 +197,45 @@ function getStoryStore() {
   return new StoryStore(getSupabaseAdmin());
 }
 
+// Gate for the partner-facing public API. Two independent checks:
+//   1. A shared secret in the `x-api-key` header must match PUBLIC_API_KEY.
+//   2. If the caller is a browser (sends an Origin), that Origin must be in the
+//      PUBLIC_API_ORIGINS allow-list. Server-to-server callers send no Origin
+//      and are allowed once the key matches.
+// Returns true when access is granted; otherwise it writes the 401/403 response
+// and returns false so the route can bail out.
+function requirePublicApiAccess(request: FastifyRequest, reply: FastifyReply): boolean {
+  if (!env.publicApiKey) {
+    void reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy tài nguyên.' } });
+    return false;
+  }
+
+  const providedKey = request.headers['x-api-key'];
+  if (typeof providedKey !== 'string' || providedKey !== env.publicApiKey) {
+    void reply.code(401).send({ error: { code: 'unauthorized', message: 'API key không hợp lệ.' } });
+    return false;
+  }
+
+  const origin = request.headers.origin;
+  if (origin && !env.publicApiOrigins.includes(origin)) {
+    void reply.code(403).send({ error: { code: 'forbidden', message: 'Origin không được phép sử dụng API này.' } });
+    return false;
+  }
+
+  return true;
+}
+
 const app = fastify({
   bodyLimit: 1024 * 1024,
   logger: { level: env.logLevel },
 });
 
+// Partner sites calling the public API live on different origins than the main
+// web app, so they must also receive a matching Access-Control-Allow-Origin.
+const allCorsOrigins = [...new Set([...env.corsOrigins, ...env.publicApiOrigins])];
+
 app.addHook('onRequest', (request, reply, done) => {
-  for (const [key, value] of Object.entries(buildCorsHeaders(request.headers.origin, env.corsOrigins))) {
+  for (const [key, value] of Object.entries(buildCorsHeaders(request.headers.origin, allCorsOrigins))) {
     reply.header(key, value);
   }
 
@@ -255,6 +287,42 @@ app.post('/admin/telegram/status', async (request, reply) => {
 app.get('/story/style-presets', async (_request, reply) => {
   try {
     return reply.send({ presets: await listStylePresets() });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+// ─── Public partner API (guarded by x-api-key + Origin allow-list) ──────────
+// Lists completed stories across all users for embedding on partner sites like
+// studio.novelkit.cc. Read-only; never exposes user_id, config, or LLM settings.
+
+const PublicListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).catch(20).default(20),
+  offset: z.coerce.number().int().min(0).catch(0).default(0),
+});
+
+app.get('/public/stories', async (request, reply) => {
+  if (!requirePublicApiAccess(request, reply)) return reply;
+
+  try {
+    const { limit, offset } = PublicListQuerySchema.parse(request.query);
+    const { stories, total } = await getStoryStore().listPublicStories({ limit, offset });
+    return reply.send({ stories, total, limit, offset });
+  } catch (error) {
+    return sendError(reply, error);
+  }
+});
+
+app.get('/public/stories/:id', async (request, reply) => {
+  if (!requirePublicApiAccess(request, reply)) return reply;
+
+  try {
+    const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
+    const story = await getStoryStore().getPublicStory(id);
+    if (!story) {
+      return reply.code(404).send({ error: { code: 'not_found', message: 'Không tìm thấy truyện.' } });
+    }
+    return reply.send({ story });
   } catch (error) {
     return sendError(reply, error);
   }

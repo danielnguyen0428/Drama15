@@ -12,7 +12,7 @@ export function buildCorsHeaders(origin: string | undefined, corsOrigins: readon
   return {
     'Access-Control-Allow-Origin': resolveAllowedOrigin(origin, corsOrigins),
     'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization,content-type,x-admin-api-key',
+    'Access-Control-Allow-Headers': 'authorization,content-type,x-admin-api-key,x-api-key',
     Vary: 'Origin',
   };
 }
