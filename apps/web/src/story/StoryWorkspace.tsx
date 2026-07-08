@@ -88,7 +88,7 @@ const DEFAULT_CONFIG: StoryConfig = {
   title: '',
   seed: '',
   outputLanguage: 'vietnamese',
-  intensity: 0.84,
+  intensity: 0.7,
   dialogueRatio: 0.56,
   hookDensity: 0.67,
   stylePreset: 'co_man_warm_modern_blueprint',

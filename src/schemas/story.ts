@@ -37,7 +37,7 @@ export const StoryControlsSchema = z.object({
   shameType: z.string().default("polite_class_exclusion"),
   revengeMode: z.string().default("strategic_withdrawal_status_reversal"),
   endingMode: z.string().default("bittersweet_dignity_first"),
-  intensity: z.number().min(0).max(1).default(0.84),
+  intensity: z.number().min(0).max(1).default(0.7),
 });
 
 export const CustomCreativeInputsSchema = z

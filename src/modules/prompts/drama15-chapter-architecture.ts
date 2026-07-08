@@ -622,19 +622,25 @@ const PROMPT_TEMPLATE_STYLE_LOCKS: Record<number, string> = {
 };
 
 export function renderIntensityInstruction(intensity: number) {
+  // Intensity must live in CONTENT and RHYTHM CONTRAST, not in a flat command to
+  // keep every sentence short. Ordering the model to make "short sentences
+  // dominate" produced choppy, machine-like prose because it collapsed sentence
+  // variance. Instead, high intensity now means a sharper mix — long build lines
+  // snapping into short punch lines — while the pressure comes from stakes,
+  // silence, and consequence. This keeps human length variance (cv ≥ 0.65) alive.
   if (intensity >= 0.9) {
-    return `Intensity ${intensity}: very short sentences, no exterior decoration, no spare adjectives, and no explanatory interior monologue.`;
+    return `Intensity ${intensity}: keep the pressure high through stakes, silence, and consequence — not through uniformly short sentences. Contrast a few longer, tightening lines with sudden short punch lines; strip decorative adjectives and avoid long explanatory interior monologue.`;
   }
 
   if (intensity >= 0.84) {
-    return `Intensity ${intensity}: short sentences should dominate; keep interior explanation minimal.`;
+    return `Intensity ${intensity}: drive the scene with contrast — build with longer clause-carrying sentences, then cut to short lines at the pressure points. Do not flatten every sentence to the same short length; keep interior explanation lean.`;
   }
 
   if (intensity >= 0.75) {
-    return `Intensity ${intensity}: mix medium and short sentences; let short lines mark pressure points.`;
+    return `Intensity ${intensity}: mix medium and long sentences with short lines that mark pressure points; let rhythm vary rather than settling into one length.`;
   }
 
-  return `Intensity ${intensity}: allow longer setup sentences, sensory grounding, and calmer scene rhythm.`;
+  return `Intensity ${intensity}: allow longer setup sentences, sensory grounding, and calmer scene rhythm, still varying sentence length so the prose never reads flat.`;
 }
 
 function renderHookExecution(hookType: ChapterArchitecture["hookType"]) {

@@ -40,10 +40,16 @@ export type IntensityComplianceReport = {
 // every sentence. Bands mirror the tiers in `renderIntensityInstruction`
 // (0.90 / 0.84 / 0.75).
 function expectedMeanWindow(intensity: number): { min: number; max: number } {
-  if (intensity >= 0.9) return { min: 6, max: 16 };
-  if (intensity >= 0.84) return { min: 7, max: 18 };
-  if (intensity >= 0.75) return { min: 8, max: 21 };
-  return { min: 9, max: 26 };
+  // Windows widened for Vietnamese web-fiction prose. Natural human narration in
+  // this genre runs ~20-30 words/sentence when long clause-heavy lines are mixed
+  // with short punch lines (cv ≥ 0.65). The previous ceilings (16-21) fought that
+  // mix: any chapter written with real length variance tripped `too_slow` and was
+  // repaired shorter, flattening the prose into machine staccato. The ceiling now
+  // only catches prose that is genuinely bloated, not prose that simply breathes.
+  if (intensity >= 0.9) return { min: 6, max: 22 };
+  if (intensity >= 0.84) return { min: 7, max: 26 };
+  if (intensity >= 0.75) return { min: 8, max: 30 };
+  return { min: 9, max: 34 };
 }
 
 // Only flag when the mean sits well outside the window, so ordinary variation

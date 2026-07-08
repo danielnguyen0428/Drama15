@@ -97,7 +97,7 @@ const StoryConfigSchema = z.object({
   outputLanguage: z
     .enum(['english', 'vietnamese', 'japanese', 'korean', 'portuguese', 'spanish'])
     .default('vietnamese'),
-  intensity: z.coerce.number().min(0).max(1).catch(0.84).default(0.84),
+  intensity: z.coerce.number().min(0).max(1).catch(0.7).default(0.7),
   dialogueRatio: z.coerce.number().min(0.2).max(0.85).catch(0.56).default(0.56),
   hookDensity: z.coerce.number().min(0).max(1).catch(0.67).default(0.67),
   stylePreset: z.string().trim().min(1).default(env.defaultStylePreset),
